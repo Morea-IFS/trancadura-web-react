@@ -1,17 +1,20 @@
+import MobileMenu from "@/components/Menus/MobileMenu";
+import DesktopMenu from "@/components/Menus/DesktopMenu";
+
 const Header = () => {
   return (
-    <header className="bg-white w-full">
-      <div className="text-black flex justify-between items-center p-4">
-        <h1 className="text-2xl font-bold">MOREA Trancadura</h1>
+    <header className="bg-black text-white w-full">
+      <div className="flex justify-between items-center p-4">
+        <h1 className="text-xl font-bold">
+          <a href="/">MOREA - Trancadura</a>
+        </h1>
         <nav>
-          <ul className="flex gap-4">
-            <li><a href="/" className="hover:underline">Início</a></li>
-            <li><a href="/membros" className="hover:underline">Membros</a></li>
-          </ul>
+          <MobileMenu />
+          <DesktopMenu />
         </nav>
       </div>
     </header>
   );
-}
+};
 
 export default Header;
