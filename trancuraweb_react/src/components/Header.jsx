@@ -3,7 +3,7 @@ import DesktopMenu from "@/components/Menus/DesktopMenu";
 
 const Header = () => {
   return (
-    <header className="bg-black text-white w-full">
+    <header className="bg-foreground text-background w-full">
       <div className="flex justify-between items-center p-4">
         <h1 className="text-xl font-bold">
           <a href="/">MOREA - Trancadura</a>

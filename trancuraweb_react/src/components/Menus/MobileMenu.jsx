@@ -21,7 +21,7 @@ const MobileMenu = () => {
 
       {/* Menu lateral compacto */}
       <div
-        className={`fixed top-20 right-4 z-50 w-[120px] h-[180px] flex flex-col items-start justify-center bg-black shadow-xl rounded-lg p-4 
+        className={`fixed top-20 right-4 z-50 w-[120px] h-[180px] flex flex-col items-start justify-center bg-foreground shadow-xl rounded-lg p-4 
           transform transition-transform duration-300 ease-in-out ${
             isOpen
               ? "translate-y-0 opacity-100 visible"
