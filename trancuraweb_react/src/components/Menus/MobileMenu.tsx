@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { FiMenu, FiX } from "react-icons/fi";
+import Link from "next/link";
 
-const MobileMenu = () => {
+const MobileMenu: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -32,40 +33,40 @@ const MobileMenu = () => {
         <nav className="flex justify-center">
           <ul className="space-y-4 flex flex-col items-start w-full text-[18px]">
             <li>
-              <a
+              <Link
                 className="flex w-full justify-end gap-1"
                 href="/"
                 onClick={() => setIsOpen(false)}
               >
                 Tranca
-              </a>
+              </Link>
             </li>
             <li>
-              <a
+              <Link
                 className="flex w-full justify-end gap-1"
                 href="/historico"
                 onClick={() => setIsOpen(false)}
               >
                 Histórico
-              </a>
+              </Link>
             </li>
             <li>
-              <a
+              <Link
                 className="flex w-full justify-end gap-1"
                 href="/membros"
                 onClick={() => setIsOpen(false)}
               >
                 Membros
-              </a>
+              </Link>
             </li>
             <li>
-              <a
+              <Link
                 className="flex w-full justify-end gap-1"
                 href="/logout"
                 onClick={() => setIsOpen(false)}
               >
                 Logout
-              </a>
+              </Link>
             </li>
           </ul>
         </nav>
