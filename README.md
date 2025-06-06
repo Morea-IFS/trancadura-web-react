@@ -17,6 +17,8 @@
 
 ### Nossas rotas:
 - / = Acessa a home (tranca).
+- /login = Acessa a página de login.
+- /logout = Faz o logout do usuário.
 - /historico = Acessa a página de históricos de acesso, recusas e etc...
 - /membros = (Apenas para admins) Acessa a página de membros com CRUD para gerenciar todos os membros.
 
