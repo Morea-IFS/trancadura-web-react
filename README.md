@@ -9,6 +9,8 @@
 ### Para entender o projeto veja:
 
 - [REACT](https://www.youtube.com/watch?v=_gHr2Pe5LCY) - Vídeo mostrando o básico de React
+-
+[TYPESCRIPT](https://youtu.be/ppDsxbUNtNQ?si=8IaT387Azl_520eH&utm_source=ZTQxO) - Vídeo mostrando o básico de TS
 - [NEXT](https://www.youtube.com/watch?v=e6FigV2fLC8) - Vídeo mostrando o básico de Next
 - [TAILWIND](https://www.youtube.com/watch?v=SUavcwCCLN8) - Vídeo mostrando o básico de Tailwind CSS
 
