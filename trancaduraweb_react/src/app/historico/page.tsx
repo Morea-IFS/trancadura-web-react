@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import Header from "@/components/Header";
 import HistoryCard from "@/components/HistoryCard";
 
@@ -13,7 +15,14 @@ const opcoes = [
   { value: "ano", label: "Ano" },
 ];
 
-export default function Historico() {
+export default function HistoricoPage() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
   return (
     <div>
       <header>
@@ -25,15 +34,21 @@ export default function Historico() {
             <div className="flex items-center justify-between w-full">
               <div>
                 <div className="flex gap-2 items-center">
-                  <FaRegClock className="w-6 h-6 text-foreground font-bold" />
-                  <p className="text-2xl font-bold">Histórico de Operações</p>
+                  <FaRegClock className="w-4 h-4 sm:w-6 sm:h-6 text-foreground font-bold" />
+                  <p className="text-lg sm:text-2xl font-bold">
+                    Histórico de Operações
+                  </p>
                 </div>
-                <div className="text-gray-600 text-lg">
+                <div className="text-gray-600 text-base sm:text-lg">
                   <p>Todas as operações registradas</p>
                 </div>
               </div>
               <div>
-                <Select options={opcoes} placeholder="Selecione..." />
+                <Select
+                  options={opcoes}
+                  placeholder="FILTRAR"
+                  className="w-16 sm:w-30"
+                />
               </div>
             </div>
             <HistoryCard />
