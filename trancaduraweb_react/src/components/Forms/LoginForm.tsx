@@ -14,7 +14,10 @@ export default function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col space-y-4 md:text-xl"
+    >
       <div>
         <label className="text-foreground text-xl">Usuário</label>
         <Input
@@ -35,11 +38,11 @@ export default function LoginForm() {
       </div>
       <button
         type="submit"
-        className="btn-gradient text-white text-lg px-6 py-2 rounded-lg font-bold shadow-md transition hover:opacity-90"
+        className="bg-primary text-white text-xl md:text-2xl px-6 py-2 rounded-lg font-bold shadow-md transition hover:opacity-90"
       >
         Entrar
       </button>
-      <p className="text-foreground text-lg">
+      <p className="text-foreground text-sm sm:text-lg">
         Esqueceu a senha?{" "}
         <a href="#" className="text-primary hover:underline">
           Redefinir senha
