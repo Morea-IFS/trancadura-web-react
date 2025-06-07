@@ -5,6 +5,12 @@
   --foreground: #000000;
   --primary: #05aff2;
   --secondary: #2ef23b;
+  --login-gradient: linear-gradient(
+    120deg,
+    rgba(5, 175, 242, 1) 33%,
+    rgba(35, 224, 108, 1) 71%,
+    rgba(46, 242, 59, 1) 100%
+  );
 }
 
 @theme inline {
@@ -14,6 +20,7 @@
   --color-secondary: var(--secondary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --login-gradient: var(--login-gradient);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,6 +29,12 @@
     --foreground: #000000;
     --primary: #05aff2;
     --secondary: #2ef23b;
+    --login-gradient: linear-gradient(
+      120deg,
+      rgba(5, 175, 242, 1) 33%,
+      rgba(35, 224, 108, 1) 71%,
+      rgba(46, 242, 59, 1) 100%
+    );
   }
 }
 
@@ -29,4 +42,8 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.btn-gradient {
+  background: var(--login-gradient);
 }

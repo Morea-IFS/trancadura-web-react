@@ -4,7 +4,7 @@ import { useState } from "react";
 import { FiMenu, FiX } from "react-icons/fi";
 import Link from "next/link";
 
-const MobileMenu: React.FC = () => {
+export default function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -73,6 +73,4 @@ const MobileMenu: React.FC = () => {
       </div>
     </div>
   );
-};
-
-export default MobileMenu;
+}

@@ -2,7 +2,7 @@ import MobileMenu from "@/components/Menus/MobileMenu";
 import DesktopMenu from "@/components/Menus/DesktopMenu";
 import Link from "next/link";
 
-const Header: React.FC = () => {
+export default function Header() {
   return (
     <header className="bg-foreground text-background w-full">
       <div className="flex justify-between items-center p-4">
@@ -16,6 +16,4 @@ const Header: React.FC = () => {
       </div>
     </header>
   );
-};
-
-export default Header;
+}
