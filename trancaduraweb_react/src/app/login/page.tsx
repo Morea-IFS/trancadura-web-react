@@ -1,5 +1,3 @@
-"use client";
-
 import LoginForm from "@/components/Forms/LoginForm";
 import { IoLockClosedOutline } from "react-icons/io5";
 
