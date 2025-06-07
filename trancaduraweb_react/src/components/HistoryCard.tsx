@@ -2,7 +2,7 @@ import { IoCheckmarkDoneCircle } from "react-icons/io5";
 
 export default function HistoryCard() {
   return (
-    <div className="w-full p-2">
+    <div className="w-full">
       <div className="w-full flex items-center gap-4 p-3 bg-white rounded-lg shadow-md border border-gray-200">
         <IoCheckmarkDoneCircle className="text-secondary w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20" />
         <div className="flex flex-col gap-2 items-start">
