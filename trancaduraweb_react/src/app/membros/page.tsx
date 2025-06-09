@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import MemberCard from "@/components/MemberCard";
 
 export default function Membros() {
   return (
@@ -6,7 +7,9 @@ export default function Membros() {
       <header>
         <Header />
       </header>
-      <h1 className="text-6xl text-black">HELLO WORLD! (Membros)</h1>
+      <section className="p-4 md:w-[70%] mx-auto">
+        <MemberCard />
+      </section>
     </div>
   );
 }
