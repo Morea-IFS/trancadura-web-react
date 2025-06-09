@@ -28,7 +28,7 @@ export default function HistoricoPage() {
       <header>
         <Header />
       </header>
-      <section className="p-4">
+      <section className="p-4 md:w-[70%] mx-auto">
         <div>
           <div className="p-4 w-full flex items-start justify-center flex-col gap-2 bg-white rounded-lg shadow-md border border-gray-200">
             <div className="flex items-center justify-between w-full">
