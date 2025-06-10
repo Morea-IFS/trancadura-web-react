@@ -1,20 +1,29 @@
 "use client";
 
 import { useState } from "react";
+import Input from "@/components/Input";
 
-interface RegisterForm {
+interface RegisterFormProps {
+  initialData?: {
+    username?: string;
+    email?: string;
+    status?: "ativo" | "inativo";
+  };
   onClose?: () => void;
 }
 
-export default function RegisterForm({ onClose }: RegisterForm) {
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
+export default function EditForm({ initialData, onClose }: RegisterFormProps) {
+  const [username, setUsername] = useState(initialData?.username || "");
+  const [email, setEmail] = useState(initialData?.email || "");
   const [password, setPassword] = useState("");
-  const [status, setStatus] = useState<"ativo" | "inativo">("ativo");
+  const [status, setStatus] = useState<"ativo" | "inativo">(
+    initialData?.status || "ativo"
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Lógica de cadastro aqui
+    // Colocar lógica de registro/edição aqui
+    console.log("Salvando:", { username, email, password, status });
     if (onClose) onClose();
   };
 
@@ -22,9 +31,8 @@ export default function RegisterForm({ onClose }: RegisterForm) {
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div>
         <label className="block text-sm font-medium mb-1">Nome</label>
-        <input
+        <Input
           type="text"
-          className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-foreground"
           placeholder="Nome do usuário"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
@@ -32,9 +40,8 @@ export default function RegisterForm({ onClose }: RegisterForm) {
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">E-mail</label>
-        <input
+        <Input
           type="email"
-          className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-foreground"
           placeholder="E-mail"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -42,10 +49,9 @@ export default function RegisterForm({ onClose }: RegisterForm) {
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">Senha</label>
-        <input
+        <Input
           type="password"
-          className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-          placeholder="Senha"
+          placeholder="Nova senha"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
@@ -73,9 +79,9 @@ export default function RegisterForm({ onClose }: RegisterForm) {
         )}
         <button
           type="submit"
-          className="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition"
+          className="px-4 py-2 rounded-md bg-foreground text-white hover:bg-foreground/90 transition"
         >
-          Registrar
+          Salvar
         </button>
       </div>
     </form>
