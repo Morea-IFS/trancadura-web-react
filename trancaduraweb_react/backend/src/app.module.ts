@@ -22,8 +22,8 @@ import { ButtonsModule } from './buttons/buttons.module';
     }),
     ThrottlerModule.forRoot([
       {
-        ttl: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000,
-        limit: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+        ttl: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'),
+        limit: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'),
       },
     ]),
     PrismaModule,

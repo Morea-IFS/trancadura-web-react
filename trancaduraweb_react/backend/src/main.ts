@@ -6,7 +6,6 @@ import helmet from 'helmet';
 import * as cors from 'cors';
 
 import { AppModule } from './app.module';
-import { PrismaService } from './prisma/prisma.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -36,9 +35,16 @@ async function bootstrap() {
   // Global prefix
   app.setGlobalPrefix('api');
 
-  // Prisma shutdown hook
-  const prismaService = app.get(PrismaService);
-  await prismaService.enableShutdownHooks(app);
+  // Shutdown hooks
+  app.enableShutdownHooks();
+
+  process.on('SIGINT', async () => {
+    await app.close();
+  });
+
+  process.on('SIGTERM', async () => {
+    await app.close();
+  });
 
   const port = configService.get('PORT') || 3000;
   await app.listen(port);
