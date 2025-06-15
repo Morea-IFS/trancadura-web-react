@@ -1,3 +1,4 @@
+// src/common/types/index.ts
 export interface AuthenticatedUser {
   id: string;
   email: string;
@@ -37,42 +38,6 @@ export interface DeviceRoleWithRole {
   };
 }
 
-export interface CreateDeviceInput {
-  macAddress: string;
-}
-
-export interface UpdateDeviceIpInput {
-  deviceId: string;
-  deviceIp: string;
-  apiToken: string;
-}
-
-export interface CreatePinCodeInput {
-  deviceId: string;
-  dateInit: Date;
-  dateStop: Date;
-}
-
-export interface UnlockWithPinInput {
-  deviceId: string;
-  pin: number;
-}
-
-export interface ApproximationCardInput {
-  hexid: string;
-  macaddress: string;
-}
-
-export interface CreateCardInput {
-  hexid: string;
-  id: string;
-}
-
-export interface ButtonOpenInput {
-  deviceId: string;
-  apiToken: string;
-}
-
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
@@ -86,17 +51,4 @@ export interface PaginatedResponse<T> {
   page: number;
   limit: number;
   totalPages: number;
-}
-
-// Express Request com usuário autenticado
-export interface AuthenticatedRequest extends Request {
-  user: AuthenticatedUser;
-}
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: AuthenticatedUser;
-    }
-  }
 }
