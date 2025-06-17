@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { User } from '@prisma/client';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -28,11 +29,11 @@ describe('UsersService', () => {
         password: 'password',
       };
 
-      const result = {
+      const result: User = {
         id: 'abc123',
-        ...createUserDto,
-        firstName: null,
-        lastName: null, 
+        email: createUserDto.email,
+        username: createUserDto.username,
+        password: createUserDto.password,
         isActive: true,
         isStaff: false,
         isSuperuser: false,

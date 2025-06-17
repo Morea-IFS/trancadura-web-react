@@ -14,8 +14,6 @@ model User {
   id          String   @id @default(cuid())
   email       String   @unique
   username    String   @unique
-  firstName   String?  @map("first_name")
-  lastName    String?  @map("last_name")
   password    String
   isActive    Boolean  @default(true) @map("is_active")
   isStaff     Boolean  @default(false) @map("is_staff")
