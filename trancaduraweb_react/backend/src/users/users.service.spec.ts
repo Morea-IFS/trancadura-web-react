@@ -30,7 +30,7 @@ describe('UsersService', () => {
       };
 
       const result: User = {
-        id: 'abc123',
+        id: 1,
         email: createUserDto.email,
         username: createUserDto.username,
         password: createUserDto.password,
