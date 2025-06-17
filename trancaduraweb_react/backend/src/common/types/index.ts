@@ -1,6 +1,6 @@
 // src/common/types/index.ts
 export interface AuthenticatedUser {
-  id: string;
+  id: number;
   email: string;
   username: string;
   firstName?: string;
@@ -12,15 +12,15 @@ export interface AuthenticatedUser {
 }
 
 export interface UserRoleWithRole {
-  id: string;
+  id: number;
   role: {
-    id: string;
+    id: number;
     name: string;
   };
 }
 
 export interface DeviceWithRoles {
-  id: string;
+  id: number;
   uuid: string;
   macAddress?: string;
   section?: string;
@@ -31,9 +31,9 @@ export interface DeviceWithRoles {
 }
 
 export interface DeviceRoleWithRole {
-  id: string;
+  id: number;
   role: {
-    id: string;
+    id: number;
     name: string;
   };
 }
