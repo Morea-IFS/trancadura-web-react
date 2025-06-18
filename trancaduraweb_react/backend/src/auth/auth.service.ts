@@ -22,7 +22,10 @@ export class AuthService {
   }
 
   async login(dto: LoginAuthDto) {
-    const user = await this.usersService.findByUsername(dto.username);
+    const user =
+      (await this.usersService.findByUsername(dto.username)) ||
+      (await this.usersService.findByEmail(dto.username));
+
     if (!user || !(await bcrypt.compare(dto.password, user.password))) {
       throw new UnauthorizedException('Credenciais inválidas');
     }

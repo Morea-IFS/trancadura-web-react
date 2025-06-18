@@ -2,15 +2,30 @@
 
 import { useState } from "react";
 import Input from "@/components/Input";
+import { useRouter } from "next/navigation";
+import api from "@/lib/api";
 
 export default function LoginForm() {
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
+  const [mensagem, setMensagem] = useState("");
+  const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // Colocar lógica de login aqui
-    console.log("Logging in with:", { usuario, password });
+    try {
+      const res = await api.post('/api/auth/login', {username: usuario, password});
+      if (res.data && res.data.access_token) {
+        document.cookie = `token=${res.data.access_token}; path=/`;
+        setMensagem("Login bem-sucedido!");
+        router.push("/"); // Redireciona para home ou dashboard
+      } else {
+        setMensagem("Usuário ou senha inválidos");
+      }
+    } catch (err: any) {
+      setMensagem(err.response?.data?.message || "Erro ao fazer login");
+    }
   };
 
   return (
