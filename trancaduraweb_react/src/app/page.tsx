@@ -1,10 +1,22 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import HistoryCard from "@/components/HistoryCard";
 import Header from "@/components/Header";
-
+import axios from "axios";
 import { FaRegClock } from "react-icons/fa6";
 import { IoLockClosedOutline } from "react-icons/io5";
 
 export default function Home() {
+  const [usuario, setUsuario] = useState<string | null>(null);
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:8080/api/users/me", { withCredentials: true })
+      .then((res) => setUsuario(res.data.username || res.data.email))
+      .catch(() => setUsuario(null));
+  }, []);
+
   return (
     <div>
       <header>
@@ -12,7 +24,9 @@ export default function Home() {
       </header>
       <section className="p-4">
         <div className="w-full mx-auto max-w-4xl p-4 flex items-center justify-center flex-col gap-1">
-          <h1 className="font-bold text-2xl sm:text-4xl">Bem vindo, usuário</h1>
+          <h1 className="font-bold text-2xl sm:text-4xl">
+            Bem vindo, {usuario ? usuario : "usuário"}
+          </h1>
           <p className="font-bold text-base sm:text-lg text-gray-600">
             Use o botão abaixo para controlar a tranca
           </p>
