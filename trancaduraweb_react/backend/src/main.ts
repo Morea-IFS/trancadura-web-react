@@ -3,26 +3,19 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
-import * as cors from 'cors';
 
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const configService = app.get(ConfigService);
+
+  app.enableCors({
+    origin: 'http://localhost:3000',
+    credentials: true,
+  });
 
   // Security
   app.use(helmet());
-
-  // CORS
-  app.use(
-    cors({
-      origin: ['http://localhost:3000'],
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-      credentials: true,
-    }),
-  );
 
   // Global validation pipe
   app.useGlobalPipes(
@@ -39,15 +32,16 @@ async function bootstrap() {
   // Shutdown hooks
   app.enableShutdownHooks();
 
-  process.on('SIGINT', async () => {
-    await app.close();
+  process.on('SIGINT', () => {
+    app.close();
   });
 
-  process.on('SIGTERM', async () => {
-    await app.close();
+  process.on('SIGTERM', () => {
+    app.close();
   });
 
-  const port = configService.get('PORT') || 3000;
+  const configService = app.get(ConfigService);
+  const port = Number(configService.get<string>('PORT')) || 8080;
   await app.listen(port);
 
   console.log(`🚀 Server running on http://localhost:${port}/api`);

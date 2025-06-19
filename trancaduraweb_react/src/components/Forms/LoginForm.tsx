@@ -8,23 +8,33 @@ import api from "@/lib/api";
 export default function LoginForm() {
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
-  const [mensagem, setMensagem] = useState("");
+  const [erro, setErro] = useState("");
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Colocar lógica de login aqui
+    setErro("");
+
+    if (!usuario || !password) {
+      setErro("Preencha todos os campos");
+      return;
+    }
+
     try {
-      const res = await api.post('/api/auth/login', {username: usuario, password});
+      const res = await api.post(
+        "/api/auth/login",
+        { username: usuario, password },
+        { withCredentials: true }
+      );
       if (res.data && res.data.access_token) {
-        document.cookie = `token=${res.data.access_token}; path=/`;
-        setMensagem("Login bem-sucedido!");
-        router.push("/"); // Redireciona para home ou dashboard
+        router.push("/");
+        console.log("Login bem sucedido");
       } else {
-        setMensagem("Usuário ou senha inválidos");
+        console.log("O login deu errado.");
       }
     } catch (err: any) {
-      setMensagem(err.response?.data?.message || "Erro ao fazer login");
+      setErro("Usuário ou senha estão incorretos.");
+      console.log("Está faltando dados para o login.");
     }
   };
 
@@ -33,6 +43,7 @@ export default function LoginForm() {
       onSubmit={handleSubmit}
       className="flex flex-col space-y-4 md:text-xl"
     >
+      <div>{erro && <p className="text-red-500 text-sm">{erro}</p>}</div>
       <div>
         <label className="text-foreground text-xl">Usuário</label>
         <Input
@@ -53,7 +64,7 @@ export default function LoginForm() {
       </div>
       <button
         type="submit"
-        className="bg-primary text-white text-xl md:text-2xl px-6 py-2 rounded-lg font-bold shadow-md transition hover:opacity-90"
+        className="cursor-pointer bg-primary text-white text-xl md:text-2xl px-6 py-2 rounded-lg font-bold shadow-md transition hover:opacity-90"
       >
         Entrar
       </button>
