@@ -1,6 +1,17 @@
 import { IoCheckmarkDoneCircle } from "react-icons/io5";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 export default function HistoryCard() {
+  const [usuario, setUsuario] = useState<string | null>(null);
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:8080/api/users/me", { withCredentials: true })
+      .then((res) => setUsuario(res.data.username || res.data.email))
+      .catch(() => setUsuario(null));
+  }, []);
+
   return (
     <div className="w-full">
       <div className="w-full flex items-center gap-4 p-3 bg-white rounded-lg shadow-md border border-gray-200">
@@ -8,7 +19,7 @@ export default function HistoryCard() {
         <div className="flex flex-col gap-2 items-start">
           <h2 className="text-sm sm:text-lg">Mensagem</h2>
           <div className="text-gray-600 text-xs sm:text-sm flex items-center justify-center gap-1">
-            <p>Usuário •</p>
+            <p>{usuario ? usuario : "Usuário"} •</p>
             <p>Data, hora</p>
           </div>
         </div>

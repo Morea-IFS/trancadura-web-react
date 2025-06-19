@@ -1,8 +1,8 @@
-// src/main.ts
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
+import * as cookieParser from 'cookie-parser';
 
 import { AppModule } from './app.module';
 
@@ -16,6 +16,9 @@ async function bootstrap() {
 
   // Security
   app.use(helmet());
+
+  // Cookie parser
+  app.use(cookieParser());
 
   // Global validation pipe
   app.useGlobalPipes(
