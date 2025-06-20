@@ -35,4 +35,43 @@ export class ButtonsService {
       where: { id },
     });
   }
+
+  async linkButtonToDevice(buttonId: string, deviceId: string) {
+    return this.prisma.buttonDevice.create({
+      data: {
+        buttonId,
+        deviceId,
+      },
+    });
+  }
+
+
+  async registerUnlock(userId: number) {
+    // Busca o primeiro botão -> device vinculado
+    const buttonDevice = await this.prisma.buttonDevice.findFirst({
+      include: {
+        device: true,
+      },
+    });
+
+    if (!userId || isNaN(userId)) {
+      throw new Error('ID de usuário inválido');
+    }
+
+    if (!buttonDevice) throw new Error('Botão ou dispositivo não vinculado');
+
+    const newAccess = await this.prisma.userAccess.create({
+      data: {
+        userId,
+        deviceId: buttonDevice.deviceId,
+        date: new Date(),
+      },
+    });
+
+    return {
+      message: 'Acesso registrado',
+      access: newAccess,
+    };
+  }
+
 }
