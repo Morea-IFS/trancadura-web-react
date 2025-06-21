@@ -47,31 +47,44 @@ export class ButtonsService {
 
 
   async registerUnlock(userId: number) {
-    // Busca o primeiro botão -> device vinculado
     const buttonDevice = await this.prisma.buttonDevice.findFirst({
       include: {
         device: true,
       },
     });
 
-    if (!userId || isNaN(userId)) {
-      throw new Error('ID de usuário inválido');
-    }
-
     if (!buttonDevice) throw new Error('Botão ou dispositivo não vinculado');
 
-    const newAccess = await this.prisma.userAccess.create({
+    const deviceId = buttonDevice.deviceId;
+
+    // Lógica de autorização (exemplo: verificar se o user tem role vinculada ao device)
+    const isAuthorized = await this.prisma.deviceRole.findFirst({
+      where: {
+        deviceId: deviceId,
+        role: {
+          userRoles: {
+            some: {
+              userId: userId,
+            },
+          },
+        },
+      },
+    });
+
+    const access = await this.prisma.userAccess.create({
       data: {
         userId,
-        deviceId: buttonDevice.deviceId,
+        deviceId,
         date: new Date(),
+        permission: !!isAuthorized, // true se autorizado, false se não
       },
     });
 
     return {
-      message: 'Acesso registrado',
-      access: newAccess,
+      message: !!isAuthorized ? 'Acesso autorizado' : 'Acesso negado',
+      access,
     };
   }
+
 
 }
