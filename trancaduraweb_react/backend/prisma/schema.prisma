@@ -125,6 +125,7 @@ model UserAccess {
   userId   Int?  @map("user_id")
   deviceId String   @map("device_id")
   date     DateTime @default(now())
+  permission Boolean @default(false)
 
   user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
   device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)

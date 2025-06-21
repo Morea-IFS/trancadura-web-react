@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateButtonDto } from './dto/create-button.dto';
 import { UpdateButtonDto } from './dto/update-button.dto';
@@ -47,31 +48,56 @@ export class ButtonsService {
 
 
   async registerUnlock(userId: number) {
-    // Busca o primeiro botão -> device vinculado
     const buttonDevice = await this.prisma.buttonDevice.findFirst({
       include: {
         device: true,
       },
     });
 
-    if (!userId || isNaN(userId)) {
-      throw new Error('ID de usuário inválido');
-    }
-
     if (!buttonDevice) throw new Error('Botão ou dispositivo não vinculado');
 
-    const newAccess = await this.prisma.userAccess.create({
-      data: {
-        userId,
-        deviceId: buttonDevice.deviceId,
-        date: new Date(),
+    const deviceId = buttonDevice.deviceId;
+    const deviceIp = buttonDevice.device.ipAddress;
+
+    const isAuthorized = await this.prisma.deviceRole.findFirst({
+      where: {
+        deviceId,
+        role: {
+          userRoles: {
+            some: {
+              userId,
+            },
+          },
+        },
       },
     });
 
+    const access = await this.prisma.userAccess.create({
+      data: {
+        userId,
+        deviceId,
+        date: new Date(),
+        permission: !!isAuthorized,
+      },
+    });
+
+    // ⚡ Se autorizado, envia requisição para o ESP
+    if (isAuthorized && deviceIp) {
+      try {
+        await axios.post(`http://${deviceIp}/unlock`, {
+          userId,
+          accessId: access.id,
+        });
+      } catch (err) {
+        console.error('Erro ao comunicar com o ESP:', err.message);
+      }
+    }
+
     return {
-      message: 'Acesso registrado',
-      access: newAccess,
+      message: !!isAuthorized ? 'Acesso autorizado e enviado ao ESP' : 'Acesso negado',
+      access,
     };
   }
+
 
 }
