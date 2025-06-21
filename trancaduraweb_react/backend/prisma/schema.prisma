@@ -15,7 +15,6 @@ model User {
   password    String
   isActive    Boolean  @default(true) @map("is_active")
   isStaff     Boolean  @default(false) @map("is_staff")
-  isSuperuser Boolean  @default(false) @map("is_superuser")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
