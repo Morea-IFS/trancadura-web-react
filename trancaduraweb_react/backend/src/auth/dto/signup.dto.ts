@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, MinLength, IsIn } from 'class-validator';
+import { IsEmail, IsNotEmpty, MinLength, IsOptional } from 'class-validator';
 
 export class SignupDto {
   @IsEmail()
@@ -11,7 +11,9 @@ export class SignupDto {
   @MinLength(6)
   password: string;
 
-  @IsNotEmpty()
-  @IsIn(['admin', 'basic']) // permite somente 'admin' ou 'basic'
-  role: string;
+  @IsOptional()
+  isActive?: boolean;
+
+  @IsOptional()
+  isStaff?: boolean;
 }

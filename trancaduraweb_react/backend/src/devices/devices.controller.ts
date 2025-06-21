@@ -4,7 +4,6 @@ import { CreateDeviceDto } from './dto/create-device.dto';
 import { UpdateDeviceDto } from './dto/update-device.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtAuthGuard } from '../auth/jwt-auth/jwt-auth.guard';
-import { CreateDeviceRoleDto } from './dto/create-device-role.dto';
 
 @Controller('devices')
 export class DevicesController {
@@ -35,33 +34,6 @@ export class DevicesController {
     return this.devicesService.remove(id);
   }
 
-  @Post('link-role')
-  async linkRole(@Body() dto: CreateDeviceRoleDto) {
-    return this.devicesService.linkRoleToDevice(dto.deviceId, dto.roleId);
-  }
-
-  @Get(':id/check-access')
-  @UseGuards(JwtAuthGuard)
-  async checkAccess(@Param('id') deviceId: string) {
-    const latest = await this.prisma.userAccess.findFirst({
-      where: {
-        deviceId,
-      },
-      orderBy: { date: 'desc' },
-    });
-
-    if (!latest) {
-      return { authorized: false, message: 'Nenhum acesso encontrado' };
-    }
-
-    return {
-      authorized: latest.permission === true,
-      user: latest.userId,
-      date: latest.date,
-    };
-
-  }
-
   @Get(':id/latest')
   @UseGuards(JwtAuthGuard)
   async getLatestAccess(@Param('id') deviceId: string) {
@@ -71,6 +43,13 @@ export class DevicesController {
         permission: true,
       },
       orderBy: { date: 'desc' },
+      include: {
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
     });
 
     return {

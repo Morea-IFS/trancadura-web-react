@@ -36,13 +36,4 @@ export class DevicesService {
     });
   }
 
-  async linkRoleToDevice(deviceId: string, roleId: string) {
-    return this.prisma.deviceRole.create({
-      data: {
-        deviceId,
-        roleId,
-      },
-    });
-  }
-
 }
