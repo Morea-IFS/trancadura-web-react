@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateButtonDto } from './dto/create-button.dto';
 import { UpdateButtonDto } from './dto/update-button.dto';
@@ -56,15 +57,15 @@ export class ButtonsService {
     if (!buttonDevice) throw new Error('Botão ou dispositivo não vinculado');
 
     const deviceId = buttonDevice.deviceId;
+    const deviceIp = buttonDevice.device.ipAddress;
 
-    // Lógica de autorização (exemplo: verificar se o user tem role vinculada ao device)
     const isAuthorized = await this.prisma.deviceRole.findFirst({
       where: {
-        deviceId: deviceId,
+        deviceId,
         role: {
           userRoles: {
             some: {
-              userId: userId,
+              userId,
             },
           },
         },
@@ -76,12 +77,24 @@ export class ButtonsService {
         userId,
         deviceId,
         date: new Date(),
-        permission: !!isAuthorized, // true se autorizado, false se não
+        permission: !!isAuthorized,
       },
     });
 
+    // ⚡ Se autorizado, envia requisição para o ESP
+    if (isAuthorized && deviceIp) {
+      try {
+        await axios.post(`http://${deviceIp}/unlock`, {
+          userId,
+          accessId: access.id,
+        });
+      } catch (err) {
+        console.error('Erro ao comunicar com o ESP:', err.message);
+      }
+    }
+
     return {
-      message: !!isAuthorized ? 'Acesso autorizado' : 'Acesso negado',
+      message: !!isAuthorized ? 'Acesso autorizado e enviado ao ESP' : 'Acesso negado',
       access,
     };
   }

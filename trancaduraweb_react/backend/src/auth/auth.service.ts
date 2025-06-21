@@ -4,12 +4,14 @@ import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { SignupDto } from './dto/signup.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    public prisma: PrismaService,
   ) {}
 
   async validateUser(username: string, password: string): Promise<any> {
@@ -45,8 +47,29 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     const newUser = await this.usersService.create({
-      ...dto,
+      email: dto.email,
+      username: dto.username,
       password: hashedPassword,
+    });
+
+    // Verifica se a role existe
+    let role = await this.prisma.role.findUnique({
+      where: { name: dto.role },
+    });
+
+    // Se não existir, cria
+    if (!role) {
+      role = await this.prisma.role.create({
+        data: { name: dto.role },
+      });
+    }
+
+    // Vincula o usuário à role
+    await this.prisma.userRole.create({
+      data: {
+        userId: newUser.id,
+        roleId: role.id,
+      },
     });
 
     const payload = { username: newUser.username, sub: newUser.id };
@@ -54,4 +77,5 @@ export class AuthService {
       access_token: this.jwtService.sign(payload),
     };
   }
+
 }
