@@ -8,14 +8,82 @@ import { FaRegClock } from "react-icons/fa6";
 import { IoLockClosedOutline } from "react-icons/io5";
 
 export default function Home() {
-  const [usuario, setUsuario] = useState<string | null>(null);
+  const [usuarioId, setUsuarioId] = useState<number | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
+  const [acessos, setAcessos] = useState<any[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [ultimoStatus, setUltimoStatus] = useState<
+    "autorizado" | "negado" | null
+  >(null);
 
   useEffect(() => {
     axios
       .get("http://localhost:8080/api/users/me", { withCredentials: true })
-      .then((res) => setUsuario(res.data.username || res.data.email))
-      .catch(() => setUsuario(null));
+      .then((res) => {
+        setUsuarioId(res.data.userId);
+        setUsername(res.data.username || res.data.email);
+      })
+      .catch(() => {
+        setUsuarioId(null);
+        setUsername(null);
+      });
   }, []);
+
+  useEffect(() => {
+    if (!usuarioId) return;
+    axios
+      .get("http://localhost:8080/api/devices/cmc8059ly0000ovu0j4ahbc13/all", {
+        withCredentials: true,
+      })
+      .then((res) => {
+        const filtrados = res.data
+          .filter((item: any) => item.userId === usuarioId)
+          .slice(0, 3);
+        setAcessos(filtrados);
+      })
+      .catch((err) => {
+        console.error("Erro ao buscar acessos:", err);
+        setAcessos([]);
+      });
+  }, [usuarioId]);
+
+  const handleUnlock = async () => {
+    if (!usuarioId) return alert("Usuário não identificado.");
+
+    setLoading(true);
+    setUltimoStatus(null); // reseta status visual até que o novo chegue
+
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/api/buttons/unlock",
+        { userId: usuarioId },
+        { withCredentials: true }
+      );
+
+      const status = response.data.access?.permission ? "autorizado" : "negado";
+      setUltimoStatus(status);
+      alert(response.data.message || "Requisição enviada com sucesso!");
+
+      // Atualiza os acessos após o desbloqueio
+      const res = await axios.get(
+        "http://localhost:8080/api/devices/cmc8059ly0000ovu0j4ahbc13/all",
+        { withCredentials: true }
+      );
+      const filtrados = res.data
+        .filter((item: any) => item.userId === usuarioId)
+        .slice(0, 3);
+      setAcessos(filtrados);
+    } catch (error: any) {
+      console.error("Erro ao tentar desbloquear:", error);
+      alert(
+        "Erro ao desbloquear: " +
+          (error?.response?.data?.message || "Erro desconhecido.")
+      );
+      setUltimoStatus("negado");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div>
@@ -25,7 +93,7 @@ export default function Home() {
       <section className="p-4">
         <div className="w-full mx-auto max-w-4xl p-4 flex items-center justify-center flex-col gap-1">
           <h1 className="font-bold text-2xl sm:text-4xl">
-            Bem vindo, {usuario ? usuario : "usuário"}
+            Bem vindo, {username ? username : "usuário"}
           </h1>
           <p className="font-bold text-base sm:text-lg text-gray-600">
             Use o botão abaixo para controlar a tranca
@@ -33,21 +101,34 @@ export default function Home() {
         </div>
 
         <div className="flex items-center justify-center w-full">
-          <div className="flex flex-col gap-4 items-center justify-center w-88  p-12 bg-white rounded-lg shadow-md border border-gray-200">
-            <button className="cursor-pointer bg-foreground text-white p-8 rounded-full flex flex-col gap-4 items-center justify-center transition duration-200 hover:scale-105 active:scale-105">
+          <div className="flex flex-col gap-4 items-center justify-center w-88 p-12 bg-white rounded-lg shadow-md border border-gray-200">
+            <button
+              onClick={handleUnlock}
+              disabled={loading}
+              className={`cursor-pointer text-white p-8 rounded-full flex flex-col gap-4 items-center justify-center transition duration-200 hover:scale-105 active:scale-105 disabled:opacity-50 ${
+                ultimoStatus === "autorizado"
+                  ? "bg-green-500"
+                  : ultimoStatus === "negado"
+                  ? "bg-red-500"
+                  : "bg-foreground"
+              }`}
+            >
               <IoLockClosedOutline className="w-16 h-16" />
-              <span className="inline text-xl font-bold">Abrir tranca</span>
+              <span className="inline text-xl font-bold">
+                {loading ? "Enviando..." : "Abrir tranca"}
+              </span>
             </button>
 
-            <div className="text-gray-600 text-sm  w-full text-center">
+            <div className="text-gray-600 text-sm w-full text-center">
               <p>
-                Toque no botão para abrir a tranca <br /> A opreção será
-                resgistrada no histórico
+                Toque no botão para abrir a tranca <br /> A operação será
+                registrada
               </p>
             </div>
           </div>
         </div>
       </section>
+
       <section className="p-4 md:w-[70%] mx-auto">
         <div className="p-4 w-full flex items-start justify-center flex-col gap-2 bg-white rounded-lg shadow-md border border-gray-200">
           <div className="flex gap-2 items-center">
@@ -57,7 +138,13 @@ export default function Home() {
           <div className="text-gray-600 text-base sm:text-lg">
             <p>Suas últimas operações</p>
           </div>
-          <HistoryCard />
+          {acessos.length > 0 ? (
+            acessos.map((item) => <HistoryCard key={item.id} acesso={item} />)
+          ) : (
+            <p className="text-gray-500 text-sm mt-4">
+              Nenhum acesso encontrado.
+            </p>
+          )}
         </div>
       </section>
     </div>
