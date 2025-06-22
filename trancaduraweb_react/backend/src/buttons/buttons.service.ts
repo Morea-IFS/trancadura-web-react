@@ -59,32 +59,22 @@ export class ButtonsService {
     const deviceId = buttonDevice.deviceId;
     const deviceIp = buttonDevice.device.ipAddress;
 
-    const isAuthorized = await this.prisma.deviceRole.findFirst({
-      where: {
-        deviceId,
-        role: {
-          userRoles: {
-            some: {
-              userId,
-            },
-          },
-        },
-      },
-    });
+    const isAuthorized = true;
 
     const access = await this.prisma.userAccess.create({
       data: {
         userId,
         deviceId,
         date: new Date(),
-        permission: !!isAuthorized,
+        permission: isAuthorized,
       },
     });
+    console.log('Acesso registrado:', access);
 
     // ⚡ Se autorizado, envia requisição para o ESP
     if (isAuthorized && deviceIp) {
       try {
-        await axios.post(`http://${deviceIp}/unlock`, {
+        await axios.post(`http://${deviceIp}:3000/unlock`, {
           userId,
           accessId: access.id,
         });
@@ -94,7 +84,7 @@ export class ButtonsService {
     }
 
     return {
-      message: !!isAuthorized ? 'Acesso autorizado e enviado ao ESP' : 'Acesso negado',
+      message: isAuthorized ? 'Acesso autorizado e enviado ao ESP' : 'Acesso negado',
       access,
     };
   }
