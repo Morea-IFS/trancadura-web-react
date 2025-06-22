@@ -34,27 +34,21 @@ export class DevicesController {
     return this.devicesService.remove(id);
   }
 
-  @Get(':id/latest')
+  @Get(':id/all')
   @UseGuards(JwtAuthGuard)
-  async getLatestAccess(@Param('id') deviceId: string) {
-    const latest = await this.prisma.userAccess.findFirst({
+  async getAllAccess(@Param('id') deviceId: string) {
+    const accesses = await this.prisma.userAccess.findMany({
       where: {
         deviceId,
-        permission: true,
       },
-      orderBy: { date: 'desc' },
+      orderBy: {
+        date: 'desc',
+      },
       include: {
-        user: {
-          select: {
-            username: true,
-          },
-        },
+        user: true, // Retorna todos os dados da tabela user
       },
     });
 
-    return {
-      success: true,
-      access: latest,
-    };
-  }
+    return accesses; // Retorna diretamente todos os registros
+    }
 }
