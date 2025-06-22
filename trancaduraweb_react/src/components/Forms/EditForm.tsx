@@ -1,31 +1,91 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Input from "@/components/Input";
+import axios from "axios";
 
-interface RegisterFormProps {
+interface EditFormProps {
   initialData?: {
+    id?: number;
     username?: string;
     email?: string;
     status?: "ativo" | "inativo";
+    isStaff?: boolean;
   };
   onClose?: () => void;
+  onSave?: (updatedUser: any) => void;
 }
 
-export default function EditForm({ initialData, onClose }: RegisterFormProps) {
+export default function EditForm({
+  initialData,
+  onClose,
+  onSave,
+}: EditFormProps) {
   const [username, setUsername] = useState(initialData?.username || "");
   const [email, setEmail] = useState(initialData?.email || "");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<"ativo" | "inativo">(
     initialData?.status || "ativo"
   );
+  const [isStaff, setIsStaff] = useState(initialData?.isStaff || false);
+  const [loading, setLoading] = useState(false);
+  const [userIsStaff, setUserIsStaff] = useState<boolean | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    axios
+      .get("http://localhost:8080/api/users/me", { withCredentials: true })
+      .then((res) => setUserIsStaff(res.data.isStaff))
+      .catch(() => setUserIsStaff(false));
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Colocar lógica de registro/edição aqui
-    console.log("Salvando:", { username, email, password, status });
-    if (onClose) onClose();
+    if (!userIsStaff) {
+      alert("Você não tem permissão para editar usuários.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      if (!initialData?.id) {
+        throw new Error("ID do usuário não definido.");
+      }
+      const response = await axios.patch(
+        `http://localhost:8080/api/users/${initialData.id}`,
+        {
+          username,
+          email,
+          password: password || undefined,
+          isActive: status === "ativo",
+          isStaff,
+        },
+        { withCredentials: true }
+      );
+
+      if (onSave) {
+        onSave(response.data);
+      }
+      if (onClose) onClose();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (userIsStaff === false) {
+    return (
+      <div className="text-red-600 text-center font-bold">
+        Acesso negado: você não tem permissão para editar usuários.
+      </div>
+    );
+  }
+
+  if (userIsStaff === null) {
+    return (
+      <div className="text-center text-gray-600">Verificando permissões...</div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -59,7 +119,7 @@ export default function EditForm({ initialData, onClose }: RegisterFormProps) {
       <div>
         <label className="block text-sm font-medium mb-1">Status</label>
         <select
-          className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-foreground"
+          className="w-full border border-gray-300 rounded-md p-2"
           value={status}
           onChange={(e) => setStatus(e.target.value as "ativo" | "inativo")}
         >
@@ -67,21 +127,37 @@ export default function EditForm({ initialData, onClose }: RegisterFormProps) {
           <option value="inativo">Inativo</option>
         </select>
       </div>
+      <div>
+        <label className="block text-sm font-medium mb-1">
+          Tipo de usuário
+        </label>
+        <select
+          className="w-full border border-gray-300 rounded-md p-2"
+          value={isStaff ? "staff" : "aluno"}
+          onChange={(e) => setIsStaff(e.target.value === "staff")}
+        >
+          <option value="aluno">Aluno</option>
+          <option value="staff">Staff</option>
+        </select>
+      </div>
+
       <div className="flex justify-end gap-2 mt-4">
         {onClose && (
           <button
             type="button"
-            className="px-4 py-2 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 transition"
+            className="px-4 py-2 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 transition cursor-pointer"
             onClick={onClose}
+            disabled={loading}
           >
             Cancelar
           </button>
         )}
         <button
           type="submit"
-          className="px-4 py-2 rounded-md bg-foreground text-white hover:bg-foreground/90 transition"
+          className="px-4 py-2 rounded-md bg-foreground text-white hover:bg-foreground/90 transition cursor-pointer"
+          disabled={loading}
         >
-          Salvar
+          {loading ? "Salvando..." : "Salvar"}
         </button>
       </div>
     </form>

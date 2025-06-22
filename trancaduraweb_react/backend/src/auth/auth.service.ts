@@ -1,4 +1,8 @@
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
@@ -16,7 +20,8 @@ export class AuthService {
 
   async validateUser(username: string, password: string): Promise<any> {
     const user = await this.usersService.findByUsername(username);
-    if (user && await bcrypt.compare(password, user.password)) {
+    if (user && (await bcrypt.compare(password, user.password))) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = user;
       return result;
     }
@@ -32,7 +37,13 @@ export class AuthService {
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
-    const payload = { username: user.username, sub: user.id };
+    const payload = {
+      sub: user.id,
+      username: user.username,
+      email: user.email,
+      isStaff: user.isStaff,
+    };
+
     return {
       access_token: this.jwtService.sign(payload),
     };
@@ -54,10 +65,10 @@ export class AuthService {
       isStaff: dto.isStaff,
     });
 
-    const payload = { username: newUser.username, sub: newUser.id };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
-  }
+    // Retorna o usuário criado (sem a senha) para o frontend
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...userWithoutPassword } = newUser;
 
+    return userWithoutPassword;
+  }
 }

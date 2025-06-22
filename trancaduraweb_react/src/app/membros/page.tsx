@@ -1,13 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import MemberCard from "@/components/MemberCard";
 import RegisterForm from "@/components/Forms/RegisterForm";
 import { LiaUserFriendsSolid } from "react-icons/lia";
+import axios from "axios";
 
 export default function Membros() {
   const [open, setOpen] = useState(false);
+  const [users, setUsers] = useState<any[]>([]);
+  const [isStaff, setIsStaff] = useState(false);
+
+  useEffect(() => {
+    // Verifica se o usuário logado é staff
+    axios
+      .get("http://localhost:8080/api/users/me", { withCredentials: true })
+      .then((res) => setIsStaff(res.data.isStaff))
+      .catch(() => setIsStaff(false));
+
+    // Busca a lista completa de usuários
+    axios
+      .get("http://localhost:8080/api/users", { withCredentials: true })
+      .then((res) => setUsers(res.data))
+      .catch((err) => console.error("Erro ao buscar usuários:", err));
+  }, []);
+
+  // Função para atualizar um usuário na lista após edição
+  function handleUserUpdate(updatedUser: any) {
+    setUsers((prevUsers) =>
+      prevUsers.map((user) => (user.id === updatedUser.id ? updatedUser : user))
+    );
+  }
+
+  // Função para adicionar novo usuário após registro
+  function handleUserAdd(newUser: any) {
+    setUsers((prevUsers) => [...prevUsers, newUser]);
+  }
 
   return (
     <div>
@@ -21,24 +50,38 @@ export default function Membros() {
               <div className="flex gap-2 items-center">
                 <LiaUserFriendsSolid className="w-4 h-4 sm:w-6 sm:h-6 text-foreground font-bold" />
                 <p className="text-lg sm:text-2xl font-bold">
-                  Gerenciamento de Membros
+                  {isStaff ? "Gerenciamento de Membros" : "Lista de Membros"}
                 </p>
               </div>
               <div className="text-gray-600 text-base sm:text-lg">
-                <p>Cadastre e gerencie usuários do sistema</p>
+                <p>
+                  {isStaff
+                    ? "Cadastre e gerencie usuários do sistema"
+                    : "Visualize os membros cadastrados no sistema"}
+                </p>
               </div>
             </div>
             <div>
-              <button
-                className="text-sm font-bold px-4 py-2 bg-green-500 text-white rounded-lg shadow-md border border-2 border-green-600 transition duration-200 hover:bg-green-600 hover:text-white flex items-center justify-center"
-                onClick={() => setOpen(true)}
-              >
-                <span className="sm:hidden">+</span>
-                <span className="hidden sm:inline">+ Novo Membro</span>
-              </button>
+              {isStaff && (
+                <button
+                  className="text-sm font-bold px-4 py-2 bg-green-500 text-white rounded-lg shadow-md border border-2 border-green-600 transition duration-200 hover:bg-green-600 hover:text-white flex items-center justify-center"
+                  onClick={() => setOpen(true)}
+                >
+                  <span className="sm:hidden">+</span>
+                  <span className="hidden sm:inline">+ Novo Membro</span>
+                </button>
+              )}
             </div>
           </div>
-          <MemberCard />
+
+          {users.map((user) => (
+            <MemberCard
+              key={user.id} // garanta que id exista e é único
+              user={user}
+              isStaff={isStaff}
+              onUpdate={handleUserUpdate}
+            />
+          ))}
         </div>
       </section>
 
@@ -56,7 +99,13 @@ export default function Membros() {
             <h2 className="text-2xl font-bold mb-6 text-center">
               Registrar Novo Membro
             </h2>
-            <RegisterForm onClose={() => setOpen(false)} />
+            <RegisterForm
+              onClose={() => setOpen(false)}
+              onSave={(newUser) => {
+                handleUserAdd(newUser); // adiciona o novo usuário à lista
+                setOpen(false); // fecha o modal
+              }}
+            />
           </div>
         </div>
       )}
