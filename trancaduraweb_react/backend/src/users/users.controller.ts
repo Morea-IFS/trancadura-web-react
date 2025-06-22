@@ -24,6 +24,7 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   findAll() {
     return this.usersService.findAll();
@@ -31,11 +32,12 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  getMe(@Req() req: { user: { id: number; name: string; email: string } }): {
-    id: number;
-    name: string;
-    email: string;
-  } {
+  getMe(
+    @Req()
+    req: {
+      user: { id: number; name: string; email: string; isStaff: boolean };
+    },
+  ) {
     return req.user;
   }
 
