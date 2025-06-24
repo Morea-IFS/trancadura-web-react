@@ -39,7 +39,7 @@ export default function HistoricoPage() {
     if (usuarioId === null) return;
 
     axios
-      .get("http://localhost:8080/api/devices/cmc8059ly0000ovu0j4ahbc13/all", {
+      .get("http://localhost:8080/api/devices/1/all", {
         withCredentials: true,
       })
       .then((res) => {
