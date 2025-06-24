@@ -22,7 +22,6 @@ export default function EditForm({ initialData, onClose }: RegisterFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Colocar lógica de registro/edição aqui
     console.log("Salvando:", { username, email, password, status });
     if (onClose) onClose();
   };

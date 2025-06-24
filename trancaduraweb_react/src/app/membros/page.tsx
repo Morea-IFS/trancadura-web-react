@@ -42,7 +42,6 @@ export default function Membros() {
         </div>
       </section>
 
-      {/* Modal de cadastro */}
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg p-8 w-80 sm:w-full max-w-md relative">

@@ -14,7 +14,6 @@ export default function RegisterForm({ onClose }: RegisterForm) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Lógica de cadastro aqui
     if (onClose) onClose();
   };
 

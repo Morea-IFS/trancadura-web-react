@@ -1,4 +1,3 @@
-// src/common/types/index.ts
 export interface AuthenticatedUser {
   id: number;
   email: string;
