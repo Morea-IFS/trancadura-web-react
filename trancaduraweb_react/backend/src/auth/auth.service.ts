@@ -61,14 +61,23 @@ export class AuthService {
       email: dto.email,
       username: dto.username,
       password: hashedPassword,
-      isActive: dto.isActive,
-      isStaff: dto.isStaff,
+      isActive: dto.isActive ?? true,
+      isStaff: dto.isStaff ?? false,
     });
 
-    // Retorna o usuário criado (sem a senha) para o frontend
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...userWithoutPassword } = newUser;
 
-    return userWithoutPassword;
+    const payload = {
+      sub: newUser.id,
+      username: newUser.username,
+      email: newUser.email,
+      isStaff: newUser.isStaff,
+    }
+
+    return {
+      user: userWithoutPassword,
+      access_token: this.jwtService.sign(payload),
+    };
   }
 }

@@ -18,17 +18,17 @@ export class ApproximationsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: number) {
     return this.service.findOne(id);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() data: UpdateApproximationDto) {
+  update(@Param('id') id: number, @Body() data: UpdateApproximationDto) {
     return this.service.update(id, data);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id') id: number) {
     return this.service.remove(id);
   }
 }

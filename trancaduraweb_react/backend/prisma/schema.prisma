@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
-  engineType      = "binary"
+  provider     = "prisma-client-js"
+  engineType   = "binary"
 }
 
 datasource db {
@@ -9,16 +9,15 @@ datasource db {
 }
 
 model User {
-  id Int @id @default(autoincrement())
-  email       String   @unique
-  username    String   @unique
-  password    String
-  isActive    Boolean  @default(true) @map("is_active")
-  isStaff     Boolean  @default(false) @map("is_staff")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id         Int           @id @default(autoincrement())
+  email      String        @unique
+  username   String        @unique
+  password   String
+  isActive   Boolean       @default(true) @map("is_active")
+  isStaff    Boolean       @default(false) @map("is_staff")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
 
-  // Relacionamentos
   roles       UserRole[]
   pinCodes    DevicePinCode[]
   cards       UserCard[]
@@ -28,8 +27,8 @@ model User {
 }
 
 model Role {
-  id   String @id @default(cuid())
-  name String @unique
+  id         Int          @id @default(autoincrement())
+  name       String       @unique
 
   userRoles   UserRole[]
   deviceRoles DeviceRole[]
@@ -38,9 +37,9 @@ model Role {
 }
 
 model UserRole {
-  id     String  @id @default(cuid())
-  userId Int  @map("user_id")
-  roleId String  @map("role_id")
+  id      Int  @id @default(autoincrement())
+  userId  Int  @map("user_id")
+  roleId  Int  @map("role_id")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
@@ -50,15 +49,15 @@ model UserRole {
 }
 
 model Device {
-  id         String   @id @default(cuid())
-  uuid       String   @unique
-  macAddress String?  @unique @map("mac_address")
+  id         Int       @id @default(autoincrement())
+  uuid       String    @unique
+  macAddress String?   @unique @map("mac_address")
   section    String?
   location   String?
-  ipAddress  String?  @map("ip_address")
-  apiToken   String?  @unique @map("api_token")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  ipAddress  String?   @map("ip_address")
+  apiToken   String?   @unique @map("api_token")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
 
   roles         DeviceRole[]
   pinCodes      DevicePinCode[]
@@ -69,9 +68,9 @@ model Device {
 }
 
 model DeviceRole {
-  id       String @id @default(cuid())
-  deviceId String @map("device_id")
-  roleId   String @map("role_id")
+  id       Int  @id @default(autoincrement())
+  deviceId Int  @map("device_id")
+  roleId   Int  @map("role_id")
 
   device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
   role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
@@ -81,13 +80,13 @@ model DeviceRole {
 }
 
 model DevicePinCode {
-  id        String   @id @default(cuid())
-  deviceId  String   @map("device_id")
-  userId    Int   @map("user_id")
+  id        Int      @id @default(autoincrement())
+  deviceId  Int      @map("device_id")
+  userId    Int      @map("user_id")
   pin       Int
   dateInit  DateTime? @map("date_init")
   dateStop  DateTime? @map("date_stop")
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
   device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -96,11 +95,11 @@ model DevicePinCode {
 }
 
 model Approximation {
-  id         String   @id @default(cuid())
-  cardId     String   @unique @map("card_id")
-  name       String?  @default("empty")
-  permission Boolean  @default(false)
-  createdAt  DateTime @default(now()) @map("created_at")
+  id         Int       @id @default(autoincrement())
+  cardId     String    @unique @map("card_id")
+  name       String?   @default("empty")
+  permission Boolean   @default(false)
+  createdAt  DateTime  @default(now()) @map("created_at")
 
   userCards UserCard[]
 
@@ -108,9 +107,9 @@ model Approximation {
 }
 
 model UserCard {
-  id              String  @id @default(cuid())
+  id              Int  @id @default(autoincrement())
   userId          Int  @map("user_id")
-  approximationId String  @map("approximation_id")
+  approximationId Int  @map("approximation_id")
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   approximation Approximation @relation(fields: [approximationId], references: [id], onDelete: Cascade)
@@ -120,11 +119,11 @@ model UserCard {
 }
 
 model UserAccess {
-  id       String   @id @default(cuid())
-  userId   Int?  @map("user_id")
-  deviceId String   @map("device_id")
-  date     DateTime @default(now())
-  permission Boolean @default(false)
+  id         Int      @id @default(autoincrement())
+  userId     Int?     @map("user_id")
+  deviceId   Int      @map("device_id")
+  date       DateTime @default(now())
+  permission Boolean  @default(false)
 
   user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
   device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
@@ -133,7 +132,7 @@ model UserAccess {
 }
 
 model Button {
-  id          String   @id @default(cuid())
+  id          Int      @id @default(autoincrement())
   uuid        String   @unique
   macAddress  String?  @unique @map("mac_address")
   apiToken    String?  @unique @map("api_token")
@@ -147,9 +146,9 @@ model Button {
 }
 
 model ButtonDevice {
-  id       String @id @default(cuid())
-  buttonId String @map("button_id")
-  deviceId String @map("device_id")
+  id        Int @id @default(autoincrement())
+  buttonId  Int @map("button_id")
+  deviceId  Int @map("device_id")
 
   button Button @relation(fields: [buttonId], references: [id], onDelete: Cascade)
   device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)

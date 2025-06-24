@@ -20,23 +20,23 @@ export class DevicesController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: number) {
     return this.devicesService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDeviceDto: UpdateDeviceDto) {
+  update(@Param('id') id: number, @Body() updateDeviceDto: UpdateDeviceDto) {
     return this.devicesService.update(id, updateDeviceDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id') id: number) {
     return this.devicesService.remove(id);
   }
 
   @Get(':id/all')
   @UseGuards(JwtAuthGuard)
-  async getAllAccess(@Param('id') deviceId: string) {
+  async getAllAccess(@Param('id') deviceId: number) {
     const accesses = await this.prisma.userAccess.findMany({
       where: {
         deviceId,
@@ -45,10 +45,10 @@ export class DevicesController {
         date: 'desc',
       },
       include: {
-        user: true, // Retorna todos os dados da tabela user
+        user: true,
       },
     });
 
-    return accesses; // Retorna diretamente todos os registros
+    return accesses;
     }
 }

@@ -1,4 +1,3 @@
-// approximations.module.ts
 import { Module } from '@nestjs/common';
 import { ApproximationsController } from './approximations.controller';
 import { ApproximationsService } from './approximations.service';

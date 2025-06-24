@@ -17,7 +17,7 @@ export class ApproximationsService {
     return await this.prisma.approximation.findMany();
   }
 
-  async findOne(id: string) {
+  async findOne(id: number) {
     const approximation = await this.prisma.approximation.findUnique({
       where: { id },
     });
@@ -25,15 +25,15 @@ export class ApproximationsService {
     return approximation;
   }
 
-  async update(id: string, data: UpdateApproximationDto) {
-    await this.findOne(id); // garante que existe, senão lança erro
+  async update(id: number, data: UpdateApproximationDto) {
+    await this.findOne(id);
     return await this.prisma.approximation.update({
       where: { id },
       data,
     });
   }
 
-  async remove(id: string) {
+  async remove(id: number) {
     await this.findOne(id);
     return await this.prisma.approximation.delete({
       where: { id },

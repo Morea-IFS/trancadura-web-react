@@ -24,7 +24,6 @@ export default function HistoricoPage() {
   useEffect(() => {
     setMounted(true);
 
-    // Pega os dados do usuário logado
     axios
       .get("http://localhost:8080/api/users/me", { withCredentials: true })
       .then((res) => {
@@ -46,12 +45,10 @@ export default function HistoricoPage() {
       .then((res) => {
         let dados = res.data;
 
-        // Se não for staff, filtra apenas os acessos do próprio usuário
         if (!isStaff) {
           dados = dados.filter((item: any) => item.userId === usuarioId);
         }
 
-        // Aplica filtro de tempo
         if (filtro) {
           const agora = new Date();
           let limite: Date = new Date();
@@ -74,7 +71,6 @@ export default function HistoricoPage() {
           dados = dados.filter((item: any) => new Date(item.date) >= limite);
         }
 
-        // Ordena do mais recente para o mais antigo
         dados.sort(
           (a: any, b: any) =>
             new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -120,7 +116,6 @@ export default function HistoricoPage() {
               </div>
             </div>
 
-            {/* Renderiza os acessos */}
             {acessos.length > 0 ? (
               acessos.map((item) => <HistoryCard key={item.id} acesso={item} />)
             ) : (
