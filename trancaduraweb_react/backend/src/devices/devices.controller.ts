@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, UseGuards, ParseIntPipe } from '@nestjs/common';
 import { DevicesService } from './devices.service';
 import { CreateDeviceDto } from './dto/create-device.dto';
 import { UpdateDeviceDto } from './dto/update-device.dto';
@@ -36,10 +36,10 @@ export class DevicesController {
 
   @Get(':id/all')
   @UseGuards(JwtAuthGuard)
-  async getAllAccess(@Param('id') deviceId: number) {
+  async getAllAccess(@Param('id', ParseIntPipe) deviceId: number) {
     const accesses = await this.prisma.userAccess.findMany({
       where: {
-        deviceId,
+        deviceId: deviceId,
       },
       orderBy: {
         date: 'desc',

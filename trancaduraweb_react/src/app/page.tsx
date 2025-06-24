@@ -32,7 +32,7 @@ export default function Home() {
   useEffect(() => {
     if (!usuarioId) return;
     axios
-      .get("http://localhost:8080/api/devices/cmc8059ly0000ovu0j4ahbc13/all", {
+      .get("http://localhost:8080/api/devices/1/all", {
         withCredentials: true,
       })
       .then((res) => {
@@ -56,7 +56,7 @@ export default function Home() {
     try {
       const response = await axios.post(
         "http://localhost:8080/api/buttons/unlock",
-        { userId: usuarioId },
+        { deviceId: usuarioId },
         { withCredentials: true }
       );
 
