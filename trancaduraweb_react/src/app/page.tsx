@@ -65,7 +65,7 @@ export default function Home() {
       alert(response.data.message || "Requisição enviada com sucesso!");
 
       const res = await axios.get(
-        "http://localhost:8080/api/devices/cmc8059ly0000ovu0j4ahbc13/all",
+        "http://localhost:8080/api/devices/1/all",
         { withCredentials: true }
       );
       const filtrados = res.data
