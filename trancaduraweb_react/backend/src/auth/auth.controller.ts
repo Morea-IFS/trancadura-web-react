@@ -23,7 +23,7 @@ export class AuthController {
       httpOnly: true,
       sameSite: 'lax',
       path: '/',
-      // secure: true, // use em produção com HTTPS
+      // secure: true,
     });
     return { access_token: result.access_token };
   }
@@ -34,7 +34,7 @@ export class AuthController {
       httpOnly: true,
       sameSite: 'lax',
       path: '/',
-      // secure: true, // use em produção
+      // secure: true,
     });
     return { message: 'Logout realizado com sucesso' };
   }

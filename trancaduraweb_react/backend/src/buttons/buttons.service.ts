@@ -71,7 +71,6 @@ export class ButtonsService {
     });
     console.log('Acesso registrado:', access);
 
-    // ⚡ Se autorizado, envia requisição para o ESP
     if (isAuthorized && deviceIp) {
       try {
         await axios.post(`http://${deviceIp}:3000/unlock`, {

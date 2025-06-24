@@ -51,7 +51,7 @@ export default function Home() {
     if (!usuarioId) return alert("Usuário não identificado.");
 
     setLoading(true);
-    setUltimoStatus(null); // reseta status visual até que o novo chegue
+    setUltimoStatus(null);
 
     try {
       const response = await axios.post(
@@ -64,7 +64,6 @@ export default function Home() {
       setUltimoStatus(status);
       alert(response.data.message || "Requisição enviada com sucesso!");
 
-      // Atualiza os acessos após o desbloqueio
       const res = await axios.get(
         "http://localhost:8080/api/devices/cmc8059ly0000ovu0j4ahbc13/all",
         { withCredentials: true }

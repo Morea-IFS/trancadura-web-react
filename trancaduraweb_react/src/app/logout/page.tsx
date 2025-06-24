@@ -28,12 +28,10 @@ export default function Logout() {
 
   return (
     <div className="min-h-screen bg-gray-100 relative">
-      {/* Header fixo no topo */}
       <header className="fixed top-0 left-0 w-full z-10 shadow bg-white">
         <Header />
       </header>
 
-      {/* Modal de confirmação centralizado */}
       <div className="fixed inset-0 flex items-center justify-center bg-background bg-opacity-40 z-20 p-4">
         <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8 flex flex-col items-center max-w-sm w-full">
           <h1 className="text-2xl font-bold mb-4 text-gray-800 text-center">

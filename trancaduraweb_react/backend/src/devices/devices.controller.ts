@@ -45,10 +45,10 @@ export class DevicesController {
         date: 'desc',
       },
       include: {
-        user: true, // Retorna todos os dados da tabela user
+        user: true,
       },
     });
 
-    return accesses; // Retorna diretamente todos os registros
+    return accesses;
     }
 }

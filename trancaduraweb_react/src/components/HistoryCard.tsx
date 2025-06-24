@@ -4,7 +4,6 @@ interface HistoryCardProps {
   acessos: any[];
 }
 
-// components/HistoryCard.tsx
 export default function HistoryCard({ acesso }: { acesso: any }) {
   const nome = acesso.user?.username || "Usuário";
   const data = new Date(acesso.date).toLocaleString();

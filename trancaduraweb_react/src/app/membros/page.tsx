@@ -13,27 +13,23 @@ export default function Membros() {
   const [isStaff, setIsStaff] = useState(false);
 
   useEffect(() => {
-    // Verifica se o usuário logado é staff
     axios
       .get("http://localhost:8080/api/users/me", { withCredentials: true })
       .then((res) => setIsStaff(res.data.isStaff))
       .catch(() => setIsStaff(false));
 
-    // Busca a lista completa de usuários
     axios
       .get("http://localhost:8080/api/users", { withCredentials: true })
       .then((res) => setUsers(res.data))
       .catch((err) => console.error("Erro ao buscar usuários:", err));
   }, []);
 
-  // Função para atualizar um usuário na lista após edição
   function handleUserUpdate(updatedUser: any) {
     setUsers((prevUsers) =>
       prevUsers.map((user) => (user.id === updatedUser.id ? updatedUser : user))
     );
   }
 
-  // Função para adicionar novo usuário após registro
   function handleUserAdd(newUser: any) {
     setUsers((prevUsers) => [...prevUsers, newUser]);
   }
@@ -76,7 +72,7 @@ export default function Membros() {
 
           {users.map((user) => (
             <MemberCard
-              key={user.id} // garanta que id exista e é único
+              key={user.id}
               user={user}
               isStaff={isStaff}
               onUpdate={handleUserUpdate}
@@ -85,7 +81,6 @@ export default function Membros() {
         </div>
       </section>
 
-      {/* Modal de cadastro */}
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg p-8 w-80 sm:w-full max-w-md relative">
@@ -102,8 +97,8 @@ export default function Membros() {
             <RegisterForm
               onClose={() => setOpen(false)}
               onSave={(newUser) => {
-                handleUserAdd(newUser); // adiciona o novo usuário à lista
-                setOpen(false); // fecha o modal
+                handleUserAdd(newUser);
+                setOpen(false);
               }}
             />
           </div>

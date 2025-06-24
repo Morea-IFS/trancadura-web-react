@@ -36,7 +36,6 @@ describe('UsersService', () => {
         password: createUserDto.password,
         isActive: true,
         isStaff: false,
-        isSuperuser: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       };

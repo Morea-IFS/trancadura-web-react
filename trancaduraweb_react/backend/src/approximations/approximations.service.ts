@@ -26,7 +26,7 @@ export class ApproximationsService {
   }
 
   async update(id: string, data: UpdateApproximationDto) {
-    await this.findOne(id); // garante que existe, senão lança erro
+    await this.findOne(id);
     return await this.prisma.approximation.update({
       where: { id },
       data,

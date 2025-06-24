@@ -43,7 +43,6 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
         { withCredentials: true }
       );
 
-      // response.data já deve conter o usuário criado
       if (onSave) {
         onSave(response.data);
       }
@@ -76,7 +75,6 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {/* inputs username, email, password, status, isStaff */}
       <div>
         <label className="block text-sm font-medium mb-1">Nome</label>
         <input
