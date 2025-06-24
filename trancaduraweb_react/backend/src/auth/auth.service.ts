@@ -65,7 +65,6 @@ export class AuthService {
       isStaff: dto.isStaff,
     });
 
-    // Retorna o usuário criado (sem a senha) para o frontend
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...userWithoutPassword } = newUser;
 
