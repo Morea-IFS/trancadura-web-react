@@ -18,26 +18,26 @@ export class ButtonsService {
     return this.prisma.button.findMany();
   }
 
-  async findOne(id: string) {
+  async findOne(id: number) {
     return this.prisma.button.findUnique({
       where: { id },
     });
   }
 
-  async update(id: string, updateButtonDto: UpdateButtonDto) {
+  async update(id: number, updateButtonDto: UpdateButtonDto) {
     return this.prisma.button.update({
       where: { id },
       data: updateButtonDto,
     });
   }
 
-  async remove(id: string) {
+  async remove(id: number) {
     return this.prisma.button.delete({
       where: { id },
     });
   }
 
-  async linkButtonToDevice(buttonId: string, deviceId: string) {
+  async linkButtonToDevice(buttonId: number, deviceId: number) {
     return this.prisma.buttonDevice.create({
       data: {
         buttonId,

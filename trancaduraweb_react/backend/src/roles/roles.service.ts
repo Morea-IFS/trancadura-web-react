@@ -17,20 +17,20 @@ export class RolesService {
     return this.prisma.role.findMany();
   }
 
-  async findOne(id: string) {
+  async findOne(id: number) {
     return this.prisma.role.findUnique({
       where: { id },
     });
   }
 
-  async update(id: string, updateRoleDto: UpdateRoleDto) {
+  async update(id: number, updateRoleDto: UpdateRoleDto) {
     return this.prisma.role.update({
       where: { id },
       data: updateRoleDto,
     });
   }
 
-  async remove(id: string) {
+  async remove(id: number) {
     return this.prisma.role.delete({
       where: { id },
     });

@@ -20,7 +20,6 @@ describe('UsersService', () => {
     expect(service).toBeDefined();
   });
 
-  // Exemplo de mock básico para método create
   describe('create', () => {
     it('should create a user', async () => {
       const createUserDto = {

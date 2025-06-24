@@ -17,20 +17,20 @@ export class DevicesService {
     return this.prisma.device.findMany();
   }
 
-  async findOne(id: string) {
+  async findOne(id: number) {
     return this.prisma.device.findUnique({
       where: { id },
     });
   }
 
-  async update(id: string, updateDeviceDto: UpdateDeviceDto) {
+  async update(id: number, updateDeviceDto: UpdateDeviceDto) {
     return this.prisma.device.update({
       where: { id },
       data: updateDeviceDto,
     });
   }
 
-  async remove(id: string) {
+  async remove(id: number) {
     return this.prisma.device.delete({
       where: { id },
     });

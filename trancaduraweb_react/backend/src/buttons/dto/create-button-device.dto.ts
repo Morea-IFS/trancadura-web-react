@@ -1,9 +1,9 @@
-import { IsString } from 'class-validator';
+import { IsNumber } from 'class-validator';
 
 export class CreateButtonDeviceDto {
-  @IsString()
-  buttonId: string;
+  @IsNumber()
+  buttonId: number;
 
-  @IsString()
-  deviceId: string;
+  @IsNumber()
+  deviceId: number;
 }

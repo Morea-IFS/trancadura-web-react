@@ -3,7 +3,7 @@ import { ApproximationsService } from './approximations.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 const mockApproximation = {
-  id: 'some-id',
+  id: 123,
   cardId: 'card-123',
   name: 'test name',
   permission: true,
@@ -55,14 +55,14 @@ describe('ApproximationsService', () => {
   });
 
   it('findOne should return item', async () => {
-    const id = 'some-id';
+    const id = 123;
     const result = await service.findOne(id);
     expect(prisma.approximation.findUnique).toHaveBeenCalledWith({ where: { id } });
     expect(result).toEqual(mockApproximation);
   });
 
   it('update should call prisma.update', async () => {
-    const id = 'some-id';
+    const id = 123;
     const dto = { permission: false };
     const result = await service.update(id, dto);
     expect(prisma.approximation.update).toHaveBeenCalledWith({ where: { id }, data: dto });
@@ -70,7 +70,7 @@ describe('ApproximationsService', () => {
   });
 
   it('remove should call prisma.delete', async () => {
-    const id = 'some-id';
+    const id = 123;
     const result = await service.remove(id);
     expect(prisma.approximation.delete).toHaveBeenCalledWith({ where: { id } });
     expect(result).toEqual(mockApproximation);
