@@ -65,7 +65,6 @@ export class AuthService {
       isStaff: dto.isStaff ?? false,
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...userWithoutPassword } = newUser;
 
     const payload = {
@@ -73,7 +72,7 @@ export class AuthService {
       username: newUser.username,
       email: newUser.email,
       isStaff: newUser.isStaff,
-    }
+    };
 
     return {
       user: userWithoutPassword,
