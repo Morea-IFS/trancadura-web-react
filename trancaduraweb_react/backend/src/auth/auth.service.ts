@@ -65,6 +65,36 @@ export class AuthService {
       isStaff: dto.isStaff ?? false,
     });
 
+    if (dto.labIds?.length) {
+      // Buscar labs existentes no banco
+      const existingLabs = await this.prisma.lab.findMany({
+        where: { id: { in: dto.labIds } },
+        select: { id: true },
+      });
+
+      const existingLabIds = existingLabs.map((lab) => lab.id);
+
+      // Verificar se há algum labId inválido
+      const invalidLabIds = dto.labIds.filter((id) => !existingLabIds.includes(id));
+      if (invalidLabIds.length > 0) {
+        throw new ConflictException(
+          `Os seguintes labs não existem: ${invalidLabIds.join(', ')}`
+        );
+      }
+
+      // Criar as relações user-lab
+      const createManyData = dto.labIds.map((labId) => ({
+        userId: newUser.id,
+        labId,
+      }));
+
+      await this.prisma.userLab.createMany({
+        data: createManyData,
+        skipDuplicates: true,
+      });
+    }
+
+
     const { password, ...userWithoutPassword } = newUser;
 
     const payload = {
