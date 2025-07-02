@@ -1,9 +1,11 @@
-import { IsInt } from 'class-validator';
+// src/labs/dto/add-users-to-lab.dto.ts
+import { IsInt, IsArray, ArrayNotEmpty } from 'class-validator';
 
-export class AddUserToLabDto {
-  @IsInt()
-  userId: number;
-
+export class AddUsersToLabDto {
   @IsInt()
   labId: number;
+
+  @IsArray()
+  @ArrayNotEmpty()
+  userIds: number[];
 }

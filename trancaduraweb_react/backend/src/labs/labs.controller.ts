@@ -3,7 +3,7 @@ import { LabsService } from './labs.service';
 import { CreateLabDto } from './dto/create-lab.dto';
 import { UpdateLabDto } from './dto/update-lab.dto';
 import { LinkDeviceDto } from './dto/link-device.dto';
-import { AddUserToLabDto } from './dto/add-user-to-lab.dto';
+import { AddUsersToLabDto } from './dto/add-user-to-lab.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth/jwt-auth.guard';
 
 @Controller('labs')
@@ -35,15 +35,10 @@ export class LabsController {
     return this.labsService.remove(id);
   }
 
-  @Post('link-device')
-  linkDevice(@Body() dto: LinkDeviceDto) {
-    return this.labsService.linkDevice(dto.labId, dto.deviceId);
-  }
-
-  @Post('add-user')
-  addUserToLab(@Body() dto: AddUserToLabDto) {
-    return this.labsService.addUserToLab(dto.userId, dto.labId);
-  }
+  @Post('add-users')
+  addUsersToLab(@Body() dto: AddUsersToLabDto) {
+    return this.labsService.addUsersToLab(dto);
+}
 
   @Post('unlock/:labId')
   @UseGuards(JwtAuthGuard)

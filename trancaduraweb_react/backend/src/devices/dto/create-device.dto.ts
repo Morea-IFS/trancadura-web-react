@@ -1,4 +1,4 @@
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, IsInt } from 'class-validator';
 
 export class CreateDeviceDto {
   @IsString()
@@ -23,4 +23,8 @@ export class CreateDeviceDto {
   @IsOptional()
   @IsString()
   apiToken?: string;
+
+  @IsOptional()
+  @IsInt()
+  labId?: number;
 }
