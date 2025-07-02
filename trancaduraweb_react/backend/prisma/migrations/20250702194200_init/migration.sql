@@ -15,6 +15,27 @@ CREATE TABLE `users` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `Lab` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(191) NOT NULL,
+    `device_id` INTEGER NULL,
+
+    UNIQUE INDEX `Lab_name_key`(`name`),
+    UNIQUE INDEX `Lab_device_id_key`(`device_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `UserLab` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `userId` INTEGER NOT NULL,
+    `labId` INTEGER NOT NULL,
+
+    UNIQUE INDEX `UserLab_userId_labId_key`(`userId`, `labId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `roles` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(191) NOT NULL,
@@ -107,31 +128,14 @@ CREATE TABLE `user_accesses` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- CreateTable
-CREATE TABLE `buttons` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `uuid` VARCHAR(191) NOT NULL,
-    `mac_address` VARCHAR(191) NULL,
-    `api_token` VARCHAR(191) NULL,
-    `description` VARCHAR(191) NULL,
-    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updated_at` DATETIME(3) NOT NULL,
+-- AddForeignKey
+ALTER TABLE `Lab` ADD CONSTRAINT `Lab_device_id_fkey` FOREIGN KEY (`device_id`) REFERENCES `devices`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
-    UNIQUE INDEX `buttons_uuid_key`(`uuid`),
-    UNIQUE INDEX `buttons_mac_address_key`(`mac_address`),
-    UNIQUE INDEX `buttons_api_token_key`(`api_token`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- AddForeignKey
+ALTER TABLE `UserLab` ADD CONSTRAINT `UserLab_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
--- CreateTable
-CREATE TABLE `button_devices` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `button_id` INTEGER NOT NULL,
-    `device_id` INTEGER NOT NULL,
-
-    UNIQUE INDEX `button_devices_button_id_device_id_key`(`button_id`, `device_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- AddForeignKey
+ALTER TABLE `UserLab` ADD CONSTRAINT `UserLab_labId_fkey` FOREIGN KEY (`labId`) REFERENCES `Lab`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `user_roles` ADD CONSTRAINT `user_roles_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -162,9 +166,3 @@ ALTER TABLE `user_accesses` ADD CONSTRAINT `user_accesses_user_id_fkey` FOREIGN 
 
 -- AddForeignKey
 ALTER TABLE `user_accesses` ADD CONSTRAINT `user_accesses_device_id_fkey` FOREIGN KEY (`device_id`) REFERENCES `devices`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `button_devices` ADD CONSTRAINT `button_devices_button_id_fkey` FOREIGN KEY (`button_id`) REFERENCES `buttons`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `button_devices` ADD CONSTRAINT `button_devices_device_id_fkey` FOREIGN KEY (`device_id`) REFERENCES `devices`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
