@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import MemberCard from "@/components/MemberCard";
 import RegisterForm from "@/components/Forms/RegisterForm";
 import { LiaUserFriendsSolid } from "react-icons/lia";
-import axios from "axios";
+import api from "@/lib/api";
 
 export default function Membros() {
   const [open, setOpen] = useState(false);
@@ -13,13 +13,13 @@ export default function Membros() {
   const [isStaff, setIsStaff] = useState(false);
 
   useEffect(() => {
-    axios
-      .get("http://localhost:8080/api/users/me", { withCredentials: true })
+    api
+      .get("/users/me")
       .then((res) => setIsStaff(res.data.isStaff))
       .catch(() => setIsStaff(false));
 
-    axios
-      .get("http://localhost:8080/api/users", { withCredentials: true })
+    api
+      .get("/users")
       .then((res) => setUsers(res.data))
       .catch((err) => console.error("Erro ao buscar usuários:", err));
   }, []);

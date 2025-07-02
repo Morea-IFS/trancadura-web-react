@@ -21,11 +21,10 @@ export default function LoginForm() {
     }
 
     try {
-      const res = await api.post(
-        "/api/auth/login",
-        { username: usuario, password },
-        { withCredentials: true }
-      );
+      const res = await api.post("/auth/login", {
+        username: usuario,
+        password,
+      });
       if (res.data && res.data.access_token) {
         router.push("/");
         console.log("Login bem sucedido");

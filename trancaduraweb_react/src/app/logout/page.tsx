@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
-import axios from "axios";
+import api from "@/lib/api";
 
 export default function Logout() {
   const router = useRouter();
@@ -12,11 +12,7 @@ export default function Logout() {
   const handleLogout = async () => {
     setLoading(true);
     try {
-      await axios.post(
-        "http://localhost:8080/api/auth/logout",
-        {},
-        { withCredentials: true }
-      );
+      await api.post("/auth/logout");
     } finally {
       router.replace("/login");
     }

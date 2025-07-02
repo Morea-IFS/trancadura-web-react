@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import EditForm from "@/components/Forms/EditForm";
-import axios from "axios";
+import api from "@/lib/api";
 
 export default function MemberCard({
   user,
@@ -19,13 +19,9 @@ export default function MemberCard({
   const toggleActiveStatus = async () => {
     try {
       setLoading(true);
-      const updatedUser = await axios.patch(
-        `http://localhost:8080/api/users/${user.id}`,
-        {
-          isActive: !user.isActive,
-        },
-        { withCredentials: true }
-      );
+      const updatedUser = await api.patch(`/users/${user.id}`, {
+        isActive: !user.isActive,
+      });
 
       if (onUpdate) {
         onUpdate(updatedUser.data);
