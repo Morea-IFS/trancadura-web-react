@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Input from "@/components/Input";
-import axios from "axios";
+import api from "@/lib/api";
 
 interface EditFormProps {
   initialData?: {
@@ -32,8 +32,8 @@ export default function EditForm({
   const [userIsStaff, setUserIsStaff] = useState<boolean | null>(null);
 
   useEffect(() => {
-    axios
-      .get("http://localhost:8080/api/users/me", { withCredentials: true })
+    api
+      .get("/users/me")
       .then((res) => setUserIsStaff(res.data.isStaff))
       .catch(() => setUserIsStaff(false));
   }, []);
@@ -50,17 +50,13 @@ export default function EditForm({
       if (!initialData?.id) {
         throw new Error("ID do usuário não definido.");
       }
-      const response = await axios.patch(
-        `http://localhost:8080/api/users/${initialData.id}`,
-        {
-          username,
-          email,
-          password: password || undefined,
-          isActive: status === "ativo",
-          isStaff,
-        },
-        { withCredentials: true }
-      );
+      const response = await api.patch(`/users/${initialData.id}`, {
+        username,
+        email,
+        password: password || undefined,
+        isActive: status === "ativo",
+        isStaff,
+      });
 
       if (onSave) {
         onSave(response.data);

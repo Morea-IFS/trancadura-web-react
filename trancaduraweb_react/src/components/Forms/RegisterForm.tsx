@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "@/lib/api";
 
 interface RegisterFormProps {
   onClose?: () => void;
@@ -18,8 +18,8 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
   const [userIsStaff, setUserIsStaff] = useState<boolean | null>(null);
 
   useEffect(() => {
-    axios
-      .get("http://localhost:8080/api/users/me", { withCredentials: true })
+    api
+      .get("/users/me", { withCredentials: true })
       .then((res) => setUserIsStaff(res.data.isStaff))
       .catch(() => setUserIsStaff(false));
   }, []);
@@ -31,17 +31,13 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
     try {
       const isActive = status === "ativo";
 
-      const response = await axios.post(
-        "http://localhost:8080/api/auth/signup",
-        {
-          username,
-          email,
-          password,
-          isActive,
-          isStaff,
-        },
-        { withCredentials: true }
-      );
+      const response = await api.post("auth/signup", {
+        username,
+        email,
+        password,
+        isActive,
+        isStaff,
+      });
 
       if (onSave) {
         onSave(response.data);

@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import HistoryCard from "@/components/HistoryCard";
 import { FaRegClock } from "react-icons/fa6";
 import Select from "react-select";
-import axios from "axios";
+import api from "@/lib/api";
 
 const opcoes = [
   { value: "dia", label: "Dia" },
@@ -24,8 +24,8 @@ export default function HistoricoPage() {
   useEffect(() => {
     setMounted(true);
 
-    axios
-      .get("http://localhost:8080/api/users/me", { withCredentials: true })
+    api
+      .get("/users/me")
       .then((res) => {
         setUsuarioId(res.data.userId);
         setIsStaff(res.data.isStaff);
@@ -38,10 +38,8 @@ export default function HistoricoPage() {
   useEffect(() => {
     if (usuarioId === null) return;
 
-    axios
-      .get("http://localhost:8080/api/devices/1/all", {
-        withCredentials: true,
-      })
+    api
+      .get("/devices/1/all")
       .then((res) => {
         let dados = res.data;
 

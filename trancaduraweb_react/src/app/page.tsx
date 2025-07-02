@@ -1,9 +1,9 @@
 "use client";
 
+import api from "@/lib/api";
 import { useEffect, useState } from "react";
 import HistoryCard from "@/components/HistoryCard";
 import Header from "@/components/Header";
-import axios from "axios";
 import { FaRegClock } from "react-icons/fa6";
 import { IoLockClosedOutline } from "react-icons/io5";
 
@@ -17,8 +17,8 @@ export default function Home() {
   >(null);
 
   useEffect(() => {
-    axios
-      .get("http://localhost:8080/api/users/me", { withCredentials: true })
+    api
+      .get("/users/me")
       .then((res) => {
         setUsuarioId(res.data.userId);
         setUsername(res.data.username || res.data.email);
@@ -31,10 +31,8 @@ export default function Home() {
 
   useEffect(() => {
     if (!usuarioId) return;
-    axios
-      .get("http://localhost:8080/api/devices/1/all", {
-        withCredentials: true,
-      })
+    api
+      .get("/devices/1/all")
       .then((res) => {
         const filtrados = res.data
           .filter((item: any) => item.userId === usuarioId)
@@ -54,20 +52,15 @@ export default function Home() {
     setUltimoStatus(null);
 
     try {
-      const response = await axios.post(
-        "http://localhost:8080/api/buttons/unlock",
-        { deviceId: usuarioId },
-        { withCredentials: true }
-      );
+      const response = await api.post("/buttons/unlock", {
+        deviceId: usuarioId,
+      });
 
       const status = response.data.access?.permission ? "autorizado" : "negado";
       setUltimoStatus(status);
       alert(response.data.message || "Requisição enviada com sucesso!");
 
-      const res = await axios.get(
-        "http://localhost:8080/api/devices/1/all",
-        { withCredentials: true }
-      );
+      const res = await api.get("/devices/1/all");
       const filtrados = res.data
         .filter((item: any) => item.userId === usuarioId)
         .slice(0, 3);
