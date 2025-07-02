@@ -13,6 +13,7 @@ model User {
   email      String        @unique
   username   String        @unique
   password   String
+  labs      UserLab[]
   isActive   Boolean       @default(true) @map("is_active")
   isStaff    Boolean       @default(false) @map("is_staff")
   createdAt  DateTime      @default(now()) @map("created_at")
@@ -24,6 +25,24 @@ model User {
   accesses    UserAccess[]
 
   @@map("users")
+}
+
+model Lab {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  users     UserLab[] 
+  device    Device?
+  deviceId Int?
+}
+
+model UserLab {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  labId  Int
+  user   User @relation(fields: [userId], references: [id])
+  lab    Lab  @relation(fields: [labId], references: [id])
+
+  @@unique([userId, labId])
 }
 
 model Role {
@@ -51,6 +70,7 @@ model UserRole {
 model Device {
   id         Int       @id @default(autoincrement())
   uuid       String    @unique
+  labId     Int?     @unique
   macAddress String?   @unique @map("mac_address")
   section    String?
   location   String?
@@ -62,7 +82,8 @@ model Device {
   roles         DeviceRole[]
   pinCodes      DevicePinCode[]
   accesses      UserAccess[]
-  buttonDevices ButtonDevice[]
+  
+  lab       Lab?     @relation(fields: [labId], references: [id])
 
   @@map("devices")
 }
@@ -131,28 +152,3 @@ model UserAccess {
   @@map("user_accesses")
 }
 
-model Button {
-  id          Int      @id @default(autoincrement())
-  uuid        String   @unique
-  macAddress  String?  @unique @map("mac_address")
-  apiToken    String?  @unique @map("api_token")
-  description String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  buttonDevices ButtonDevice[]
-
-  @@map("buttons")
-}
-
-model ButtonDevice {
-  id        Int @id @default(autoincrement())
-  buttonId  Int @map("button_id")
-  deviceId  Int @map("device_id")
-
-  button Button @relation(fields: [buttonId], references: [id], onDelete: Cascade)
-  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-
-  @@unique([buttonId, deviceId])
-  @@map("button_devices")
-}

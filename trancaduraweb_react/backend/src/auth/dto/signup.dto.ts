@@ -1,4 +1,13 @@
-import { IsEmail, IsNotEmpty, MinLength, IsOptional } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  MinLength,
+  IsOptional,
+  IsArray,
+  ArrayNotEmpty,
+  IsInt,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class SignupDto {
   @IsEmail()
@@ -16,4 +25,11 @@ export class SignupDto {
 
   @IsOptional()
   isStaff?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsInt({ each: true })
+  @Type(() => Number)
+  labIds?: number[];
 }
