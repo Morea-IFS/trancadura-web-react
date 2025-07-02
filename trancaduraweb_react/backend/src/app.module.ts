@@ -12,7 +12,7 @@ import { UsersModule } from './users/users.module';
 import { DevicesModule } from './devices/devices.module';
 import { RolesModule } from './roles/roles.module';
 import { ApproximationsModule } from './approximations/approximations.module';
-import { ButtonsModule } from './buttons/buttons.module';
+import { LabsModule } from './labs/labs.module'; // Assuming LabsModule is defined in labs.module.ts
 
 @Module({
   imports: [
@@ -29,7 +29,7 @@ import { ButtonsModule } from './buttons/buttons.module';
     DevicesModule,
     RolesModule,
     ApproximationsModule,
-    ButtonsModule,
+    LabsModule, // Importing LabsModule
   ],
   controllers: [AppController],
   providers: [

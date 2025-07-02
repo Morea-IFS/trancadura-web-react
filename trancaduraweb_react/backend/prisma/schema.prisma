@@ -1,6 +1,6 @@
 generator client {
-  provider     = "prisma-client-js"
-  engineType   = "binary"
+  provider   = "prisma-client-js"
+  engineType = "binary"
 }
 
 datasource db {
@@ -9,30 +9,30 @@ datasource db {
 }
 
 model User {
-  id         Int           @id @default(autoincrement())
-  email      String        @unique
-  username   String        @unique
-  password   String
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  username  String    @unique
+  password  String
   labs      UserLab[]
-  isActive   Boolean       @default(true) @map("is_active")
-  isStaff    Boolean       @default(false) @map("is_staff")
-  createdAt  DateTime      @default(now()) @map("created_at")
-  updatedAt  DateTime      @updatedAt @map("updated_at")
+  isActive  Boolean   @default(true) @map("is_active")
+  isStaff   Boolean   @default(false) @map("is_staff")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 
-  roles       UserRole[]
-  pinCodes    DevicePinCode[]
-  cards       UserCard[]
-  accesses    UserAccess[]
+  roles    UserRole[]
+  pinCodes DevicePinCode[]
+  cards    UserCard[]
+  accesses UserAccess[]
 
   @@map("users")
 }
 
 model Lab {
-  id        Int       @id @default(autoincrement())
-  name      String    @unique
-  users     UserLab[] 
-  device    Device?
-  deviceId Int?
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  users    UserLab[]
+  deviceId Int?      @unique @map("device_id")
+  device   Device?   @relation(fields: [deviceId], references: [id])
 }
 
 model UserLab {
@@ -46,8 +46,8 @@ model UserLab {
 }
 
 model Role {
-  id         Int          @id @default(autoincrement())
-  name       String       @unique
+  id   Int    @id @default(autoincrement())
+  name String @unique
 
   userRoles   UserRole[]
   deviceRoles DeviceRole[]
@@ -56,9 +56,9 @@ model Role {
 }
 
 model UserRole {
-  id      Int  @id @default(autoincrement())
-  userId  Int  @map("user_id")
-  roleId  Int  @map("role_id")
+  id     Int @id @default(autoincrement())
+  userId Int @map("user_id")
+  roleId Int @map("role_id")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
@@ -68,30 +68,29 @@ model UserRole {
 }
 
 model Device {
-  id         Int       @id @default(autoincrement())
-  uuid       String    @unique
-  labId     Int?     @unique
-  macAddress String?   @unique @map("mac_address")
+  id         Int      @id @default(autoincrement())
+  uuid       String   @unique
+  macAddress String?  @unique @map("mac_address")
   section    String?
   location   String?
-  ipAddress  String?   @map("ip_address")
-  apiToken   String?   @unique @map("api_token")
-  createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
+  ipAddress  String?  @map("ip_address")
+  apiToken   String?  @unique @map("api_token")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
-  roles         DeviceRole[]
-  pinCodes      DevicePinCode[]
-  accesses      UserAccess[]
-  
-  lab       Lab?     @relation(fields: [labId], references: [id])
+  roles    DeviceRole[]
+  pinCodes DevicePinCode[]
+  accesses UserAccess[]
+
+  lab Lab?
 
   @@map("devices")
 }
 
 model DeviceRole {
-  id       Int  @id @default(autoincrement())
-  deviceId Int  @map("device_id")
-  roleId   Int  @map("role_id")
+  id       Int @id @default(autoincrement())
+  deviceId Int @map("device_id")
+  roleId   Int @map("role_id")
 
   device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
   role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
@@ -101,9 +100,9 @@ model DeviceRole {
 }
 
 model DevicePinCode {
-  id        Int      @id @default(autoincrement())
-  deviceId  Int      @map("device_id")
-  userId    Int      @map("user_id")
+  id        Int       @id @default(autoincrement())
+  deviceId  Int       @map("device_id")
+  userId    Int       @map("user_id")
   pin       Int
   dateInit  DateTime? @map("date_init")
   dateStop  DateTime? @map("date_stop")
@@ -116,11 +115,11 @@ model DevicePinCode {
 }
 
 model Approximation {
-  id         Int       @id @default(autoincrement())
-  cardId     String    @unique @map("card_id")
-  name       String?   @default("empty")
-  permission Boolean   @default(false)
-  createdAt  DateTime  @default(now()) @map("created_at")
+  id         Int      @id @default(autoincrement())
+  cardId     String   @unique @map("card_id")
+  name       String?  @default("empty")
+  permission Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at")
 
   userCards UserCard[]
 
@@ -128,11 +127,11 @@ model Approximation {
 }
 
 model UserCard {
-  id              Int  @id @default(autoincrement())
-  userId          Int  @map("user_id")
-  approximationId Int  @map("approximation_id")
+  id              Int @id @default(autoincrement())
+  userId          Int @map("user_id")
+  approximationId Int @map("approximation_id")
 
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   approximation Approximation @relation(fields: [approximationId], references: [id], onDelete: Cascade)
 
   @@unique([userId, approximationId])
@@ -151,4 +150,3 @@ model UserAccess {
 
   @@map("user_accesses")
 }
-

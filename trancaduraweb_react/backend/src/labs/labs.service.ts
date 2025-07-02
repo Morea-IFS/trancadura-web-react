@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLabDto } from './dto/create-lab.dto';
 import { UpdateLabDto } from './dto/update-lab.dto';
+import { AddUsersToLabDto } from './dto/add-user-to-lab.dto';
 
 @Injectable()
 export class LabsService {
@@ -27,21 +28,18 @@ export class LabsService {
     return this.prisma.lab.delete({ where: { id } });
   }
 
-  async linkDevice(labId: number, deviceId: number) {
-    const device = await this.prisma.device.findUnique({ where: { id: deviceId } });
-    if (!device) throw new NotFoundException('Dispositivo não encontrado');
+  async addUsersToLab(dto: AddUsersToLabDto) {
+    const data = dto.userIds.map((userId) => ({
+      userId,
+      labId: dto.labId,
+    }));
 
-    return this.prisma.lab.update({
-      where: { id: labId },
-      data: { deviceId },
+    return this.prisma.userLab.createMany({
+      data,
+      skipDuplicates: true, // impede duplicatas
     });
   }
 
-  async addUserToLab(userId: number, labId: number) {
-    return this.prisma.userLab.create({
-      data: { userId, labId },
-    });
-  }
 
   async unlock(userId: number, labId: number) {
     const lab = await this.prisma.lab.findUnique({
