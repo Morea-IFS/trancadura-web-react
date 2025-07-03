@@ -15,7 +15,6 @@ model User {
   password  String
   labs      UserLab[]
   isActive  Boolean   @default(true) @map("is_active")
-  isStaff   Boolean   @default(false) @map("is_staff")
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
 
@@ -39,6 +38,8 @@ model UserLab {
   id     Int  @id @default(autoincrement())
   userId Int
   labId  Int
+  isStaff Boolean @default(false)
+
   user   User @relation(fields: [userId], references: [id])
   lab    Lab  @relation(fields: [labId], references: [id])
 

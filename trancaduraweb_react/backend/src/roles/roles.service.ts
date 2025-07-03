@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { AssignRoleDto } from './dto/assign-role.dto';
 
 @Injectable()
 export class RolesService {
@@ -35,4 +36,33 @@ export class RolesService {
       where: { id },
     });
   }
+
+  // src/roles/roles.service.ts
+  async assignRoleToUser(dto: AssignRoleDto) {
+    const { userId, roleId } = dto;
+
+    // Confirma se o usuário existe
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Usuário não encontrado');
+
+    // Confirma se o papel existe
+    const role = await this.prisma.role.findUnique({ where: { id: roleId } });
+    if (!role) throw new NotFoundException('Papel (role) não encontrado');
+
+    // Cria ou ignora se já existir
+    return this.prisma.userRole.upsert({
+      where: {
+        userId_roleId: {
+          userId,
+          roleId,
+        },
+      },
+      update: {},
+      create: {
+        userId,
+        roleId,
+      },
+    });
+  }
+
 }

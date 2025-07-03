@@ -13,12 +13,4 @@ export class CreateUserDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  isStaff?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  isSuperuser?: boolean;
 }
