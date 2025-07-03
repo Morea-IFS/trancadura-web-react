@@ -33,7 +33,6 @@ export class UsersService {
         id: true,
         username: true,
         email: true,
-        isStaff: true,
         isActive: true,
       },
     });

@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param, Patch, Delete } from '@nestjs/commo
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { AssignRoleDto } from './dto/assign-role.dto';
 
 @Controller('roles')
 export class RolesController {
@@ -31,4 +32,11 @@ export class RolesController {
   remove(@Param('id') id: number) {
     return this.rolesService.remove(id);
   }
+
+  // src/roles/roles.controller.ts
+  @Post('assign')
+  assignRoleToUser(@Body() dto: AssignRoleDto) {
+    return this.rolesService.assignRoleToUser(dto);
+  }
+
 }

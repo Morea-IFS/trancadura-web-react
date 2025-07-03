@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, ForbiddenException } from '@nestjs/common';
 import { LabsService } from './labs.service';
 import { CreateLabDto } from './dto/create-lab.dto';
 import { UpdateLabDto } from './dto/update-lab.dto';
-import { LinkDeviceDto } from './dto/link-device.dto';
 import { AddUsersToLabDto } from './dto/add-user-to-lab.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth/jwt-auth.guard';
+import { Roles } from 'src/auth/roles/roles.decorator';
+import { RolesGuard } from 'src/auth/roles/roles.guard';
 
 @Controller('labs')
 export class LabsController {
@@ -35,10 +36,27 @@ export class LabsController {
     return this.labsService.remove(id);
   }
 
+  @Roles('superuser', 'staff')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Post('add-users')
-  addUsersToLab(@Body() dto: AddUsersToLabDto) {
+  async addUsersToLab(@Body() dto: AddUsersToLabDto, @Req() req) {
+    const requesterId = req.user.userId;
+    const userRoles = await this.labsService.getUserRoles(requesterId);
+
+    const isSuperUser = userRoles.includes('superuser');
+    if (isSuperUser) {
+      return this.labsService.addUsersToLab(dto);
+    }
+
+    // Staff precisa ser staff no laboratório alvo
+    const userLab = await this.labsService.getUserLab(requesterId, dto.labId);
+    if (!userLab?.isStaff) {
+      throw new ForbiddenException('Você não tem permissão para adicionar usuários neste laboratório');
+    }
+
     return this.labsService.addUsersToLab(dto);
-}
+  }
+
 
   @Post('unlock/:labId')
   @UseGuards(JwtAuthGuard)

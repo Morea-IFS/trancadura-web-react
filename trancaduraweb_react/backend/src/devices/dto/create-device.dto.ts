@@ -23,8 +23,4 @@ export class CreateDeviceDto {
   @IsOptional()
   @IsString()
   apiToken?: string;
-
-  @IsOptional()
-  @IsInt()
-  labId?: number;
 }

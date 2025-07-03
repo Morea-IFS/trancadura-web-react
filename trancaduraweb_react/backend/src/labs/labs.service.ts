@@ -29,17 +29,36 @@ export class LabsService {
   }
 
   async addUsersToLab(dto: AddUsersToLabDto) {
-    const data = dto.userIds.map((userId) => ({
-      userId,
+    const data = dto.users.map((user) => ({
+      userId: user.userId,
       labId: dto.labId,
+      isStaff: user.isStaff,
     }));
 
     return this.prisma.userLab.createMany({
       data,
-      skipDuplicates: true, // impede duplicatas
+      skipDuplicates: true,
     });
   }
 
+  async getUserRoles(userId: number): Promise<string[]> {
+    const roles = await this.prisma.userRole.findMany({
+      where: { userId },
+      include: { role: true },
+    });
+    return roles.map((r) => r.role.name);
+  }
+
+  async getUserLab(userId: number, labId: number) {
+    return this.prisma.userLab.findUnique({
+      where: {
+        userId_labId: {
+          userId,
+          labId,
+        },
+      },
+    });
+  }
 
   async unlock(userId: number, labId: number) {
     const lab = await this.prisma.lab.findUnique({

@@ -25,13 +25,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     sub: number;
     username: string;
     email: string;
-    isStaff: boolean;
+    roles: string[];
   }) {
     return {
       userId: payload.sub,
       username: payload.username,
       email: payload.email,
-      isStaff: payload.isStaff,
+      roles: payload.roles,
     };
   }
 }

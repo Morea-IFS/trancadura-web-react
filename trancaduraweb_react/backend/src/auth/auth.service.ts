@@ -32,16 +32,23 @@ export class AuthService {
     const user =
       (await this.usersService.findByUsername(dto.username)) ||
       (await this.usersService.findByEmail(dto.username));
-
-    if (!user || !(await bcrypt.compare(dto.password, user.password))) {
-      throw new UnauthorizedException('Credenciais inválidas');
-    }
+    
+      
+      if (!user || !(await bcrypt.compare(dto.password, user.password))) {
+        throw new UnauthorizedException('Credenciais inválidas');
+      }
+      
+    const roles = await this.prisma.userRole.findMany({
+      where: { userId: user.id },
+      include: { role: true },
+    });
+    const roleNames = roles.map((r) => r.role.name);
 
     const payload = {
       sub: user.id,
       username: user.username,
       email: user.email,
-      isStaff: user.isStaff,
+      roles: roleNames, // Adiciona os roles ao payload
     };
 
     return {
@@ -62,7 +69,6 @@ export class AuthService {
       username: dto.username,
       password: hashedPassword,
       isActive: dto.isActive ?? true,
-      isStaff: dto.isStaff ?? false,
     });
 
     if (dto.labIds?.length) {
@@ -101,7 +107,6 @@ export class AuthService {
       sub: newUser.id,
       username: newUser.username,
       email: newUser.email,
-      isStaff: newUser.isStaff,
     };
 
     return {
@@ -109,4 +114,24 @@ export class AuthService {
       access_token: this.jwtService.sign(payload),
     };
   }
+
+  async getUserRoles(userId: number): Promise<string[]> {
+    const roles = await this.prisma.userRole.findMany({
+      where: { userId },
+      include: { role: true },
+    });
+    return roles.map((r) => r.role.name);
+  }
+
+  async getUserLab(userId: number, labId: number) {
+    return this.prisma.userLab.findUnique({
+      where: {
+        userId_labId: {
+          userId,
+          labId,
+        },
+      },
+    });
+  }
+
 }
