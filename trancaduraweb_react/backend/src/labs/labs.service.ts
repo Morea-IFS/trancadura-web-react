@@ -29,9 +29,10 @@ export class LabsService {
   }
 
   async addUsersToLab(dto: AddUsersToLabDto) {
-    const data = dto.userIds.map((userId) => ({
-      userId,
+    const data = dto.users.map((user) => ({
+      userId: user.userId,
       labId: dto.labId,
+      isStaff: user.isStaff,
     }));
 
     return this.prisma.userLab.createMany({
