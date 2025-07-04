@@ -11,6 +11,7 @@ export default function Membros() {
   const [open, setOpen] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
   const [isStaff, setIsStaff] = useState(false);
+  const [labSelecionado, setLabSelecionado] = useState<number | null>(null);
 
   useEffect(() => {
     api
@@ -37,7 +38,10 @@ export default function Membros() {
   return (
     <div>
       <header>
-        <Header />
+        <Header
+          labSelecionado={labSelecionado}
+          setLabSelecionado={setLabSelecionado}
+        />
       </header>
       <section className="p-4 md:w-[70%] mx-auto">
         <div className="p-4 w-full flex items-start justify-center flex-col gap-2 bg-white rounded-lg shadow-md border border-gray-200">

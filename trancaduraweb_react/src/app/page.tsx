@@ -15,6 +15,10 @@ export default function Home() {
   const [ultimoStatus, setUltimoStatus] = useState<
     "autorizado" | "negado" | null
   >(null);
+  const [labSelecionado, setLabSelecionado] = useState<number | null>(null);
+  const [nomeLabSelecionado, setNomeLabSelecionado] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     api
@@ -30,40 +34,57 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!usuarioId) return;
+    if (!usuarioId || !labSelecionado) return;
     api
-      .get("/devices/1/all")
+      .get(`/devices/${labSelecionado}/all`)
       .then((res) => {
         const filtrados = res.data
           .filter((item: any) => item.userId === usuarioId)
-          .slice(0, 3);
+          .slice(0, 3)
+          .map((item: any) => ({
+            ...item,
+            nomeLab: nomeLabSelecionado,
+          }));
         setAcessos(filtrados);
       })
       .catch((err) => {
         console.error("Erro ao buscar acessos:", err);
         setAcessos([]);
       });
-  }, [usuarioId]);
+  }, [usuarioId, labSelecionado, nomeLabSelecionado]);
+
+  useEffect(() => {
+    if (!labSelecionado) return;
+    api.get(`/labs/${labSelecionado}`).then((res) => {
+      setNomeLabSelecionado(res.data.name); // ou res.data.nome, conforme o backend
+    });
+  }, [labSelecionado]);
 
   const handleUnlock = async () => {
     if (!usuarioId) return alert("Usuário não identificado.");
+    if (!labSelecionado) return alert("Selecione um laboratório.");
 
     setLoading(true);
     setUltimoStatus(null);
 
     try {
-      const response = await api.post("/buttons/unlock", {
+      const response = await api.post(`/labs/unlock/${labSelecionado}`, {
         deviceId: usuarioId,
       });
 
+      console.log("Id do lab:", labSelecionado);
       const status = response.data.access?.permission ? "autorizado" : "negado";
       setUltimoStatus(status);
       alert(response.data.message || "Requisição enviada com sucesso!");
 
-      const res = await api.get("/devices/1/all");
+      const res = await api.get(`/devices/${labSelecionado}/all`);
       const filtrados = res.data
         .filter((item: any) => item.userId === usuarioId)
-        .slice(0, 3);
+        .slice(0, 3)
+        .map((item: any) => ({
+          ...item,
+          nomeLab: nomeLabSelecionado,
+        }));
       setAcessos(filtrados);
     } catch (error: any) {
       console.error("Erro ao tentar desbloquear:", error);
@@ -80,7 +101,10 @@ export default function Home() {
   return (
     <div>
       <header>
-        <Header />
+        <Header
+          labSelecionado={labSelecionado}
+          setLabSelecionado={setLabSelecionado}
+        />
       </header>
       <section className="p-4">
         <div className="w-full mx-auto max-w-4xl p-4 flex items-center justify-center flex-col gap-1">
