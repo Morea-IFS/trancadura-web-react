@@ -14,13 +14,26 @@ export default function Header({
 }: HeaderProps) {
   const [labs, setLabs] = useState<{ id: number; name: string }[]>([]);
 
+  // Carrega o lab salvo no localStorage ao montar
   useEffect(() => {
+    const savedLab = localStorage.getItem("labSelecionado");
+    if (savedLab) {
+      setLabSelecionado(Number(savedLab));
+    }
     api.get("/labs/me").then((res) => {
       setLabs(res.data);
-      if (res.data.length > 0 && labSelecionado === null)
+      if (res.data.length > 0 && !savedLab && labSelecionado === null)
         setLabSelecionado(res.data[0].id);
     });
+    // eslint-disable-next-line
   }, []);
+
+  // Salva no localStorage sempre que mudar
+  useEffect(() => {
+    if (labSelecionado !== null) {
+      localStorage.setItem("labSelecionado", labSelecionado.toString());
+    }
+  }, [labSelecionado]);
 
   return (
     <header className="bg-foreground text-background w-full">
