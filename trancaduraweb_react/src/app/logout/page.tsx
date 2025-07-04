@@ -8,6 +8,7 @@ import api from "@/lib/api";
 export default function Logout() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [labSelecionado, setLabSelecionado] = useState<number | null>(null);
 
   const handleLogout = async () => {
     setLoading(true);
@@ -25,7 +26,10 @@ export default function Logout() {
   return (
     <div className="min-h-screen bg-gray-100 relative">
       <header className="fixed top-0 left-0 w-full z-10 shadow bg-white">
-        <Header />
+        <Header
+          labSelecionado={labSelecionado}
+          setLabSelecionado={setLabSelecionado}
+        />
       </header>
 
       <div className="fixed inset-0 flex items-center justify-center bg-background bg-opacity-40 z-20 p-4">

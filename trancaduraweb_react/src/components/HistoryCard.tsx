@@ -1,11 +1,7 @@
 import { IoCheckmarkDoneCircle, IoCloseCircle } from "react-icons/io5";
 
-interface HistoryCardProps {
-  acessos: any[];
-}
-
 export default function HistoryCard({ acesso }: { acesso: any }) {
-  const nome = acesso.user?.username || "Usuário";
+  const nome = acesso.nomeLab || "Lab";
   const data = new Date(acesso.date).toLocaleString();
   const status = acesso.permission ? "Autorizado" : "Negado";
 

@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Req,
+  ForbiddenException,
+} from '@nestjs/common';
 import { LabsService } from './labs.service';
 import { CreateLabDto } from './dto/create-lab.dto';
 import { UpdateLabDto } from './dto/update-lab.dto';
@@ -19,6 +30,13 @@ export class LabsController {
   @Get()
   findAll() {
     return this.labsService.findAll();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async getMyLabs(@Req() req) {
+    const userId = req.user.userId;
+    return this.labsService.getLabsByUser(userId);
   }
 
   @Get(':id')
@@ -51,12 +69,13 @@ export class LabsController {
     // Staff precisa ser staff no laboratório alvo
     const userLab = await this.labsService.getUserLab(requesterId, dto.labId);
     if (!userLab?.isStaff) {
-      throw new ForbiddenException('Você não tem permissão para adicionar usuários neste laboratório');
+      throw new ForbiddenException(
+        'Você não tem permissão para adicionar usuários neste laboratório',
+      );
     }
 
     return this.labsService.addUsersToLab(dto);
   }
-
 
   @Post('unlock/:labId')
   @UseGuards(JwtAuthGuard)

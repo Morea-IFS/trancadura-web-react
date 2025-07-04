@@ -6,6 +6,7 @@ import HistoryCard from "@/components/HistoryCard";
 import { FaRegClock } from "react-icons/fa6";
 import Select from "react-select";
 import api from "@/lib/api";
+import dayjs from "dayjs";
 
 const opcoes = [
   { value: "dia", label: "Dia" },
@@ -17,9 +18,12 @@ const opcoes = [
 export default function HistoricoPage() {
   const [mounted, setMounted] = useState(false);
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
-  const [isStaff, setIsStaff] = useState<boolean>(false);
   const [acessos, setAcessos] = useState<any[]>([]);
-  const [filtro, setFiltro] = useState<string | null>(null);
+  const [labSelecionado, setLabSelecionado] = useState<number | null>(null);
+  const [nomeLabSelecionado, setNomeLabSelecionado] = useState<string | null>(
+    null
+  );
+  const [filtro, setFiltro] = useState("dia");
 
   useEffect(() => {
     setMounted(true);
@@ -28,7 +32,6 @@ export default function HistoricoPage() {
       .get("/users/me")
       .then((res) => {
         setUsuarioId(res.data.userId);
-        setIsStaff(res.data.isStaff);
       })
       .catch((err) => {
         console.error("Erro ao buscar usuário:", err);
@@ -36,58 +39,54 @@ export default function HistoricoPage() {
   }, []);
 
   useEffect(() => {
-    if (usuarioId === null) return;
-
+    if (!usuarioId || !labSelecionado) return;
     api
-      .get("/devices/1/all")
+      .get(`/devices/${labSelecionado}/all`)
       .then((res) => {
-        let dados = res.data;
-
-        if (!isStaff) {
-          dados = dados.filter((item: any) => item.userId === usuarioId);
-        }
-
-        if (filtro) {
-          const agora = new Date();
-          let limite: Date = new Date();
-
-          switch (filtro) {
-            case "dia":
-              limite.setDate(agora.getDate() - 1);
-              break;
-            case "semana":
-              limite.setDate(agora.getDate() - 7);
-              break;
-            case "mes":
-              limite.setMonth(agora.getMonth() - 1);
-              break;
-            case "ano":
-              limite.setFullYear(agora.getFullYear() - 1);
-              break;
-          }
-
-          dados = dados.filter((item: any) => new Date(item.date) >= limite);
-        }
-
-        dados.sort(
-          (a: any, b: any) =>
-            new Date(b.date).getTime() - new Date(a.date).getTime()
+        // Filtra por usuário
+        let filtrados = res.data.filter(
+          (item: any) => item.userId === usuarioId
         );
 
-        setAcessos(dados);
+        // Filtra por período
+        const agora = dayjs();
+        filtrados = filtrados.filter((item: any) => {
+          const data = dayjs(item.date);
+          if (filtro === "dia") return data.isSame(agora, "day");
+          if (filtro === "semana") return data.isSame(agora, "week");
+          if (filtro === "mes") return data.isSame(agora, "month");
+          if (filtro === "ano") return data.isSame(agora, "year");
+          return true;
+        });
+
+        filtrados = filtrados.map((item: any) => ({
+          ...item,
+          nomeLab: nomeLabSelecionado,
+        }));
+        setAcessos(filtrados);
       })
       .catch((err) => {
         console.error("Erro ao buscar acessos:", err);
         setAcessos([]);
       });
-  }, [usuarioId, isStaff, filtro]);
+  }, [usuarioId, labSelecionado, nomeLabSelecionado, filtro]); // <-- inclua filtro aqui
+
+  useEffect(() => {
+    if (!labSelecionado) return;
+    api.get(`/labs/${labSelecionado}`).then((res) => {
+      setNomeLabSelecionado(res.data.name); // ou res.data.nome, conforme o backend
+    });
+  }, [labSelecionado]);
 
   if (!mounted) return null;
 
   return (
     <div>
       <header>
-        <Header />
+        <Header
+          labSelecionado={labSelecionado}
+          setLabSelecionado={setLabSelecionado}
+        />
       </header>
       <section className="p-4 md:w-[70%] mx-auto">
         <div>
@@ -109,7 +108,8 @@ export default function HistoricoPage() {
                   options={opcoes}
                   placeholder="FILTRAR"
                   className="w-32"
-                  onChange={(e) => setFiltro(e?.value ?? null)}
+                  value={opcoes.find((op) => op.value === filtro)}
+                  onChange={(op) => setFiltro(op?.value || "dia")}
                 />
               </div>
             </div>

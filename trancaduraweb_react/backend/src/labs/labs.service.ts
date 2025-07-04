@@ -67,13 +67,15 @@ export class LabsService {
     });
 
     if (!lab) throw new NotFoundException('Laboratório não encontrado');
-    if (!lab.device) throw new NotFoundException('Dispositivo não vinculado ao laboratório');
+    if (!lab.device)
+      throw new NotFoundException('Dispositivo não vinculado ao laboratório');
 
     const userInLab = await this.prisma.userLab.findUnique({
       where: { userId_labId: { userId, labId } },
     });
 
-    if (!userInLab) throw new NotFoundException('Usuário não faz parte deste laboratório');
+    if (!userInLab)
+      throw new NotFoundException('Usuário não faz parte deste laboratório');
 
     const device = lab.device;
     const access = await this.prisma.userAccess.create({
@@ -101,5 +103,15 @@ export class LabsService {
       message: 'Acesso autorizado',
       access,
     };
+  }
+
+  async getLabsByUser(userId: number) {
+    return this.prisma.lab.findMany({
+      where: {
+        users: {
+          some: { userId },
+        },
+      },
+    });
   }
 }
