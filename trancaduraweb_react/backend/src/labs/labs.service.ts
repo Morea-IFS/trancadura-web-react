@@ -17,7 +17,16 @@ export class LabsService {
   }
 
   findOne(id: number) {
-    return this.prisma.lab.findUnique({ where: { id } });
+    return this.prisma.lab.findUnique({
+      where: { id },
+      include: {
+        users: {
+          include: {
+            user: true, // Inclui dados do usuário
+          },
+        },
+      },
+    });
   }
 
   update(id: number, data: UpdateLabDto) {

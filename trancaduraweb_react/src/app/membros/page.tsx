@@ -11,19 +11,76 @@ export default function Membros() {
   const [open, setOpen] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
   const [isStaff, setIsStaff] = useState(false);
+  const [isSuperuser, setIsSuperuser] = useState(false);
   const [labSelecionado, setLabSelecionado] = useState<number | null>(null);
 
   useEffect(() => {
-    api
-      .get("/users/me")
-      .then((res) => setIsStaff(res.data.isStaff))
-      .catch(() => setIsStaff(false));
+    async function fetchRoles() {
+      try {
+        const userRes = await api.get("/users/me");
 
+        // Verifica diretamente as roles como no History
+        const rolesArray: any[] = userRes.data.roles || [];
+
+        // Mapeia os nomes corretamente
+        const roleNames: string[] = rolesArray
+          .map((r) => r?.role?.name)
+          .filter(Boolean);
+
+        setIsSuperuser(roleNames.includes("superuser"));
+
+        console.log("Usuário:", userRes.data);
+        console.log("Roles:", rolesArray);
+        console.log("Superuser?", roleNames.includes("superuser"));
+
+        if (labSelecionado) {
+          const labRes = await api.get(`/labs/${labSelecionado}`);
+          console.log("Buscando lab com ID:", labSelecionado);
+          console.log("Lab resposta:", labRes.data);
+
+          const userLab = labRes.data.users?.find(
+            (u: any) => u.userId === userRes.data.userId
+          );
+
+          setIsStaff(!!userLab?.isStaff);
+        } else {
+          setIsStaff(false);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar roles:", err);
+        setIsSuperuser(false);
+        setIsStaff(false);
+      }
+    }
+
+    fetchRoles();
+  }, [labSelecionado]);
+
+  // Busca usuários
+  useEffect(() => {
     api
       .get("/users")
       .then((res) => setUsers(res.data))
       .catch((err) => console.error("Erro ao buscar usuários:", err));
   }, []);
+
+  // Busca usuários do laboratório selecionado
+  useEffect(() => {
+    if (!labSelecionado) {
+      setUsers([]);
+      return;
+    }
+    api
+      .get(`/labs/${labSelecionado}`)
+      .then((res) => {
+        // Ajuste conforme a estrutura retornada pela sua API
+        setUsers(res.data.users?.map((u: any) => u.user) || []);
+      })
+      .catch((err) => {
+        console.error("Erro ao buscar usuários do laboratório:", err);
+        setUsers([]);
+      });
+  }, [labSelecionado]);
 
   function handleUserUpdate(updatedUser: any) {
     setUsers((prevUsers) =>
@@ -34,6 +91,9 @@ export default function Membros() {
   function handleUserAdd(newUser: any) {
     setUsers((prevUsers) => [...prevUsers, newUser]);
   }
+
+  const podeGerenciar = isSuperuser || isStaff;
+  console.log("podeGerenciar:", podeGerenciar);
 
   return (
     <div>
@@ -50,19 +110,21 @@ export default function Membros() {
               <div className="flex gap-2 items-center">
                 <LiaUserFriendsSolid className="w-4 h-4 sm:w-6 sm:h-6 text-foreground font-bold" />
                 <p className="text-lg sm:text-2xl font-bold">
-                  {isStaff ? "Gerenciamento de Membros" : "Lista de Membros"}
+                  {podeGerenciar
+                    ? "Gerenciamento de Membros"
+                    : "Lista de Membros"}
                 </p>
               </div>
               <div className="text-gray-600 text-base sm:text-lg">
                 <p>
-                  {isStaff
+                  {podeGerenciar
                     ? "Cadastre e gerencie usuários do sistema"
                     : "Visualize os membros cadastrados no sistema"}
                 </p>
               </div>
             </div>
             <div>
-              {isStaff && (
+              {podeGerenciar && (
                 <button
                   className="text-sm font-bold px-4 py-2 bg-green-500 text-white rounded-lg shadow-md border border-2 border-green-600 transition duration-200 hover:bg-green-600 hover:text-white flex items-center justify-center"
                   onClick={() => setOpen(true)}
@@ -78,14 +140,14 @@ export default function Membros() {
             <MemberCard
               key={user.id}
               user={user}
-              isStaff={isStaff}
+              isStaff={podeGerenciar}
               onUpdate={handleUserUpdate}
             />
           ))}
         </div>
       </section>
 
-      {open && (
+      {open && podeGerenciar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg p-8 w-80 sm:w-full max-w-md relative">
             <button
