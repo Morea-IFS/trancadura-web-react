@@ -13,16 +13,53 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<"ativo" | "inativo">("ativo");
-  const [isStaff, setIsStaff] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [userIsStaff, setUserIsStaff] = useState<boolean | null>(null);
+  const [labs, setLabs] = useState<{ id: number; name: string }[]>([]);
+  const [selectedLabs, setSelectedLabs] = useState<number[]>([]);
+  const [labsStaff, setLabsStaff] = useState<{ [labId: number]: boolean }>({});
+  const [staffRoleId, setStaffRoleId] = useState<number | null>(null);
 
+  // Buscar labs onde o usuário é staff e roleId da role "staff"
   useEffect(() => {
-    api
-      .get("/users/me", { withCredentials: true })
-      .then((res) => setUserIsStaff(res.data.isStaff))
-      .catch(() => setUserIsStaff(false));
+    async function fetchInitialData() {
+      try {
+        const userRes = await api.get("/users/me");
+        const userId = userRes.data.userId;
+
+        const labsRes = await api.get("/labs/me");
+        const labsStaffOnly = labsRes.data.filter((lab: any) =>
+          lab.users?.some((u: any) => u.userId === userId && u.isStaff)
+        );
+        setLabs(labsStaffOnly);
+
+        const rolesRes = await api.get("/roles");
+        const staffRole = rolesRes.data.find(
+          (role: any) => role.name === "staff"
+        );
+        if (staffRole) {
+          setStaffRoleId(staffRole.id);
+        } else {
+          console.warn("Role 'staff' não encontrada");
+        }
+      } catch (err) {
+        console.error("Erro ao buscar dados iniciais:", err);
+      }
+    }
+
+    fetchInitialData();
   }, []);
+
+  const handleLabSelect = (labId: number) => {
+    setSelectedLabs((prev) =>
+      prev.includes(labId)
+        ? prev.filter((id) => id !== labId)
+        : [...prev, labId]
+    );
+  };
+
+  const handleStaffChange = (labId: number, isStaff: boolean) => {
+    setLabsStaff((prev) => ({ ...prev, [labId]: isStaff }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,20 +68,49 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
     try {
       const isActive = status === "ativo";
 
-      const response = await api.post("auth/signup", {
+      // Criação do usuário
+      const response = await api.post("/auth/signup", {
         username,
         email,
         password,
         isActive,
-        isStaff,
+        labs: selectedLabs.map((labId) => ({
+          labId,
+          isStaff: !!labsStaff[labId],
+        })),
       });
 
-      if (onSave) {
-        onSave(response.data);
+      const newUser = response.data.user;
+      const userId = newUser.id;
+
+      // Prepara os dados para associação aos labs
+      const labsToSend = selectedLabs.map((labId) => ({
+        userId,
+        labId,
+        isStaff: !!labsStaff[labId],
+      }));
+
+      // Adiciona usuário aos laboratórios
+      if (labsToSend.length > 0) {
+        for (const lab of labsToSend) {
+          await api.post("/labs/add-users", {
+            labId: lab.labId,
+            users: [{ userId, isStaff: lab.isStaff }],
+          });
+        }
       }
-      if (onClose) {
-        onClose();
+
+      // Se for staff em algum lab, atribui a role
+      const isStaffAnywhere = labsToSend.some((l) => l.isStaff);
+      if (isStaffAnywhere && staffRoleId !== null) {
+        await api.post("/roles/assign", {
+          userId,
+          roleId: staffRoleId,
+        });
       }
+
+      if (onSave) onSave(newUser);
+      if (onClose) onClose();
     } catch (error: any) {
       console.error(
         "Erro ao registrar usuário:",
@@ -54,21 +120,6 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
       setLoading(false);
     }
   };
-
-  if (userIsStaff === null) {
-    return (
-      <p className="text-center text-gray-500">Verificando permissões...</p>
-    );
-  }
-
-  if (!userIsStaff) {
-    return (
-      <p className="text-center text-red-600 font-semibold">
-        Acesso negado: apenas usuários staff podem registrar membros.
-      </p>
-    );
-  }
-
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div>
@@ -118,17 +169,51 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
 
       <div>
         <label className="block text-sm font-medium mb-1">
-          Tipo de usuário
+          Selecionar Laboratórios
         </label>
-        <select
-          className="w-full border border-gray-300 rounded-md p-2"
-          value={isStaff ? "staff" : "aluno"}
-          onChange={(e) => setIsStaff(e.target.value === "staff")}
-        >
-          <option value="aluno">Aluno</option>
-          <option value="staff">Staff</option>
-        </select>
+        <div className="flex flex-col gap-2">
+          {labs.map((lab) => (
+            <div key={lab.id} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={selectedLabs.includes(lab.id)}
+                onChange={() => handleLabSelect(lab.id)}
+                id={`lab-${lab.id}`}
+              />
+              <label htmlFor={`lab-${lab.id}`}>{lab.name}</label>
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* Subcampo para staff em cada lab selecionado */}
+      {selectedLabs.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Definir permissões de Staff por laboratório
+          </label>
+          <div className="flex flex-col gap-2">
+            {selectedLabs.map((labId) => {
+              const lab = labs.find((l) => l.id === labId);
+              return (
+                <div key={labId} className="flex items-center gap-2">
+                  <span>{lab?.name}</span>
+                  <select
+                    className="border rounded p-1"
+                    value={labsStaff[labId] ? "staff" : "default"}
+                    onChange={(e) =>
+                      handleStaffChange(labId, e.target.value === "staff")
+                    }
+                  >
+                    <option value="default">Colaborador</option>
+                    <option value="staff">Staff</option>
+                  </select>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-end gap-2 mt-4">
         {onClose && (

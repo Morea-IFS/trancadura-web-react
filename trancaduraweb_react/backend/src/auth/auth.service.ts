@@ -32,12 +32,11 @@ export class AuthService {
     const user =
       (await this.usersService.findByUsername(dto.username)) ||
       (await this.usersService.findByEmail(dto.username));
-    
-      
-      if (!user || !(await bcrypt.compare(dto.password, user.password))) {
-        throw new UnauthorizedException('Credenciais inválidas');
-      }
-      
+
+    if (!user || !(await bcrypt.compare(dto.password, user.password))) {
+      throw new UnauthorizedException('Credenciais inválidas');
+    }
+
     const roles = await this.prisma.userRole.findMany({
       where: { userId: user.id },
       include: { role: true },
@@ -71,27 +70,27 @@ export class AuthService {
       isActive: dto.isActive ?? true,
     });
 
-    if (dto.labIds?.length) {
-      // Buscar labs existentes no banco
+    if (dto.labs?.length) {
+      const labIds = dto.labs.map((l) => l.labId);
+
       const existingLabs = await this.prisma.lab.findMany({
-        where: { id: { in: dto.labIds } },
+        where: { id: { in: labIds } },
         select: { id: true },
       });
 
       const existingLabIds = existingLabs.map((lab) => lab.id);
+      const invalidLabIds = labIds.filter((id) => !existingLabIds.includes(id));
 
-      // Verificar se há algum labId inválido
-      const invalidLabIds = dto.labIds.filter((id) => !existingLabIds.includes(id));
       if (invalidLabIds.length > 0) {
         throw new ConflictException(
-          `Os seguintes labs não existem: ${invalidLabIds.join(', ')}`
+          `Os seguintes labs não existem: ${invalidLabIds.join(', ')}`,
         );
       }
 
-      // Criar as relações user-lab
-      const createManyData = dto.labIds.map((labId) => ({
+      const createManyData = dto.labs.map((lab) => ({
         userId: newUser.id,
-        labId,
+        labId: lab.labId,
+        isStaff: lab.isStaff ?? false,
       }));
 
       await this.prisma.userLab.createMany({
@@ -99,7 +98,6 @@ export class AuthService {
         skipDuplicates: true,
       });
     }
-
 
     const { password, ...userWithoutPassword } = newUser;
 
@@ -133,5 +131,4 @@ export class AuthService {
       },
     });
   }
-
 }
