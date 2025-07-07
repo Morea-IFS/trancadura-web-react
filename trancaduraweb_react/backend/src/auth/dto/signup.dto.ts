@@ -3,11 +3,19 @@ import {
   IsNotEmpty,
   MinLength,
   IsOptional,
+  ValidateNested,
   IsArray,
-  ArrayNotEmpty,
-  IsInt,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+class SignupLabDto {
+  @IsNotEmpty()
+  @Type(() => Number)
+  labId: number;
+
+  @IsOptional()
+  isStaff: boolean;
+}
 
 export class SignupDto {
   @IsEmail()
@@ -28,8 +36,7 @@ export class SignupDto {
 
   @IsOptional()
   @IsArray()
-  @ArrayNotEmpty()
-  @IsInt({ each: true })
-  @Type(() => Number)
-  labIds?: number[];
+  @ValidateNested({ each: true })
+  @Type(() => SignupLabDto)
+  labs?: SignupLabDto[];
 }

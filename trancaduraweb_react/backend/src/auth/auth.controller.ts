@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Res, UseGuards, Req, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Res,
+  UseGuards,
+  Req,
+  ForbiddenException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { SignupDto } from './dto/signup.dto';
@@ -25,28 +33,32 @@ export class AuthController {
       return this.authService.signup(dto);
     }
 
-    // STAFF precisa passar obrigatoriamente labIds no signup
-    if (!dto.labIds || dto.labIds.length === 0) {
-      throw new ForbiddenException('Você precisa informar os laboratórios do novo usuário');
+    // STAFF precisa informar os labs no signup
+    if (!dto.labs || dto.labs.length === 0) {
+      throw new ForbiddenException(
+        'Você precisa informar os laboratórios do novo usuário',
+      );
     }
 
-    // Verifica se o staff é staff nesses labs
-    const staffLabs = await Promise.all(
-      dto.labIds.map(async (labId) => {
-        const userLab = await this.authService.getUserLab(requesterId, labId);
+    // Verifica se o staff é staff nos labs enviados
+    const allAuthorized = await Promise.all(
+      dto.labs.map(async (lab) => {
+        const userLab = await this.authService.getUserLab(
+          requesterId,
+          lab.labId,
+        );
         return userLab?.isStaff === true;
       }),
     );
 
-    const allAuthorized = staffLabs.every((isStaff) => isStaff === true);
-
-    if (!allAuthorized) {
-      throw new ForbiddenException('Você não tem permissão para adicionar usuários em um ou mais laboratórios informados');
+    if (allAuthorized.some((authorized) => !authorized)) {
+      throw new ForbiddenException(
+        'Você não tem permissão para adicionar usuários em um ou mais laboratórios informados',
+      );
     }
 
     return this.authService.signup(dto);
   }
-
 
   @Post('login')
   async login(

@@ -121,6 +121,9 @@ export class LabsService {
           some: { userId },
         },
       },
+      include: {
+        users: true, // Inclui os vínculos UserLab (com isStaff)
+      },
     });
   }
 }
