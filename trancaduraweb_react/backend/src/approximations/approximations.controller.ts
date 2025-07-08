@@ -2,6 +2,7 @@ import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common'
 import { ApproximationsService } from './approximations.service';
 import { CreateApproximationDto } from './dto/create-approximation.dto';
 import { UpdateApproximationDto } from './dto/update-approximation.dto';
+import { ApproximationAuthDto } from './dto/approximation-auth.dto';
 
 @Controller('approximations')
 export class ApproximationsController {
@@ -30,5 +31,11 @@ export class ApproximationsController {
   @Delete(':id')
   remove(@Param('id') id: number) {
     return this.service.remove(id);
+  }
+
+  @Post('auth')
+  async validate(@Body() dto: ApproximationAuthDto) {
+    const result = await this.service.validateCard(dto);
+    return result;
   }
 }
