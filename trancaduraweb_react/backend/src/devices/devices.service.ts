@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDeviceDto } from './dto/create-device.dto';
 import { UpdateDeviceDto } from './dto/update-device.dto';
 import { randomUUID } from 'crypto';
+import { UpdateDeviceIpDto } from './dto/update-device-ip.dto';
 
 @Injectable()
 export class DevicesService {
@@ -71,5 +72,35 @@ export class DevicesService {
         api_token: newApiToken,
       };
     }
+
+    async setDeviceIp(dto: UpdateDeviceIpDto) {
+      const { deviceId, deviceIp, apiToken } = dto;
+
+      const device = await this.prisma.device.findUnique({
+        where: { uuid: deviceId },
+      });
+
+      if (!device) {
+        throw new UnauthorizedException('device does not exist.');
+      }
+
+      if (device.apiToken !== apiToken) {
+        throw new BadRequestException('api token does not exist.');
+      }
+
+      if (!deviceIp) {
+        throw new BadRequestException('ip not received.');
+      }
+
+      await this.prisma.device.update({
+        where: { uuid: deviceId },
+        data: {
+          ipAddress: deviceIp,
+        },
+      });
+
+      return { message: 'ip received.' };
+    }
+
 
 }
