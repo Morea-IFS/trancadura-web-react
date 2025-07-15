@@ -51,4 +51,13 @@ export class DevicesController {
 
     return accesses;
     }
+
+    @Post('identify')
+    async identifyDevice(@Body('macAddress') macAddress: string) {
+      if (!macAddress) {
+        return { error: 'macAddress é obrigatório' };
+      }
+
+      return this.devicesService.identifyDevice(macAddress);
+    }
 }

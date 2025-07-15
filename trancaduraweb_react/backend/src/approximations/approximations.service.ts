@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateApproximationDto } from './dto/create-approximation.dto';
 import { UpdateApproximationDto } from './dto/update-approximation.dto';
 import { ApproximationAuthDto } from './dto/approximation-auth.dto';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class ApproximationsService {

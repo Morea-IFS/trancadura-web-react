@@ -98,7 +98,7 @@ export class LabsService {
 
     if (device.ipAddress) {
       try {
-        await fetch(`http://${device.ipAddress}:3000/unlock`, {
+        await fetch(`http://${device.ipAddress}/unlock`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId, accessId: access.id }),
