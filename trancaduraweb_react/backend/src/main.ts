@@ -45,7 +45,7 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
   const port = Number(configService.get<string>('PORT')) || 8080;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 
   console.log(`🚀 Server running on http://localhost:${port}/api`);
 }

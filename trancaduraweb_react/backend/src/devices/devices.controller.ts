@@ -3,6 +3,7 @@ import { DevicesService } from './devices.service';
 import { CreateDeviceDto } from './dto/create-device.dto';
 import { UpdateDeviceDto } from './dto/update-device.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { UpdateDeviceIpDto } from './dto/update-device-ip.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth/jwt-auth.guard';
 
 @Controller('devices')
@@ -50,5 +51,19 @@ export class DevicesController {
     });
 
     return accesses;
+    }
+
+    @Post('identify')
+    async identifyDevice(@Body('macAddress') macAddress: string) {
+      if (!macAddress) {
+        return { error: 'macAddress é obrigatório' };
+      }
+
+      return this.devicesService.identifyDevice(macAddress);
+    }
+
+    @Post('ip')
+    async setIp(@Body() body: UpdateDeviceIpDto) {
+      return this.devicesService.setDeviceIp(body);
     }
 }
