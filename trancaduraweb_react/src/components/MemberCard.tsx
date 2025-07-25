@@ -33,60 +33,73 @@ export default function MemberCard({
     }
   };
 
+  const roleName =
+    user.roles?.find((r: any) => r.role?.name)?.role.name?.toLowerCase() ??
+    "aluno";
+
+  console.log(user.roles);
+
+  const roleColors: Record<string, string> = {
+    staff: "bg-blue-200 text-blue-800",
+    superuser: "bg-purple-200 text-purple-800",
+    aluno: "bg-orange-200 text-orange-800",
+  };
+
+  const roleClass =
+    roleColors[roleName.toLowerCase()] || "bg-gray-200 text-gray-800";
+
   return (
     <div className="w-full">
-      <div className="w-full flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 bg-white rounded-lg shadow-md border border-gray-200">
-        <div className="flex flex-col gap-2 items-start">
-          <div className="flex items-center justify-center gap-2">
-            <h2 className="text-sm sm:text-lg md:text-xl">{user.username}</h2>
-
-            <p
-              className={`w-15 text-center text-xs sm:text-sm md:text-base rounded-xl px-2 py-1 ${
-                user.isStaff ? "bg-blue-600 text-white" : "bg-black text-white"
-              }`}
-            >
-              {user.isStaff ? "Staff" : "Aluno"}
-            </p>
-
-            <p
-              className={`w-15 text-center text-xs sm:text-sm md:text-base rounded-xl px-2 py-1 ${
-                user.isActive
-                  ? "bg-green-600 text-white"
-                  : "bg-red-600 text-white"
-              }`}
-            >
-              {user.isActive ? "Ativo" : "Inativo"}
-            </p>
-          </div>
-
-          <div className="text-gray-600 text-xs sm:text-sm md:text-lg">
-            <p>{user.email}</p>
-          </div>
+      <div className="w-full flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-white rounded-lg shadow-md border border-black/5 transition-transform duration-300 hover:scale-[1.01]">
+        {/* Lado esquerdo: nome e email */}
+        <div className="flex flex-col gap-1">
+          <h2 className="text-sm font-bold md:text-lg">{user.username}</h2>
+          <p className="text-xs md:text-sm text-gray-600">{user.email}</p>
         </div>
 
-        {isStaff && (
-          <div className="flex flex-1 justify-end items-center gap-2">
-            <button
-              className="text-sm w-20 cursor-pointer bg-background border border-2 border-gray-200 p-2 rounded-lg shadow-md"
-              onClick={() => setOpen(true)}
-            >
-              Editar
-            </button>
-            <button
-              className={`text-sm w-20 cursor-pointer text-white p-2 rounded-lg shadow-md border border-2 ${
-                user.isActive
-                  ? "bg-red-600 hover:bg-red-700"
-                  : "bg-green-600 hover:bg-green-700"
-              }`}
-              onClick={toggleActiveStatus}
-              disabled={loading}
-            >
-              {loading ? "..." : user.isActive ? "Desativar" : "Ativar"}
-            </button>
-          </div>
-        )}
+        {/* Lado direito: tags */}
+        <div className="flex gap-2 flex-wrap text-xs font-bold">
+          <span
+            className={`px-3 py-1 rounded-lg border border-white/20 backdrop-blur-sm shadow-md ${roleClass}`}
+          >
+            {roleName.charAt(0).toUpperCase() + roleName.slice(1)}
+          </span>
+          <span
+            className={`px-3 py-1 rounded-lg border border-white/20 backdrop-blur-sm shadow-md ${
+              user.isActive
+                ? "bg-green-200 text-green-800"
+                : "bg-red-200 text-red-800"
+            }`}
+          >
+            {user.isActive ? "Ativo" : "Inativo"}
+          </span>
+        </div>
       </div>
 
+      {/* Ações (somente se for staff) */}
+      {isStaff && (
+        <div className="flex gap-2 mt-2 w-full">
+          <button
+            className="w-1/2 text-sm font-bold cursor-pointer bg-background border border-2 border-gray-200 p-2 rounded-lg shadow-md"
+            onClick={() => setOpen(true)}
+          >
+            Editar
+          </button>
+          <button
+            className={`w-1/2 text-sm font-bold cursor-pointer text-white p-2 rounded-lg shadow-md border border-2 ${
+              user.isActive
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-green-600 hover:bg-green-700"
+            }`}
+            onClick={toggleActiveStatus}
+            disabled={loading}
+          >
+            {loading ? "..." : user.isActive ? "Desativar" : "Ativar"}
+          </button>
+        </div>
+      )}
+
+      {/* Modal de edição */}
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg p-8 w-80 sm:w-full max-w-md relative">
