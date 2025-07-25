@@ -144,10 +144,9 @@ export default function Membros() {
             <LuTriangleAlert className="w-10 h-10 md:w-12 md:h-12" />
           </div>
         </div>
-
         {/* Busca e Adicionar Membros */}
-        <div className="w-full flex flex-col gap-2 bg-white rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.25)] p-4">
-          <div className="relative">
+        <div className="w-full flex flex-col md:flex-row gap-2 bg-white rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.25)] p-4">
+          <div className="relative flex-1">
             <input
               type="text"
               placeholder="Inativa por enquanto..."
@@ -157,7 +156,7 @@ export default function Membros() {
 
           {podeGerenciar && (
             <button
-              className="text-sm font-semibold px-4 py-2 bg-gradient-to-r from-green-500 to-lime-300 text-white rounded-md shadow-lg border border-green-600 flex items-center justify-center gap-2 cursor-pointer"
+              className="flex-1 md:w-auto text-sm font-semibold px-4 py-2 bg-gradient-to-r from-green-500 to-lime-300 text-white rounded-md shadow-lg border border-green-600 flex items-center justify-center gap-2 cursor-pointer"
               onClick={() => setOpen(true)}
             >
               <FaPlus className="w-4 h-4" />
