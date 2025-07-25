@@ -106,7 +106,6 @@ export default function MemberCard({
                 username: user.username,
                 email: user.email,
                 status: user.isActive ? "ativo" : "inativo",
-                isStaff: user.isStaff,
               }}
               onClose={() => setOpen(false)}
               onSave={(updatedUser) => {
