@@ -74,4 +74,39 @@ export class UsersService {
       where: { id },
     });
   }
+
+  async linkCardToUser(userId: number, approximationId: number) {
+    // Verifica se já existe o vínculo
+    const existing = await this.prisma.userCard.findUnique({
+      where: {
+        userId_approximationId: {
+          userId,
+          approximationId,
+        },
+      },
+    });
+
+    if (existing) {
+      return { message: 'Cartão já está vinculado a este usuário.' };
+    }
+
+    // Cria o vínculo
+    return this.prisma.userCard.create({
+      data: {
+        userId,
+        approximationId,
+      },
+    });
+  }
+
+  async getUserCards(userId: number) {
+    return this.prisma.userCard.findMany({
+      where: { userId },
+      include: {
+        approximation: true,
+      },
+    });
+  }
+
+
 }

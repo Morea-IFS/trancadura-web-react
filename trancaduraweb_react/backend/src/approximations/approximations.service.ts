@@ -10,10 +10,19 @@ export class ApproximationsService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: CreateApproximationDto) {
+    const existingCard = await this.prisma.approximation.findUnique({
+      where: { cardId: data.cardId },
+    });
+
+    if (existingCard) {
+      return existingCard;
+    }
+
     return await this.prisma.approximation.create({
       data,
     });
   }
+
 
   async findAll() {
     return await this.prisma.approximation.findMany();
