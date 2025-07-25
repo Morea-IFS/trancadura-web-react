@@ -4,6 +4,8 @@ import api from "@/lib/api";
 import { useEffect, useState } from "react";
 import HistoryCard from "@/components/HistoryCard";
 import Header from "@/components/Header";
+
+// Import do icones
 import { FaRegClock } from "react-icons/fa6";
 import { IoLockClosedOutline } from "react-icons/io5";
 import { SlGraph } from "react-icons/sl";
@@ -23,6 +25,7 @@ export default function Home() {
     null
   );
 
+  // Pega os dados do usuário logado
   useEffect(() => {
     api
       .get("/users/me")
@@ -36,6 +39,7 @@ export default function Home() {
       });
   }, []);
 
+  // Pega os acessos do usuário no laboratório selecionado
   useEffect(() => {
     if (!usuarioId || !labSelecionado) return;
     api
@@ -55,6 +59,7 @@ export default function Home() {
       });
   }, [usuarioId, labSelecionado, nomeLabSelecionado]);
 
+  // Pega o nome do laboratório selecionado
   useEffect(() => {
     if (!labSelecionado) return;
     api.get(`/labs/${labSelecionado}`).then((res) => {
@@ -62,6 +67,7 @@ export default function Home() {
     });
   }, [labSelecionado]);
 
+  // Função para desbloquear a tranca
   const handleUnlock = async () => {
     if (!usuarioId) return alert("Usuário não identificado.");
     if (!labSelecionado) return alert("Selecione um laboratório.");
@@ -108,8 +114,9 @@ export default function Home() {
           setLabSelecionado={setLabSelecionado}
         />
       </header>
+
       <section className="p-4 flex flex-col min-w-full gap-6 md:px-40 md:mt-15 md:mb-15">
-        {/* Bem-vindo ao Trancadura Web */}
+        {/* Título */}
         <div className="w-full text-center flex flex-col items-center justify-center gap-2">
           <h1 className="font-bold text-2xl text-center md:text-4xl">
             Bem-vindo, {""}
@@ -126,7 +133,7 @@ export default function Home() {
         {/* Status */}
         <div className="flex flex-col gap-4 font-bold md:flex-row">
           {/* Total de Operações no Laboratório */}
-          <div className="text-white flex items-center justify-between p-4 bg-gradient-to-r from-violet-500 to-fuchsia-300 rounded-lg shadow-md w-full h-20">
+          <div className="text-white flex items-center justify-between p-4 bg-gradient-to-r from-violet-500 to-fuchsia-300 rounded-lg shadow-md w-full h-24">
             <div className="flex items-start justify-center flex-col">
               <div className="text-sm md:text-lg">
                 Total de Operações no Laboratório
@@ -141,7 +148,7 @@ export default function Home() {
           </div>
 
           {/* Taxa de Sucesso */}
-          <div className="text-white flex items-center justify-between p-4 bg-gradient-to-r from-orange-500 to-amber-400 rounded-lg shadow-md w-full h-20">
+          <div className="text-white flex items-center justify-between p-4 bg-gradient-to-r from-orange-500 to-amber-400 rounded-lg shadow-md w-full h-24">
             <div className="flex items-start justify-center flex-col">
               <div className="text-sm md:text-lg">Taxa de Sucesso</div>
               <div className="text-2xl font-bold md:text-3xl">
@@ -160,7 +167,7 @@ export default function Home() {
           </div>
 
           {/* Status do Sistema */}
-          <div className="text-white flex items-center justify-between p-4 bg-gradient-to-r from-green-500 to-lime-300 rounded-lg shadow-md w-full h-20">
+          <div className="text-white flex items-center justify-between p-4 bg-gradient-to-r from-green-500 to-lime-300 rounded-lg shadow-md w-full h-24">
             <div className="flex items-start justify-center flex-col">
               <div className="text-sm md:text-lg">Status do Sistema</div>
               <div className="text-2xl font-bold md:text-3xl">Online</div>
