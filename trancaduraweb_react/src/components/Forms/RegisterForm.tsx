@@ -2,6 +2,27 @@
 
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
+import {
+  Listbox,
+  ListboxButton,
+  ListboxOptions,
+  ListboxOption,
+} from "@headlessui/react";
+import { FiChevronsDown } from "react-icons/fi";
+
+// Import dos Ìcones
+import {
+  IoPersonCircle,
+  IoMailOpenOutline,
+  IoLockClosedOutline,
+} from "react-icons/io5";
+import { HiOutlineStatusOnline } from "react-icons/hi";
+import { LuHotel } from "react-icons/lu";
+
+const statusOptions = [
+  { value: "ativo", label: "Ativo" },
+  { value: "inativo", label: "Inativo" },
+];
 
 interface RegisterFormProps {
   onClose?: () => void;
@@ -19,7 +40,7 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
   const [labsStaff, setLabsStaff] = useState<{ [labId: number]: boolean }>({});
   const [staffRoleId, setStaffRoleId] = useState<number | null>(null);
 
-  // Buscar labs onde o usuário é staff e roleId da role "staff"
+  // Busca os laboratórios do usuário e o ID da role "staff"
   useEffect(() => {
     async function fetchInitialData() {
       try {
@@ -49,6 +70,7 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
     fetchInitialData();
   }, []);
 
+  // Manipula a seleção de laboratórios
   const handleLabSelect = (labId: number) => {
     setSelectedLabs((prev) =>
       prev.includes(labId)
@@ -57,10 +79,12 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
     );
   };
 
+  // Manipula a mudança de permissões de staff por laboratório
   const handleStaffChange = (labId: number, isStaff: boolean) => {
     setLabsStaff((prev) => ({ ...prev, [labId]: isStaff }));
   };
 
+  // Envia o formulário de registro
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -68,7 +92,6 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
     try {
       const isActive = status === "ativo";
 
-      // Criação do usuário
       const response = await api.post("/auth/signup", {
         username,
         email,
@@ -83,14 +106,12 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
       const newUser = response.data.user;
       const userId = newUser.id;
 
-      // Prepara os dados para associação aos labs
       const labsToSend = selectedLabs.map((labId) => ({
         userId,
         labId,
         isStaff: !!labsStaff[labId],
       }));
 
-      // Adiciona usuário aos laboratórios
       if (labsToSend.length > 0) {
         for (const lab of labsToSend) {
           await api.post("/labs/add-users", {
@@ -100,7 +121,6 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
         }
       }
 
-      // Se for staff em algum lab, atribui a role
       const isStaffAnywhere = labsToSend.some((l) => l.isStaff);
       if (isStaffAnywhere && staffRoleId !== null) {
         await api.post("/roles/assign", {
@@ -120,10 +140,15 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
       setLoading(false);
     }
   };
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {/* Nome */}
       <div>
-        <label className="block text-sm font-medium mb-1">Nome</label>
+        <div className="flex items-center gap-1">
+          <IoPersonCircle className="w-4 h-4 text-blue-400" />
+          <label>Nome</label>
+        </div>
         <input
           type="text"
           className="w-full border border-gray-300 rounded-md p-2"
@@ -133,8 +158,12 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
         />
       </div>
 
+      {/* Email */}
       <div>
-        <label className="block text-sm font-medium mb-1">E-mail</label>
+        <div className="flex items-center gap-1">
+          <IoMailOpenOutline className="w-4 h-4 text-blue-400" />
+          <label>E-mail</label>
+        </div>
         <input
           type="email"
           className="w-full border border-gray-300 rounded-md p-2"
@@ -144,8 +173,12 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
         />
       </div>
 
+      {/* Senha */}
       <div>
-        <label className="block text-sm font-medium mb-1">Senha</label>
+        <div className="flex items-center gap-1">
+          <IoLockClosedOutline className="w-4 h-4 text-blue-400" />
+          <label>Senha</label>
+        </div>
         <input
           type="password"
           className="w-full border border-gray-300 rounded-md p-2"
@@ -155,30 +188,51 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
         />
       </div>
 
+      {/* Status */}
       <div>
-        <label className="block text-sm font-medium mb-1">Status</label>
-        <select
-          className="w-full border border-gray-300 rounded-md p-2"
-          value={status}
-          onChange={(e) => setStatus(e.target.value as "ativo" | "inativo")}
-        >
-          <option value="ativo">Ativo</option>
-          <option value="inativo">Inativo</option>
-        </select>
+        <div className="flex items-center gap-1">
+          <HiOutlineStatusOnline className="w-4 h-4 text-blue-400" />
+          <label>Status</label>
+        </div>
+        <Listbox value={status} onChange={setStatus}>
+          <div className="relative mt-1">
+            <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white p-3 text-left text-gray-800 font-semibold border border-gray-300 shadow-sm flex justify-between items-center">
+              {statusOptions.find((opt) => opt.value === status)?.label}
+              <FiChevronsDown className="h-4 w-4 text-gray-600" />
+            </ListboxButton>
+            <ListboxOptions className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white p-2 text-sm shadow-lg ring-1 ring-black/5">
+              {statusOptions.map((opt) => (
+                <ListboxOption
+                  key={opt.value}
+                  value={opt.value}
+                  className={({ selected }) =>
+                    `cursor-pointer select-none p-2 rounded ${
+                      selected ? "bg-teal-200 font-bold" : "hover:bg-gray-100"
+                    }`
+                  }
+                >
+                  {opt.label}
+                </ListboxOption>
+              ))}
+            </ListboxOptions>
+          </div>
+        </Listbox>
       </div>
 
+      {/* Laboratórios */}
       <div>
-        <label className="block text-sm font-medium mb-1">
-          Selecionar Laboratórios
-        </label>
-        <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-1">
+          <LuHotel className="w-4 h-4 text-blue-400" />
+          <label>Selecionar Laboratórios</label>
+        </div>
+        <div className="flex flex-col gap-2 border border-gray-300 rounded-md p-2">
           {labs.map((lab) => (
             <div key={lab.id} className="flex items-center gap-2">
               <input
                 type="checkbox"
+                id={`lab-${lab.id}`}
                 checked={selectedLabs.includes(lab.id)}
                 onChange={() => handleLabSelect(lab.id)}
-                id={`lab-${lab.id}`}
               />
               <label htmlFor={`lab-${lab.id}`}>{lab.name}</label>
             </div>
@@ -186,7 +240,7 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
         </div>
       </div>
 
-      {/* Subcampo para staff em cada lab selecionado */}
+      {/* Permissões Staff por laboratório */}
       {selectedLabs.length > 0 && (
         <div>
           <label className="block text-sm font-medium mb-1">
@@ -195,19 +249,52 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
           <div className="flex flex-col gap-2">
             {selectedLabs.map((labId) => {
               const lab = labs.find((l) => l.id === labId);
+              const currentValue = labsStaff[labId] ? "staff" : "default";
+
               return (
                 <div key={labId} className="flex items-center gap-2">
-                  <span>{lab?.name}</span>
-                  <select
-                    className="border rounded p-1"
-                    value={labsStaff[labId] ? "staff" : "default"}
-                    onChange={(e) =>
-                      handleStaffChange(labId, e.target.value === "staff")
+                  <span className="w-24">{lab?.name}</span>
+                  <Listbox
+                    value={currentValue}
+                    onChange={(val) =>
+                      handleStaffChange(labId, val === "staff")
                     }
                   >
-                    <option value="default">Colaborador</option>
-                    <option value="staff">Staff</option>
-                  </select>
+                    <div className="relative w-full">
+                      <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white p-2 text-left text-gray-800 font-semibold border border-gray-300 shadow-sm flex justify-between items-center">
+                        {currentValue === "staff" ? "Staff" : "Colaborador"}
+                        <FiChevronsDown className="h-4 w-4 text-gray-600" />
+                      </ListboxButton>
+
+                      <ListboxOptions className="absolute z-50 mt-1 max-h-40 w-full overflow-auto rounded-md bg-white p-1 text-sm shadow-lg">
+                        <ListboxOption
+                          value="default"
+                          className={({ selected }) =>
+                            `cursor-pointer select-none rounded p-2 ${
+                              selected
+                                ? "bg-teal-200 font-bold"
+                                : "hover:bg-gray-100"
+                            }`
+                          }
+                        >
+                          Colaborador
+                        </ListboxOption>
+
+                        <ListboxOption
+                          value="staff"
+                          className={({ selected }) =>
+                            `cursor-pointer select-none rounded p-2 ${
+                              selected
+                                ? "bg-teal-200 font-bold"
+                                : "hover:bg-gray-100"
+                            }`
+                          }
+                        >
+                          Staff
+                        </ListboxOption>
+                      </ListboxOptions>
+                    </div>
+                  </Listbox>
                 </div>
               );
             })}
@@ -215,11 +302,12 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
         </div>
       )}
 
-      <div className="flex justify-end gap-2 mt-4">
+      {/* Botões */}
+      <div className="flex gap-2 mt-4">
         {onClose && (
           <button
             type="button"
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+            className="w-1/2 px-4 py-2 bg-white border border-black/10 text-gray-700 rounded-md cursor-pointer"
             onClick={onClose}
             disabled={loading}
           >
@@ -228,7 +316,7 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
         )}
         <button
           type="submit"
-          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+          className="w-1/2 px-4 py-2 bg-gradient-to-r from-green-500 border border-black/10 to-lime-300 text-white rounded-md cursor-pointer"
           disabled={loading}
         >
           {loading ? "Registrando..." : "Registrar"}

@@ -50,15 +50,13 @@ export default function MemberCard({
 
   return (
     <div className="w-full">
-      <div className="w-full flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-white rounded-lg shadow-md border border-black/5 transition-transform duration-300 hover:scale-[1.01]">
-        {/* Lado esquerdo: nome e email */}
+      <div className="w-full flex justify-between items-start sm:items-center gap-4 p-4 bg-white rounded-lg shadow-md border border-black/5 transition-transform duration-300 hover:scale-[1.01]">
         <div className="flex flex-col gap-1">
           <h2 className="text-sm font-bold md:text-lg">{user.username}</h2>
           <p className="text-xs md:text-sm text-gray-600">{user.email}</p>
         </div>
 
-        {/* Lado direito: tags */}
-        <div className="flex gap-2 flex-wrap text-xs font-bold">
+        <div className="flex gap-2 text-xs font-bold justify-end">
           <span
             className={`px-3 py-1 rounded-lg border border-white/20 backdrop-blur-sm shadow-md ${roleClass}`}
           >
@@ -76,7 +74,7 @@ export default function MemberCard({
         </div>
       </div>
 
-      {/* Ações (somente se for staff) */}
+      {/* Ações */}
       {isStaff && (
         <div className="flex gap-2 mt-2 w-full">
           <button
