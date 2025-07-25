@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import MemberCard from "@/components/MemberCard";
 import RegisterForm from "@/components/Forms/RegisterForm";
+
+// Import dos ícones
 import { IoPeopleSharp } from "react-icons/io5";
 import { CiCircleCheck } from "react-icons/ci";
 import { LuTriangleAlert } from "react-icons/lu";
@@ -18,6 +20,7 @@ export default function Membros() {
   const [isSuperuser, setIsSuperuser] = useState(false);
   const [labSelecionado, setLabSelecionado] = useState<number | null>(null);
 
+  // Estado para armazenar os laboratórios do usuário
   useEffect(() => {
     async function fetchRoles() {
       try {
@@ -52,6 +55,7 @@ export default function Membros() {
     fetchRoles();
   }, [labSelecionado]);
 
+  // Busca os laboratórios do usuário
   useEffect(() => {
     if (!labSelecionado) {
       setUsers([]);
@@ -68,12 +72,14 @@ export default function Membros() {
       });
   }, [labSelecionado]);
 
+  // Função para atualizar o usuário na lista
   function handleUserUpdate(updatedUser: any) {
     setUsers((prevUsers) =>
       prevUsers.map((user) => (user.id === updatedUser.id ? updatedUser : user))
     );
   }
 
+  // Função para adicionar um novo usuário à lista
   function handleUserAdd(newUser: any) {
     setUsers((prevUsers) => [...prevUsers, newUser]);
   }
@@ -83,7 +89,6 @@ export default function Membros() {
   const total = users.length;
   const ativos = users.filter((u) => u.isActive).length;
   const inativos = total - ativos;
-  const porcentagem = total > 0 ? Math.round((ativos / total) * 100) : 0;
 
   return (
     <div>
@@ -140,7 +145,7 @@ export default function Membros() {
           </div>
         </div>
 
-        {/* Busca e e Adicionar Membros */}
+        {/* Busca e Adicionar Membros */}
         <div className="w-full flex flex-col gap-2 bg-white rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.25)] p-4">
           <div className="relative">
             <input
