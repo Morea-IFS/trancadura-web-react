@@ -10,10 +10,19 @@ export class ApproximationsService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: CreateApproximationDto) {
+    const existingCard = await this.prisma.approximation.findUnique({
+      where: { cardId: data.cardId },
+    });
+
+    if (existingCard) {
+      return existingCard;
+    }
+
     return await this.prisma.approximation.create({
       data,
     });
   }
+
 
   async findAll() {
     return await this.prisma.approximation.findMany();
@@ -45,85 +54,54 @@ export class ApproximationsService {
   async validateCard(dto: ApproximationAuthDto) {
     const { hexid, macaddress } = dto;
 
-    // Verifica se o cartão existe
+    // 1. Verifica se o cartão existe
     let card = await this.prisma.approximation.findUnique({
       where: { cardId: hexid },
     });
 
-    // Se não existir, cria um novo cartão com permission: false
     if (!card) {
-      card = await this.prisma.approximation.create({
+      await this.prisma.approximation.create({
         data: {
           cardId: hexid,
           permission: false,
         },
       });
-      return {
-        message: 'Card criado, mas ainda não autorizado.',
-        status: 404,
-      };
+      return "Unauthorized";
     }
 
-    // Se o cartão não tem permissão
+    // 2. Verifica permissão do cartão
     if (!card.permission) {
-      return {
-        message: 'Cartão encontrado, mas sem permissão.',
-        status: 403,
-      };
+      return "Unauthorized";
     }
 
-    // Verifica se o dispositivo existe
+    // 3. Verifica o dispositivo
     const device = await this.prisma.device.findUnique({
       where: { macAddress: macaddress },
     });
 
-    if (!device) {
-      return {
-        message: 'Dispositivo não encontrado.',
-        status: 404,
-      };
-    }
+    if (!device) return "Unauthorized";
 
-    // Busca a role do dispositivo
+    // 4. Verifica role do dispositivo
     const deviceRole = await this.prisma.deviceRole.findFirst({
       where: { deviceId: device.id },
     });
+    if (!deviceRole) return "Unauthorized";
 
-    if (!deviceRole) {
-      return {
-        message: 'Dispositivo não possui role associada.',
-        status: 403,
-      };
-    }
-
-    // Busca o usuário vinculado ao cartão
+    // 5. Verifica o usuário vinculado ao cartão
     const userCard = await this.prisma.userCard.findFirst({
       where: { approximationId: card.id },
     });
+    if (!userCard) return "Unauthorized";
 
-    if (!userCard) {
-      return {
-        message: 'Cartão sem usuário associado.',
-        status: 403,
-      };
-    }
-
-    // Busca a role do usuário
     const userRole = await this.prisma.userRole.findFirst({
       where: { userId: userCard.userId },
     });
+    if (!userRole) return "Unauthorized";
 
-    if (!userRole) {
-      return {
-        message: 'Usuário não possui role associada.',
-        status: 403,
-      };
-    }
-
-    // Compara roles
+    // 6. Compara roles
     const isAuthorized = userRole.roleId === deviceRole.roleId;
 
-    // Salva tentativa de acesso
+    // 7. Registra tentativa de acesso
     await this.prisma.userAccess.create({
       data: {
         userId: userCard.userId,
@@ -132,11 +110,8 @@ export class ApproximationsService {
       },
     });
 
-    return {
-      message: isAuthorized ? 'Acesso autorizado.' : 'Acesso não autorizado.',
-      authorized: isAuthorized,
-      status: isAuthorized ? 200 : 403,
-    };
+    return isAuthorized ? "Authorized" : "Unauthorized";
   }
+
 
 }
