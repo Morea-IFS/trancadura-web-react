@@ -6,6 +6,9 @@ import HistoryCard from "@/components/HistoryCard";
 import Header from "@/components/Header";
 import { FaRegClock } from "react-icons/fa6";
 import { IoLockClosedOutline } from "react-icons/io5";
+import { SlGraph } from "react-icons/sl";
+import { CiDiscount1 } from "react-icons/ci";
+import { HiOutlineStatusOnline } from "react-icons/hi";
 
 export default function Home() {
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
@@ -40,7 +43,6 @@ export default function Home() {
       .then((res) => {
         const filtrados = res.data
           .filter((item: any) => item.userId === usuarioId)
-          .slice(0, 3)
           .map((item: any) => ({
             ...item,
             nomeLab: nomeLabSelecionado,
@@ -106,60 +108,113 @@ export default function Home() {
           setLabSelecionado={setLabSelecionado}
         />
       </header>
-      <section className="p-4">
-        <div className="w-full mx-auto max-w-4xl p-4 flex items-center justify-center flex-col gap-1">
-          <h1 className="font-bold text-2xl sm:text-4xl">
-            Bem vindo, {username ? username : "usuário"}
+      <section className="p-4 flex flex-col min-w-full gap-6 md:px-40 md:mt-15 md:mb-15">
+        {/* Bem-vindo ao Trancadura Web */}
+        <div className="w-full text-center flex flex-col items-center justify-center gap-2">
+          <h1 className="font-bold text-2xl text-center md:text-4xl">
+            Bem-vindo, {""}
+            <span className="bg-gradient-to-r from-blue-800 to-teal-500 bg-clip-text text-transparent">
+              {username ? username : "Usuário Desconhecido"}
+            </span>
           </h1>
-          <p className="font-bold text-base sm:text-lg text-gray-600">
-            Use o botão abaixo para controlar a tranca
+          <p className="text-sm md:text-lg">
+            Controle sua tranca eletrônica de forma segura e inteligente. Todas
+            as operações são monitoradas e registradas.
           </p>
         </div>
 
-        <div className="flex items-center justify-center w-full">
-          <div className="flex flex-col gap-4 items-center justify-center w-88 p-12 bg-white rounded-lg shadow-md border border-gray-200">
-            <button
-              onClick={handleUnlock}
-              disabled={loading}
-              className={`cursor-pointer text-white p-8 rounded-full flex flex-col gap-4 items-center justify-center transition duration-200 hover:scale-105 active:scale-105 disabled:opacity-50 ${
-                ultimoStatus === "autorizado"
-                  ? "bg-green-500"
-                  : ultimoStatus === "negado"
-                  ? "bg-red-500"
-                  : "bg-foreground"
-              }`}
-            >
-              <IoLockClosedOutline className="w-16 h-16" />
-              <span className="inline text-xl font-bold">
-                {loading ? "Enviando..." : "Abrir tranca"}
-              </span>
-            </button>
+        {/* Status */}
+        <div className="flex flex-col gap-4 font-bold md:flex-row">
+          {/* Total de Operações no Laboratório */}
+          <div className="text-white flex items-center justify-between p-4 bg-gradient-to-r from-violet-500 to-fuchsia-300 rounded-lg shadow-md w-full h-20">
+            <div className="flex items-start justify-center flex-col">
+              <div className="text-sm md:text-lg">
+                Total de Operações no Laboratório
+              </div>
+              <div className="text-2xl font-bold md:text-3xl">
+                {acessos.length > 0 ? `${acessos.length}` : "0"}
+              </div>
+            </div>
+            <div>
+              <SlGraph className="w-12 h-12" />
+            </div>
+          </div>
 
-            <div className="text-gray-600 text-sm w-full text-center">
-              <p>
-                Toque no botão para abrir a tranca <br /> A operação será
-                registrada
-              </p>
+          {/* Taxa de Sucesso */}
+          <div className="text-white flex items-center justify-between p-4 bg-gradient-to-r from-orange-500 to-amber-400 rounded-lg shadow-md w-full h-20">
+            <div className="flex items-start justify-center flex-col">
+              <div className="text-sm md:text-lg">Taxa de Sucesso</div>
+              <div className="text-2xl font-bold md:text-3xl">
+                {acessos.length > 0
+                  ? `${Math.round(
+                      (acessos.filter((a) => a.permission === true).length /
+                        acessos.length) *
+                        100
+                    )}%`
+                  : "0%"}
+              </div>
+            </div>
+            <div>
+              <CiDiscount1 className="w-12 h-12" />
+            </div>
+          </div>
+
+          {/* Status do Sistema */}
+          <div className="text-white flex items-center justify-between p-4 bg-gradient-to-r from-green-500 to-lime-300 rounded-lg shadow-md w-full h-20">
+            <div className="flex items-start justify-center flex-col">
+              <div className="text-sm md:text-lg">Status do Sistema</div>
+              <div className="text-2xl font-bold md:text-3xl">Online</div>
+            </div>
+            <div>
+              <HiOutlineStatusOnline className="w-12 h-12" />
             </div>
           </div>
         </div>
-      </section>
 
-      <section className="p-4 md:w-[70%] mx-auto">
-        <div className="p-4 w-full flex items-start justify-center flex-col gap-2 bg-white rounded-lg shadow-md border border-gray-200">
-          <div className="flex gap-2 items-center">
-            <FaRegClock className="w-4 h-4 sm:w-6 sm:h-6 text-foreground font-bold" />
-            <p className="text-lg sm:text-2xl font-bold">Operações Recentes</p>
+        {/* Tranca */}
+        <div className="flex flex-col gap-4 items-center justify-center w-full p-12 bg-white rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.25)]">
+          <button
+            onClick={handleUnlock}
+            disabled={loading}
+            className={`cursor-pointer text-white p-8 rounded-full flex flex-col gap-4 items-center justify-center transition duration-200 hover:scale-105 active:scale-105 disabled:opacity-50 ${
+              ultimoStatus === "autorizado"
+                ? "bg-gradient-to-r from-green-500 to-lime-300"
+                : ultimoStatus === "negado"
+                ? "bg-gradient-to-r from-red-700 to-rose-300"
+                : "bg-gradient-to-r from-blue-800 to-teal-500"
+            }`}
+          >
+            <IoLockClosedOutline className="w-16 h-16" />
+            <span className="inline text-xl font-bold">
+              {loading ? "Enviando..." : "Abrir tranca"}
+            </span>
+          </button>
+
+          <div className="text-sm w-full text-center md:text-lg">
+            <p>
+              Toque no botão para abrir a tranca <br /> A operação será
+              registrada
+            </p>
           </div>
-          <div className="text-gray-600 text-base sm:text-lg">
-            <p>Suas últimas operações</p>
+        </div>
+
+        {/* Operações Recentes */}
+        <div className="p-4 w-full flex items-start justify-center flex-col gap-2 bg-white rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.25)]">
+          <div className="flex gap-2 items-center">
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-violet-500 to-fuchsia-300 text-white font-bold rounded-md flex items-center justify-center">
+              <FaRegClock className="w-4 h-4 md:w-6 md:h-6 stroke-[2]" />
+            </div>
+            <p className="text-lg font-bold md:text-2xl">Operações Recentes</p>
+          </div>
+          <div className="text-sm md:text-lg">
+            <p>Suas últimas tentaticas de abertura</p>
           </div>
           {acessos.length > 0 ? (
-            acessos.map((item) => <HistoryCard key={item.id} acesso={item} />)
+            acessos
+              .slice(0, 3)
+              .map((item) => <HistoryCard key={item.id} acesso={item} />)
           ) : (
-            <p className="text-gray-500 text-sm mt-4">
-              Nenhum acesso encontrado.
-            </p>
+            <p className="text-sm mt-4">Nenhum acesso encontrado.</p>
           )}
         </div>
       </section>
