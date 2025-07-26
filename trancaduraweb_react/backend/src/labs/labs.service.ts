@@ -22,7 +22,7 @@ export class LabsService {
       include: {
         users: {
           include: {
-            user: true, // Inclui dados do usuário
+            user: true,
           },
         },
       },
@@ -122,7 +122,7 @@ export class LabsService {
         },
       },
       include: {
-        users: true, // Inclui os vínculos UserLab (com isStaff)
+        users: true,
       },
     });
   }
