@@ -9,13 +9,7 @@ import {
   ListboxOption,
 } from "@headlessui/react";
 import { FiChevronsDown } from "react-icons/fi";
-
-// Import dos Ìcones
-import {
-  IoPersonCircle,
-  IoMailOpenOutline,
-  IoLockClosedOutline,
-} from "react-icons/io5";
+import { IoPersonCircle, IoMailOpenOutline, IoLockClosedOutline } from "react-icons/io5";
 import { HiOutlineStatusOnline } from "react-icons/hi";
 import { LuHotel } from "react-icons/lu";
 
@@ -30,47 +24,31 @@ interface RegisterFormProps {
 }
 
 export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [status, setStatus] = useState<"ativo" | "inativo">("ativo");
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+    status: "ativo" as "ativo" | "inativo",
+  });
   const [loading, setLoading] = useState(false);
   const [labs, setLabs] = useState<{ id: number; name: string }[]>([]);
   const [selectedLabs, setSelectedLabs] = useState<number[]>([]);
   const [labsStaff, setLabsStaff] = useState<{ [labId: number]: boolean }>({});
-  const [staffRoleId, setStaffRoleId] = useState<number | null>(null);
+  const [error, setError] = useState("");
 
-  // Busca os laboratórios do usuário e o ID da role "staff"
+  // Busca os laboratórios disponíveis
   useEffect(() => {
-    async function fetchInitialData() {
+    async function fetchLabs() {
       try {
-        const userRes = await api.get("/users/me");
-        const userId = userRes.data.userId;
-
-        const labsRes = await api.get("/labs/me");
-        const labsStaffOnly = labsRes.data.filter((lab: any) =>
-          lab.users?.some((u: any) => u.userId === userId && u.isStaff)
-        );
-        setLabs(labsStaffOnly);
-
-        const rolesRes = await api.get("/roles");
-        const staffRole = rolesRes.data.find(
-          (role: any) => role.name === "staff"
-        );
-        if (staffRole) {
-          setStaffRoleId(staffRole.id);
-        } else {
-          console.warn("Role 'staff' não encontrada");
-        }
+        const res = await api.get("/labs/me");
+        setLabs(res.data);
       } catch (err) {
-        console.error("Erro ao buscar dados iniciais:", err);
+        console.error("Erro ao carregar laboratórios:", err);
       }
     }
-
-    fetchInitialData();
+    fetchLabs();
   }, []);
 
-  // Manipula a seleção de laboratórios
   const handleLabSelect = (labId: number) => {
     setSelectedLabs((prev) =>
       prev.includes(labId)
@@ -79,63 +57,44 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
     );
   };
 
-  // Manipula a mudança de permissões de staff por laboratório
   const handleStaffChange = (labId: number, isStaff: boolean) => {
     setLabsStaff((prev) => ({ ...prev, [labId]: isStaff }));
   };
 
-  // Envia o formulário de registro
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
     try {
-      const isActive = status === "ativo";
+      // Validação básica
+      if (!formData.username || !formData.email || !formData.password) {
+        setError("Preencha todos os campos obrigatórios");
+        return;
+      }
 
       const response = await api.post("/auth/signup", {
-        username,
-        email,
-        password,
-        isActive,
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        isActive: formData.status === "ativo",
         labs: selectedLabs.map((labId) => ({
           labId,
           isStaff: !!labsStaff[labId],
         })),
       });
 
-      const newUser = response.data.user;
-      const userId = newUser.id;
-
-      const labsToSend = selectedLabs.map((labId) => ({
-        userId,
-        labId,
-        isStaff: !!labsStaff[labId],
-      }));
-
-      if (labsToSend.length > 0) {
-        for (const lab of labsToSend) {
-          await api.post("/labs/add-users", {
-            labId: lab.labId,
-            users: [{ userId, isStaff: lab.isStaff }],
-          });
-        }
-      }
-
-      const isStaffAnywhere = labsToSend.some((l) => l.isStaff);
-      if (isStaffAnywhere && staffRoleId !== null) {
-        await api.post("/roles/assign", {
-          userId,
-          roleId: staffRoleId,
-        });
-      }
-
-      if (onSave) onSave(newUser);
+      if (onSave) onSave(response.data);
       if (onClose) onClose();
+
     } catch (error: any) {
-      console.error(
-        "Erro ao registrar usuário:",
-        error.response?.data || error.message
-      );
+      console.error("Erro no registro:", error);
+      setError(error.response?.data?.message || "Erro ao registrar usuário");
     } finally {
       setLoading(false);
     }
@@ -143,6 +102,8 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {error && <div className="text-red-500 text-sm">{error}</div>}
+
       {/* Nome */}
       <div>
         <div className="flex items-center gap-1">
@@ -151,10 +112,11 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
         </div>
         <input
           type="text"
+          name="username"
           className="w-full border border-gray-300 rounded-md p-2"
           placeholder="Nome do usuário"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          value={formData.username}
+          onChange={handleChange}
         />
       </div>
 
@@ -166,10 +128,11 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
         </div>
         <input
           type="email"
+          name="email"
           className="w-full border border-gray-300 rounded-md p-2"
           placeholder="E-mail"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={formData.email}
+          onChange={handleChange}
         />
       </div>
 
@@ -181,10 +144,11 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
         </div>
         <input
           type="password"
+          name="password"
           className="w-full border border-gray-300 rounded-md p-2"
           placeholder="Senha"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          value={formData.password}
+          onChange={handleChange}
         />
       </div>
 
@@ -194,10 +158,13 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
           <HiOutlineStatusOnline className="w-4 h-4 text-blue-400" />
           <label>Status</label>
         </div>
-        <Listbox value={status} onChange={setStatus}>
+        <Listbox 
+          value={formData.status} 
+          onChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+        >
           <div className="relative mt-1">
             <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white p-3 text-left text-gray-800 font-semibold border border-gray-300 shadow-sm flex justify-between items-center">
-              {statusOptions.find((opt) => opt.value === status)?.label}
+              {statusOptions.find((opt) => opt.value === formData.status)?.label}
               <FiChevronsDown className="h-4 w-4 text-gray-600" />
             </ListboxButton>
             <ListboxOptions className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white p-2 text-sm shadow-lg ring-1 ring-black/5">
@@ -227,14 +194,14 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
         </div>
         <div className="flex flex-col gap-2 border border-gray-300 rounded-md p-2">
           {labs.map((lab) => (
-            <div key={lab.id} className="flex items-center gap-2">
+            <div key={`lab-${lab.id}`} className="flex items-center gap-2"> {/* Adicionei a key aqui */}
               <input
                 type="checkbox"
-                id={`lab-${lab.id}`}
+                id={`lab-checkbox-${lab.id}`}
                 checked={selectedLabs.includes(lab.id)}
                 onChange={() => handleLabSelect(lab.id)}
               />
-              <label htmlFor={`lab-${lab.id}`}>{lab.name}</label>
+              <label htmlFor={`lab-checkbox-${lab.id}`}>{lab.name}</label>
             </div>
           ))}
         </div>
@@ -252,13 +219,11 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
               const currentValue = labsStaff[labId] ? "staff" : "default";
 
               return (
-                <div key={labId} className="flex items-center gap-2">
+                <div key={`staff-${labId}`} className="flex items-center gap-2">
                   <span className="w-24">{lab?.name}</span>
                   <Listbox
                     value={currentValue}
-                    onChange={(val) =>
-                      handleStaffChange(labId, val === "staff")
-                    }
+                    onChange={(val) => handleStaffChange(labId, val === "staff")}
                   >
                     <div className="relative w-full">
                       <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white p-2 text-left text-gray-800 font-semibold border border-gray-300 shadow-sm flex justify-between items-center">
@@ -271,9 +236,7 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
                           value="default"
                           className={({ selected }) =>
                             `cursor-pointer select-none rounded p-2 ${
-                              selected
-                                ? "bg-teal-200 font-bold"
-                                : "hover:bg-gray-100"
+                              selected ? "bg-teal-200 font-bold" : "hover:bg-gray-100"
                             }`
                           }
                         >
@@ -284,9 +247,7 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
                           value="staff"
                           className={({ selected }) =>
                             `cursor-pointer select-none rounded p-2 ${
-                              selected
-                                ? "bg-teal-200 font-bold"
-                                : "hover:bg-gray-100"
+                              selected ? "bg-teal-200 font-bold" : "hover:bg-gray-100"
                             }`
                           }
                         >

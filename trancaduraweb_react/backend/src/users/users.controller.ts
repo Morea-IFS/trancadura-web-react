@@ -73,8 +73,22 @@ export class UsersController {
   // }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.findOne(id);
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    const user = await this.usersService.findOne(id);
+    const roles = await this.prisma.userRole.findMany({
+      where: { userId: id },
+      include: { role: true }
+    });
+    const labs = await this.prisma.userLab.findMany({
+      where: { userId: id },
+      include: { lab: true }
+    });
+    
+    return {
+      ...user,
+      roles,
+      labs: labs.map(l => ({ ...l.lab, isStaff: l.isStaff }))
+    };
   }
 
   @Patch(':id')

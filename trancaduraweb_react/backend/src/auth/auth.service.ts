@@ -9,26 +9,48 @@ import { UsersService } from '../users/users.service';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { SignupDto } from './dto/signup.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { User } from '@prisma/client';
+
+interface LoginResponse {
+  access_token: string;
+  user: {
+    id: number;
+    username: string;
+    email: string;
+    isActive: boolean;
+  };
+}
+
+interface SignupResponse {
+  user: {
+    id: number;
+    username: string;
+    email: string;
+    isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  access_token: string;
+}
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-    public prisma: PrismaService,
+    private readonly prisma: PrismaService,
   ) {}
 
-  async validateUser(username: string, password: string): Promise<any> {
+  async validateUser(username: string, password: string): Promise<Omit<User, 'password'> | null> {
     const user = await this.usersService.findByUsername(username);
     if (user && (await bcrypt.compare(password, user.password))) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = user;
       return result;
     }
     return null;
   }
 
-  async login(dto: LoginAuthDto) {
+  async login(dto: LoginAuthDto): Promise<LoginResponse> {
     const user =
       (await this.usersService.findByUsername(dto.username)) ||
       (await this.usersService.findByEmail(dto.username));
@@ -41,21 +63,26 @@ export class AuthService {
       where: { userId: user.id },
       include: { role: true },
     });
-    const roleNames = roles.map((r) => r.role.name);
 
     const payload = {
       sub: user.id,
       username: user.username,
       email: user.email,
-      roles: roleNames, // Adiciona os roles ao payload
+      roles: roles.map((r) => r.role.name),
     };
 
     return {
       access_token: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        isActive: user.isActive,
+      },
     };
   }
 
-  async signup(dto: SignupDto) {
+  async signup(dto: SignupDto): Promise<SignupResponse> {
     const existingUser = await this.usersService.findByEmail(dto.email);
     if (existingUser) {
       throw new ConflictException('Email já cadastrado');
@@ -72,34 +99,27 @@ export class AuthService {
 
     if (dto.labs?.length) {
       const labIds = dto.labs.map((l) => l.labId);
-
       const existingLabs = await this.prisma.lab.findMany({
         where: { id: { in: labIds } },
-        select: { id: true },
       });
 
-      const existingLabIds = existingLabs.map((lab) => lab.id);
-      const invalidLabIds = labIds.filter((id) => !existingLabIds.includes(id));
-
-      if (invalidLabIds.length > 0) {
+      if (existingLabs.length !== dto.labs.length) {
+        const existingLabIds = existingLabs.map((lab) => lab.id);
+        const invalidLabIds = labIds.filter((id) => !existingLabIds.includes(id));
         throw new ConflictException(
-          `Os seguintes labs não existem: ${invalidLabIds.join(', ')}`,
+          `Laboratórios não encontrados: ${invalidLabIds.join(', ')}`,
         );
       }
 
-      const createManyData = dto.labs.map((lab) => ({
-        userId: newUser.id,
-        labId: lab.labId,
-        isStaff: lab.isStaff ?? false,
-      }));
-
       await this.prisma.userLab.createMany({
-        data: createManyData,
+        data: dto.labs.map((lab) => ({
+          userId: newUser.id,
+          labId: lab.labId,
+          isStaff: lab.isStaff ?? false,
+        })),
         skipDuplicates: true,
       });
     }
-
-    const { password, ...userWithoutPassword } = newUser;
 
     const payload = {
       sub: newUser.id,
@@ -108,7 +128,14 @@ export class AuthService {
     };
 
     return {
-      user: userWithoutPassword,
+      user: {
+        id: newUser.id,
+        username: newUser.username,
+        email: newUser.email,
+        isActive: newUser.isActive,
+        createdAt: newUser.createdAt,
+        updatedAt: newUser.updatedAt,
+      },
       access_token: this.jwtService.sign(payload),
     };
   }

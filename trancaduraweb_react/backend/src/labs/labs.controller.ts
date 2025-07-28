@@ -77,6 +77,13 @@ export class LabsController {
     return this.labsService.addUsersToLab(dto);
   }
 
+  @Post('remove-users')
+  async removeUsersFromLab(
+    @Body() dto: { labIds: number[], userId: number }
+  ) {
+    return this.labsService.removeUsersFromLab(dto);
+  }
+
   @Post('unlock/:labId')
   @UseGuards(JwtAuthGuard)
   unlock(@Param('labId') labId: number, @Req() req) {

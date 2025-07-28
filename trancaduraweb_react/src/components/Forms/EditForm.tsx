@@ -109,19 +109,28 @@ export default function EditForm({
 
     setLoading(true);
     try {
+      // 1. Atualiza os dados básicos do usuário
       await api.patch(`/users/${initialData.id}`, {
         username,
         email,
         password: password || undefined,
-        isActive: status === "ativo",
+        isActive: status === "ativo", // Garanta que isso está correto
       });
 
+      // 2. Atualiza as associações com laboratórios
       const labsToSend = selectedLabs.map((labId) => ({
         userId: initialData.id!,
         labId,
         isStaff: !!labsStaff[labId],
       }));
 
+      // Primeiro remove todas as associações existentes (opcional)
+      await api.post("/labs/remove-users", {
+        labIds: selectedLabs,
+        userId: initialData.id,
+      });
+
+      // Depois adiciona as novas associações
       for (const lab of labsToSend) {
         await api.post("/labs/add-users", {
           labId: lab.labId,
@@ -129,15 +138,42 @@ export default function EditForm({
         });
       }
 
+      // 3. Atualiza a role staff
       const isStaffAnywhere = labsToSend.some((l) => l.isStaff);
-      if (isStaffAnywhere && staffRoleId !== null) {
-        await api.post("/roles/assign", {
-          userId: initialData.id,
-          roleId: staffRoleId,
-        });
+      if (staffRoleId !== null) {
+        if (isStaffAnywhere) {
+          await api.post("/roles/assign", {
+            userId: initialData.id,
+            roleId: staffRoleId,
+          });
+        } else {
+          // Remove a role staff se não for staff em nenhum lab
+          await api.delete("/roles/remove", {
+            data: {
+              userId: initialData.id,
+              roleId: staffRoleId,
+            },
+          });
+        }
       }
 
-      if (onSave) onSave({ id: initialData.id, username, email });
+      // 4. Atualiza o usuário no estado local
+      if (onSave) {
+        onSave({ 
+          id: initialData.id, 
+          username, 
+          email,
+          isActive: status === "ativo",
+          labs: labsToSend.map(l => ({
+            id: l.labId,
+            isStaff: l.isStaff
+          })),
+          roles: isStaffAnywhere 
+            ? [{ role: { name: "staff" } }] 
+            : []
+        });
+      }
+      
       if (onClose) onClose();
     } catch (err) {
       console.error("Erro ao salvar alterações:", err);

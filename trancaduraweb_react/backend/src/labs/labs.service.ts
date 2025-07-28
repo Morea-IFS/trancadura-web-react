@@ -114,6 +114,15 @@ export class LabsService {
     };
   }
 
+  async removeUsersFromLab(dto: { labIds: number[], userId: number }) {
+    return this.prisma.userLab.deleteMany({
+      where: {
+        userId: dto.userId,
+        labId: { in: dto.labIds }
+      }
+    });
+  }
+
   async getLabsByUser(userId: number) {
     return this.prisma.lab.findMany({
       where: {

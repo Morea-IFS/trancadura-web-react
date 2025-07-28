@@ -37,6 +37,22 @@ export class RolesService {
     });
   }
 
+  async removeRoleFromUser(dto: { userId: number, roleId: number }) {
+    try {
+      return await this.prisma.userRole.delete({
+        where: {
+          userId_roleId: {
+            userId: dto.userId,
+            roleId: dto.roleId
+          }
+        }
+      });
+    } catch (error) {
+      console.error("Erro ao remover role do usuário:", error);
+      throw new NotFoundException("Relação usuário-role não encontrada");
+    }
+  }
+
   // src/roles/roles.service.ts
   async assignRoleToUser(dto: AssignRoleDto) {
     const { userId, roleId } = dto;

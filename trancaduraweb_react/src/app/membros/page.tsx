@@ -61,13 +61,22 @@ export default function Membros() {
       setUsers([]);
       return;
     }
-    api
-      .get(`/labs/${labSelecionado}`)
-      .then((res) => {
-        setUsers(res.data.users?.map((u: any) => u.user) || []);
+    
+    api.get(`/labs/${labSelecionado}`)
+      .then(async (res) => {
+        const usersWithDetails = await Promise.all(
+          res.data.users?.map(async (u: any) => {
+            const userRes = await api.get(`/users/${u.userId}`);
+            return {
+              ...userRes.data,
+              labs: userRes.data.labs?.filter((lab: any) => lab.id === labSelecionado)
+            };
+          }) || []
+        );
+        setUsers(usersWithDetails);
       })
       .catch((err) => {
-        console.error("Erro ao buscar usuários do laboratório:", err);
+        console.error("Erro ao buscar usuários:", err);
         setUsers([]);
       });
   }, [labSelecionado]);
@@ -189,6 +198,7 @@ export default function Membros() {
                 user={user}
                 isStaff={podeGerenciar}
                 onUpdate={handleUserUpdate}
+                labId={labSelecionado}
               />
             ))
           ) : (
