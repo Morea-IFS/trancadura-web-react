@@ -33,6 +33,13 @@ export class RolesController {
     return this.rolesService.remove(id);
   }
 
+  @Delete('remove')
+  async removeRoleFromUser(
+    @Body() dto: { userId: number, roleId: number }
+  ) {
+    return this.rolesService.removeRoleFromUser(dto);
+  }
+
   // src/roles/roles.controller.ts
   @Post('assign')
   assignRoleToUser(@Body() dto: AssignRoleDto) {

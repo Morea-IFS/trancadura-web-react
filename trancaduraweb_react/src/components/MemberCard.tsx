@@ -8,10 +8,12 @@ export default function MemberCard({
   user,
   isStaff,
   onUpdate,
+  labId,
 }: {
   user: any;
   isStaff: boolean;
   onUpdate?: (updatedUser: any) => void;
+  labId: number | null;
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -24,7 +26,11 @@ export default function MemberCard({
       });
 
       if (onUpdate) {
-        onUpdate(updatedUser.data);
+        onUpdate({ 
+          ...updatedUser.data, 
+          labs: user.labs || [], 
+          roles: user.roles || [] 
+        });
       }
     } catch (error) {
       console.error("Erro ao atualizar status do usuário:", error);
@@ -33,11 +39,24 @@ export default function MemberCard({
     }
   };
 
-  const roleName =
-    user.roles?.find((r: any) => r.role?.name)?.role.name?.toLowerCase() ??
-    "aluno";
+  const getUserRoleForLab = () => {
+    if (!user) return "aluno";
+    
+    // Verifica se é superuser (role global)
+    const isSuperuser = user.roles?.some((r: any) => 
+      r.role?.name?.toLowerCase() === "superuser"
+    );
+    if (isSuperuser) return "superuser";
 
-  console.log(user.roles);
+    // Verifica se é staff no lab específico
+    if (labId) {
+      const userLab = user.labs?.find((lab: any) => lab.id === labId);
+      if (userLab?.isStaff) return "staff";
+    }
+
+    return "aluno";
+  };
+  const roleName = getUserRoleForLab();
 
   const roleColors: Record<string, string> = {
     staff: "bg-blue-200 text-blue-800",
@@ -45,8 +64,13 @@ export default function MemberCard({
     aluno: "bg-orange-200 text-orange-800",
   };
 
-  const roleClass =
-    roleColors[roleName.toLowerCase()] || "bg-gray-200 text-gray-800";
+  const statusColors = {
+    active: "bg-green-200 text-green-800",
+    inactive: "bg-red-200 text-red-800"
+  };
+
+  const roleClass = roleColors[roleName.toLowerCase()] || "bg-gray-200 text-gray-800";
+  const statusClass = user.isActive ? statusColors.active : statusColors.inactive;
 
   return (
     <div className="w-full">
@@ -57,37 +81,26 @@ export default function MemberCard({
         </div>
 
         <div className="flex gap-2 text-xs font-bold justify-end">
-          <span
-            className={`px-3 py-1 rounded-lg border border-white/20 backdrop-blur-sm shadow-md ${roleClass}`}
-          >
+          <span className={`px-3 py-1 rounded-lg border border-white/20 backdrop-blur-sm shadow-md ${roleClass}`}>
             {roleName.charAt(0).toUpperCase() + roleName.slice(1)}
           </span>
-          <span
-            className={`px-3 py-1 rounded-lg border border-white/20 backdrop-blur-sm shadow-md ${
-              user.isActive
-                ? "bg-green-200 text-green-800"
-                : "bg-red-200 text-red-800"
-            }`}
-          >
+          <span className={`px-3 py-1 rounded-lg border border-white/20 backdrop-blur-sm shadow-md ${statusClass}`}>
             {user.isActive ? "Ativo" : "Inativo"}
           </span>
         </div>
       </div>
 
-      {/* Ações */}
       {isStaff && (
         <div className="flex gap-2 mt-2 w-full">
           <button
-            className="w-1/2 text-sm font-bold cursor-pointer bg-background border border-2 border-gray-200 p-2 rounded-lg shadow-md"
+            className="w-1/2 text-sm font-bold cursor-pointer bg-background border border-2 border-gray-200 p-2 rounded-lg shadow-md hover:bg-gray-50 transition-colors"
             onClick={() => setOpen(true)}
           >
             Editar
           </button>
           <button
-            className={`w-1/2 text-sm font-bold cursor-pointer text-white p-2 rounded-lg shadow-md border border-2 ${
-              user.isActive
-                ? "bg-red-600 hover:bg-red-700"
-                : "bg-green-600 hover:bg-green-700"
+            className={`w-1/2 text-sm font-bold cursor-pointer text-white p-2 rounded-lg shadow-md border border-2 transition-colors ${
+              user.isActive ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"
             }`}
             onClick={toggleActiveStatus}
             disabled={loading}
@@ -97,7 +110,6 @@ export default function MemberCard({
         </div>
       )}
 
-      {/* Modal de edição */}
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg p-8 w-80 sm:w-full max-w-md relative">
@@ -108,19 +120,22 @@ export default function MemberCard({
             >
               ×
             </button>
-            <h2 className="text-2xl font-bold mb-6 text-center">
-              Editar Usuário
-            </h2>
+            <h2 className="text-2xl font-bold mb-6 text-center">Editar Usuário</h2>
             <EditForm
               initialData={{
                 id: user.id,
                 username: user.username,
                 email: user.email,
                 status: user.isActive ? "ativo" : "inativo",
+                labs: user.labs || [],
               }}
               onClose={() => setOpen(false)}
               onSave={(updatedUser) => {
-                if (onUpdate) onUpdate(updatedUser);
+                if (onUpdate) onUpdate({
+                  ...updatedUser,
+                  roles: updatedUser.roles || user.roles,
+                  labs: updatedUser.labs || user.labs
+                });
               }}
             />
           </div>
