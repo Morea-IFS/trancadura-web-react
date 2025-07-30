@@ -33,7 +33,7 @@ export class RolesController {
     return this.rolesService.remove(id);
   }
 
-  @Delete('remove')
+  @Post('remove')
   async removeRoleFromUser(
     @Body() dto: { userId: number, roleId: number }
   ) {

@@ -148,11 +148,9 @@ export default function EditForm({
           });
         } else {
           // Remove a role staff se não for staff em nenhum lab
-          await api.delete("/roles/remove", {
-            data: {
-              userId: initialData.id,
-              roleId: staffRoleId,
-            },
+          await api.post("/roles/remove", {
+            userId: initialData.id,
+            roleId: staffRoleId,
           });
         }
       }
