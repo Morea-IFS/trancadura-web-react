@@ -33,11 +33,20 @@ export class RolesController {
     return this.rolesService.remove(id);
   }
 
-  @Post('remove')
+  @Delete('user/:userId/role/:roleId')
   async removeRoleFromUser(
-    @Body() dto: { userId: number, roleId: number }
+    @Param('userId') userId: number,
+    @Param('roleId') roleId: number
   ) {
-    return this.rolesService.removeRoleFromUser(dto);
+    return this.rolesService.removeRoleFromUser({ userId, roleId });
+  }
+
+  @Delete('user/:userId/role-name/:roleName')
+  async removeRoleByNameFromUser(
+    @Param('userId') userId: number,
+    @Param('roleName') roleName: string
+  ) {
+    return this.rolesService.removeRoleByNameFromUser({ userId, roleName });
   }
 
   // src/roles/roles.controller.ts

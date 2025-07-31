@@ -39,7 +39,8 @@ export class RolesService {
 
   async removeRoleFromUser(dto: { userId: number, roleId: number }) {
     try {
-      return await this.prisma.userRole.delete({
+      // Remove a relação userRole
+      await this.prisma.userRole.delete({
         where: {
           userId_roleId: {
             userId: dto.userId,
@@ -47,9 +48,61 @@ export class RolesService {
           }
         }
       });
+
+      // Remove também o isStaff de todos os labs (opcional)
+      await this.prisma.userLab.updateMany({
+        where: {
+          userId: dto.userId,
+          isStaff: true
+        },
+        data: {
+          isStaff: false
+        }
+      });
+
+      return { success: true };
     } catch (error) {
       console.error("Erro ao remover role do usuário:", error);
       throw new NotFoundException("Relação usuário-role não encontrada");
+    }
+  }
+
+  async removeRoleByNameFromUser(dto: { userId: number, roleName: string }) {
+    // Encontra a role pelo nome
+    const role = await this.prisma.role.findFirst({
+      where: { name: dto.roleName }
+    });
+
+    if (!role) {
+      throw new NotFoundException(`Role ${dto.roleName} não encontrada`);
+    }
+
+    try {
+      // Remove a relação userRole
+      await this.prisma.userRole.deleteMany({
+        where: {
+          userId: dto.userId,
+          roleId: role.id
+        }
+      });
+
+      // Se for a role 'staff', remove também o isStaff dos labs
+      if (dto.roleName === 'staff') {
+        await this.prisma.userLab.updateMany({
+          where: {
+            userId: dto.userId,
+            isStaff: true
+          },
+          data: {
+            isStaff: false
+          }
+        });
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error("Erro ao remover role por nome:", error);
+      throw new NotFoundException("Erro ao remover role do usuário");
     }
   }
 
@@ -64,6 +117,19 @@ export class RolesService {
     // Confirma se o papel existe
     const role = await this.prisma.role.findUnique({ where: { id: roleId } });
     if (!role) throw new NotFoundException('Papel (role) não encontrado');
+
+    // Se for a role 'staff', atualiza os labs correspondentes
+    if (role.name === 'staff') {
+      await this.prisma.userLab.updateMany({
+        where: {
+          userId: userId,
+          isStaff: false
+        },
+        data: {
+          isStaff: true
+        }
+      });
+    }
 
     // Cria ou ignora se já existir
     return this.prisma.userRole.upsert({
