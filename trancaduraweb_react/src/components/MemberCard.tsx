@@ -4,17 +4,29 @@ import { useState } from "react";
 import EditForm from "@/components/Forms/EditForm";
 import api from "@/lib/api";
 
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  isActive: boolean;
+  labs?: Array<{ id: number; isStaff?: boolean }>;
+  roles?: Array<{ role: { name: string } }>;
+}
+
+interface MemberCardProps {
+  user: any;
+  isStaff: boolean;
+  onUpdate?: (updatedUser: User) => void;
+  labId: number | null;
+}
+
+
 export default function MemberCard({
   user,
   isStaff,
   onUpdate,
   labId,
-}: {
-  user: any;
-  isStaff: boolean;
-  onUpdate?: (updatedUser: any) => void;
-  labId: number | null;
-}) {
+}: MemberCardProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 

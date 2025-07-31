@@ -13,6 +13,20 @@ import api from "@/lib/api";
 import { FaPlus } from "react-icons/fa";
 import { LuShield } from "react-icons/lu";
 
+interface LabUser {
+  userId: number;
+  isStaff?: boolean;
+}
+
+interface UserDetails {
+  id: number;
+  username: string;
+  email: string;
+  isActive: boolean;
+  labs?: Array<{ id: number; isStaff?: boolean }>;
+  roles?: Array<{ role: { name: string } }>;
+}
+
 export default function Membros() {
   const [open, setOpen] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
@@ -61,24 +75,37 @@ export default function Membros() {
       setUsers([]);
       return;
     }
-    
-    api.get(`/labs/${labSelecionado}`)
-      .then(async (res) => {
+
+    const fetchUsers = async () => {
+      try {
+        const res = await api.get(`/labs/${labSelecionado}`);
+        const labUsers: LabUser[] = res.data.users || [];
+
         const usersWithDetails = await Promise.all(
-          res.data.users?.map(async (u: any) => {
-            const userRes = await api.get(`/users/${u.userId}`);
-            return {
-              ...userRes.data,
-              labs: userRes.data.labs?.filter((lab: any) => lab.id === labSelecionado)
-            };
-          }) || []
+          labUsers.map(async (u: LabUser) => {
+            try {
+              const userRes = await api.get(`/users/${u.userId}`);
+              return {
+                ...userRes.data,
+                id: u.userId, // Garante que o ID está presente
+                labs: userRes.data.labs?.filter((lab: any) => lab.id === labSelecionado) || []
+              };
+            } catch (error) {
+              console.error(`Erro ao buscar detalhes do usuário ${u.userId}:`, error);
+              return null;
+            }
+          })
         );
-        setUsers(usersWithDetails);
-      })
-      .catch((err) => {
+
+        // Filtra quaisquer usuários nulos e garante que cada um tem um ID
+        setUsers(usersWithDetails.filter((u): u is UserDetails => u !== null && !!u.id));
+      } catch (err) {
         console.error("Erro ao buscar usuários:", err);
         setUsers([]);
-      });
+      }
+    };
+
+    fetchUsers();
   }, [labSelecionado]);
 
   // Função para atualizar o usuário na lista
@@ -90,7 +117,15 @@ export default function Membros() {
 
   // Função para adicionar um novo usuário à lista
   function handleUserAdd(newUser: any) {
-    setUsers((prevUsers) => [...prevUsers, newUser]);
+    // Verifica se o novo usuário tem um ID e não está já na lista
+    if (newUser.id && !users.some(u => u.id === newUser.id)) {
+      setUsers(prevUsers => [...prevUsers, {
+        ...newUser,
+        // Garante que as propriedades necessárias existam
+        labs: newUser.labs || [],
+        roles: newUser.roles || []
+      }]);
+    }
   }
 
   const podeGerenciar = isSuperuser || isStaff;
@@ -192,15 +227,17 @@ export default function Membros() {
           </div>
           {/* Lista de Membros */}
           {users.length > 0 ? (
-            users.map((user) => (
-              <MemberCard
-                key={user.id}
-                user={user}
-                isStaff={podeGerenciar}
-                onUpdate={handleUserUpdate}
-                labId={labSelecionado}
-              />
-            ))
+            <div className="space-y-4"> {/* Container para a lista */}
+              {users.map((user) => (
+                <MemberCard
+                  key={`user-${user.id}-${labSelecionado}`} // Key única composta
+                  user={user}
+                  isStaff={podeGerenciar}
+                  onUpdate={handleUserUpdate}
+                  labId={labSelecionado}
+                />
+              ))}
+            </div>
           ) : (
             <p className="text-sm mt-4">Nenhum membro encontrado.</p>
           )}

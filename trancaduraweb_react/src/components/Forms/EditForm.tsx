@@ -103,6 +103,7 @@ export default function EditForm({
   };
 
   // Envia o formulário de registro
+  // Envia o formulário de registro
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!initialData?.id) return alert("ID de usuário inválido");
@@ -114,7 +115,7 @@ export default function EditForm({
         username,
         email,
         password: password || undefined,
-        isActive: status === "ativo", // Garanta que isso está correto
+        isActive: status === "ativo",
       });
 
       // 2. Atualiza as associações com laboratórios
@@ -124,13 +125,13 @@ export default function EditForm({
         isStaff: !!labsStaff[labId],
       }));
 
-      // Primeiro remove todas as associações existentes (opcional)
+      // Primeiro remove todas as associações existentes
       await api.post("/labs/remove-users", {
         labIds: selectedLabs,
         userId: initialData.id,
       });
 
-      // Depois adiciona as novas associações
+      // Adiciona as novas associações
       for (const lab of labsToSend) {
         await api.post("/labs/add-users", {
           labId: lab.labId,
@@ -147,11 +148,8 @@ export default function EditForm({
             roleId: staffRoleId,
           });
         } else {
-          // Remove a role staff se não for staff em nenhum lab
-          await api.post("/roles/remove", {
-            userId: initialData.id,
-            roleId: staffRoleId,
-          });
+          // Remove a role staff completamente
+          await api.delete(`/roles/user/${initialData.id}/role-name/staff`);
         }
       }
 
@@ -175,6 +173,7 @@ export default function EditForm({
       if (onClose) onClose();
     } catch (err) {
       console.error("Erro ao salvar alterações:", err);
+      alert("Ocorreu um erro ao salvar as alterações");
     } finally {
       setLoading(false);
     }
