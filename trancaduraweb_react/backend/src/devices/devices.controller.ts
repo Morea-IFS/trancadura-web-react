@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, UseGuards, ParseIntPipe, NotFoundException, ForbiddenException, ValidationPipe } from '@nestjs/common';
 import { DevicesService } from './devices.service';
 import { CreateDeviceDto } from './dto/create-device.dto';
 import { UpdateDeviceDto } from './dto/update-device.dto';
@@ -53,17 +53,109 @@ export class DevicesController {
     return accesses;
     }
 
-    @Post('identify')
-    async identifyDevice(@Body('macAddress') macAddress: string) {
-      if (!macAddress) {
-        return { error: 'macAddress é obrigatório' };
+  @Post('identify')
+  async identifyDevice(@Body('macAddress') macAddress: string) {
+    if (!macAddress) {
+      return { error: 'macAddress é obrigatório' };
+    }
+
+    return this.devicesService.identifyDevice(macAddress);
+  }
+
+  @Post(':id/roles')
+  @UseGuards(JwtAuthGuard)
+  async addRole(
+    @Param('id', ParseIntPipe) deviceId: number,
+    @Body('roleId', ParseIntPipe) roleId: number
+  ) {
+    return this.prisma.deviceRole.create({
+      data: { deviceId, roleId }
+    });
+  }
+
+  @Delete(':id/roles/:roleId')
+  @UseGuards(JwtAuthGuard)
+  async removeRole(
+    @Param('id', ParseIntPipe) deviceId: number,
+    @Param('roleId', ParseIntPipe) roleId: number
+  ) {
+    return this.prisma.deviceRole.delete({
+      where: {
+        deviceId_roleId: { deviceId, roleId }
       }
+    });
+  }
 
-      return this.devicesService.identifyDevice(macAddress);
+  @Post('ip')
+  async setIp(@Body(new ValidationPipe()) body: UpdateDeviceIpDto) {
+    return this.devicesService.setDeviceIp(body);
+  }
+
+  @Post(':id/hexid')
+  @UseGuards(JwtAuthGuard)
+  async startCardRegistration(
+    @Param('id', ParseIntPipe) deviceId: number,
+    @Body('userId', ParseIntPipe) userId: number
+  ) {
+    const device = await this.prisma.device.findUnique({
+      where: { id: deviceId },
+      include: { lab: true }
+    });
+
+    if (!device) {
+      throw new NotFoundException('Dispositivo não encontrado');
     }
 
-    @Post('ip')
-    async setIp(@Body() body: UpdateDeviceIpDto) {
-      return this.devicesService.setDeviceIp(body);
+    // Verifica se o usuário tem permissão no laboratório
+    const hasAccess = await this.prisma.userLab.findFirst({
+      where: {
+        userId,
+        labId: device.lab?.id
+      }
+    });
+
+    if (!hasAccess) {
+      throw new ForbiddenException('Usuário não tem acesso a este laboratório');
     }
+
+    return {
+      message: 'Dispositivo pronto para ler cartão',
+      apiToken: device.apiToken,
+      timeout: 15000 // 15 segundos (igual ao ESP32)
+    };
+  }
+
+  @Get(':id/roles')
+  @UseGuards(JwtAuthGuard)
+  async getDeviceRoles(@Param('id', ParseIntPipe) deviceId: number) {
+    return this.prisma.deviceRole.findMany({
+      where: { deviceId },
+      include: { role: true },
+    });
+  }
+
+  @Post(':id/roles')
+  @UseGuards(JwtAuthGuard)
+  async addRoleToDevice(
+    @Param('id', ParseIntPipe) deviceId: number,
+    @Body('roleId', ParseIntPipe) roleId: number
+  ) {
+    return this.prisma.deviceRole.create({
+      data: { deviceId, roleId },
+      include: { role: true },
+    });
+  }
+
+  @Delete(':id/roles/:roleId')
+  @UseGuards(JwtAuthGuard)
+  async removeRoleFromDevice(
+    @Param('id', ParseIntPipe) deviceId: number,
+    @Param('roleId', ParseIntPipe) roleId: number
+  ) {
+    return this.prisma.deviceRole.delete({
+      where: {
+        deviceId_roleId: { deviceId, roleId }
+      }
+    });
+  }
 }
