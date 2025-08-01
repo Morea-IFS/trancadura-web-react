@@ -8,10 +8,17 @@ import {
   ListboxOptions,
   ListboxOption,
 } from "@headlessui/react";
+
+// Import dos ícones
 import { FiChevronsDown } from "react-icons/fi";
-import { IoPersonCircle, IoMailOpenOutline, IoLockClosedOutline } from "react-icons/io5";
+import {
+  IoPersonCircle,
+  IoMailOpenOutline,
+  IoLockClosedOutline,
+} from "react-icons/io5";
 import { HiOutlineStatusOnline } from "react-icons/hi";
 import { LuHotel } from "react-icons/lu";
+import { FaRegIdCard } from "react-icons/fa";
 
 const statusOptions = [
   { value: "ativo", label: "Ativo" },
@@ -29,6 +36,7 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
     email: "",
     password: "",
     status: "ativo" as "ativo" | "inativo",
+    idCard: "",
   });
   const [loading, setLoading] = useState(false);
   const [labs, setLabs] = useState<{ id: number; name: string }[]>([]);
@@ -63,7 +71,7 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -91,7 +99,6 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
 
       if (onSave) onSave(response.data);
       if (onClose) onClose();
-
     } catch (error: any) {
       console.error("Erro no registro:", error);
       setError(error.response?.data?.message || "Erro ao registrar usuário");
@@ -152,19 +159,40 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
         />
       </div>
 
+      {/* LinkCard */}
+      <div>
+        <div className="flex items-center gap-1">
+          <FaRegIdCard className="w-4 h-4 text-blue-400" />
+          <label>ID do Card</label>
+        </div>
+        <input
+          type="text"
+          name="idCard"
+          className="w-full border border-gray-300 rounded-md p-2"
+          placeholder="Sem cartão linkado"
+          value={formData.idCard}
+          onChange={handleChange}
+        />
+      </div>
+
       {/* Status */}
       <div>
         <div className="flex items-center gap-1">
           <HiOutlineStatusOnline className="w-4 h-4 text-blue-400" />
           <label>Status</label>
         </div>
-        <Listbox 
-          value={formData.status} 
-          onChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+        <Listbox
+          value={formData.status}
+          onChange={(value) =>
+            setFormData((prev) => ({ ...prev, status: value }))
+          }
         >
           <div className="relative mt-1">
             <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white p-3 text-left text-gray-800 font-semibold border border-gray-300 shadow-sm flex justify-between items-center">
-              {statusOptions.find((opt) => opt.value === formData.status)?.label}
+              {
+                statusOptions.find((opt) => opt.value === formData.status)
+                  ?.label
+              }
               <FiChevronsDown className="h-4 w-4 text-gray-600" />
             </ListboxButton>
             <ListboxOptions className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white p-2 text-sm shadow-lg ring-1 ring-black/5">
@@ -194,7 +222,9 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
         </div>
         <div className="flex flex-col gap-2 border border-gray-300 rounded-md p-2">
           {labs.map((lab) => (
-            <div key={`lab-${lab.id}`} className="flex items-center gap-2"> {/* Adicionei a key aqui */}
+            <div key={`lab-${lab.id}`} className="flex items-center gap-2">
+              {" "}
+              {/* Adicionei a key aqui */}
               <input
                 type="checkbox"
                 id={`lab-checkbox-${lab.id}`}
@@ -223,7 +253,9 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
                   <span className="w-24">{lab?.name}</span>
                   <Listbox
                     value={currentValue}
-                    onChange={(val) => handleStaffChange(labId, val === "staff")}
+                    onChange={(val) =>
+                      handleStaffChange(labId, val === "staff")
+                    }
                   >
                     <div className="relative w-full">
                       <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white p-2 text-left text-gray-800 font-semibold border border-gray-300 shadow-sm flex justify-between items-center">
@@ -236,7 +268,9 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
                           value="default"
                           className={({ selected }) =>
                             `cursor-pointer select-none rounded p-2 ${
-                              selected ? "bg-teal-200 font-bold" : "hover:bg-gray-100"
+                              selected
+                                ? "bg-teal-200 font-bold"
+                                : "hover:bg-gray-100"
                             }`
                           }
                         >
@@ -247,7 +281,9 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
                           value="staff"
                           className={({ selected }) =>
                             `cursor-pointer select-none rounded p-2 ${
-                              selected ? "bg-teal-200 font-bold" : "hover:bg-gray-100"
+                              selected
+                                ? "bg-teal-200 font-bold"
+                                : "hover:bg-gray-100"
                             }`
                           }
                         >

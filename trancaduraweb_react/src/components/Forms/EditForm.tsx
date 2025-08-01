@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Input from "@/components/Input";
 import api from "@/lib/api";
 import {
   Listbox,
@@ -9,7 +8,6 @@ import {
   ListboxOptions,
   ListboxOption,
 } from "@headlessui/react";
-import { FiChevronsDown } from "react-icons/fi";
 
 // Import dos ícones
 import {
@@ -19,6 +17,8 @@ import {
 } from "react-icons/io5";
 import { HiOutlineStatusOnline } from "react-icons/hi";
 import { LuHotel } from "react-icons/lu";
+import { FiChevronsDown } from "react-icons/fi";
+import { FaRegIdCard } from "react-icons/fa";
 
 interface EditFormProps {
   initialData?: {
@@ -45,6 +45,7 @@ export default function EditForm({
   const [username, setUsername] = useState(initialData?.username || "");
   const [email, setEmail] = useState(initialData?.email || "");
   const [password, setPassword] = useState("");
+  const [idCard, setIdCard] = useState(""); // Precisa ser implementado
   const [status, setStatus] = useState<"ativo" | "inativo">(
     initialData?.status || "ativo"
   );
@@ -103,7 +104,6 @@ export default function EditForm({
   };
 
   // Envia o formulário de registro
-  // Envia o formulário de registro
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!initialData?.id) return alert("ID de usuário inválido");
@@ -155,21 +155,19 @@ export default function EditForm({
 
       // 4. Atualiza o usuário no estado local
       if (onSave) {
-        onSave({ 
-          id: initialData.id, 
-          username, 
+        onSave({
+          id: initialData.id,
+          username,
           email,
           isActive: status === "ativo",
-          labs: labsToSend.map(l => ({
+          labs: labsToSend.map((l) => ({
             id: l.labId,
-            isStaff: l.isStaff
+            isStaff: l.isStaff,
           })),
-          roles: isStaffAnywhere 
-            ? [{ role: { name: "staff" } }] 
-            : []
+          roles: isStaffAnywhere ? [{ role: { name: "staff" } }] : [],
         });
       }
-      
+
       if (onClose) onClose();
     } catch (err) {
       console.error("Erro ao salvar alterações:", err);
@@ -187,10 +185,12 @@ export default function EditForm({
           <IoPersonCircle className="w-4 h-4 text-blue-400" />
           <label>Nome</label>
         </div>
-        <Input
+        <input
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
+          placeholder="Nome do usuário"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-800 shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
       </div>
 
@@ -200,10 +200,12 @@ export default function EditForm({
           <IoMailOpenOutline className="w-4 h-4 text-blue-400" />
           <label>E-Mail</label>
         </div>
-        <Input
+        <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          placeholder="E-mail"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-800 shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
       </div>
 
@@ -213,11 +215,31 @@ export default function EditForm({
           <IoLockClosedOutline className="w-4 h-4 text-blue-400" />
           <label>Nova Senha</label>
         </div>
-        <Input
+        <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Deixe em branco para não alterar"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-800 shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+      </div>
+
+      {/* LinkCard */}
+      <div>
+        <div className="flex items-center gap-1">
+          <FaRegIdCard className="w-4 h-4 text-blue-400" />
+          <label>ID do Card</label>
+        </div>
+        <input
+          type="text"
+          value={idCard}
+          onChange={(e) => setIdCard(e.target.value)}
+          placeholder="Sem cartão linkado"
+          className={`w-full rounded-md border px-3 py-2 text-gray-800 shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 ${
+            idCard.length > 0
+              ? "bg-gray-100 border-gray-400 focus:ring-blue-400"
+              : "bg-white border-gray-300 focus:ring-blue-300"
+          }`}
         />
       </div>
 
