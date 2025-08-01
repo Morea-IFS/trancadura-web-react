@@ -54,16 +54,14 @@ export class ApproximationsService {
   async validateCard(dto: ApproximationAuthDto) {
     const { hexid, macaddress } = dto;
 
-    let card = await this.prisma.approximation.findUnique({
+    // 1. Verifica o cartão
+    const card = await this.prisma.approximation.findUnique({
       where: { cardId: hexid },
     });
 
     if (!card) {
       await this.prisma.approximation.create({
-        data: {
-          cardId: hexid,
-          permission: false,
-        },
+        data: { cardId: hexid, permission: false },
       });
       return "Unauthorized";
     }
@@ -72,38 +70,40 @@ export class ApproximationsService {
       return "Unauthorized";
     }
 
+    // 2. Verifica o dispositivo
     const device = await this.prisma.device.findUnique({
       where: { macAddress: macaddress },
+      include: { roles: { include: { role: true } } }, // Carrega os papéis
     });
 
     if (!device) return "Unauthorized";
 
-    const deviceRole = await this.prisma.deviceRole.findFirst({
-      where: { deviceId: device.id },
-    });
-    if (!deviceRole) return "Unauthorized";
-
+    // 3. Verifica o usuário vinculado ao cartão
     const userCard = await this.prisma.userCard.findFirst({
       where: { approximationId: card.id },
-    });
+      include: { user: { include: { roles: { include: { role: true } } } },
+    }});
+
     if (!userCard) return "Unauthorized";
 
-    const userRole = await this.prisma.userRole.findFirst({
-      where: { userId: userCard.userId },
-    });
-    if (!userRole) return "Unauthorized";
+    // 4. Verifica se há interseção de papéis
+    const deviceRoles = device.roles.map(dr => dr.role.name);
+    const userRoles = userCard.user.roles.map(ur => ur.role.name);
 
-    const isAuthorized = userRole.roleId === deviceRole.roleId;
+    const hasCommonRole = deviceRoles.some(role => 
+      userRoles.includes(role)
+    );
 
+    // 5. Registra o acesso
     await this.prisma.userAccess.create({
       data: {
-        userId: userCard.userId,
+        userId: userCard.user.id,
         deviceId: device.id,
-        permission: isAuthorized,
+        permission: hasCommonRole,
       },
     });
 
-    return isAuthorized ? "Authorized" : "Unauthorized";
+    return hasCommonRole ? "Authorized" : "Unauthorized";
   }
 
 
