@@ -77,17 +77,17 @@ export class UsersController {
     const user = await this.usersService.findOne(id);
     const roles = await this.prisma.userRole.findMany({
       where: { userId: id },
-      include: { role: true }
+      include: { role: true },
     });
     const labs = await this.prisma.userLab.findMany({
       where: { userId: id },
-      include: { lab: true }
+      include: { lab: true },
     });
-    
+
     return {
       ...user,
       roles,
-      labs: labs.map(l => ({ ...l.lab, isStaff: l.isStaff }))
+      labs: labs.map((l) => ({ ...l.lab, isStaff: l.isStaff })),
     };
   }
 
@@ -114,5 +114,4 @@ export class UsersController {
   getUserCards(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.getUserCards(id);
   }
-
 }
