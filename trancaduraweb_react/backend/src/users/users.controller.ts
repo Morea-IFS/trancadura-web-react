@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   UseGuards,
   Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -104,14 +105,53 @@ export class UsersController {
     return this.usersService.remove(id);
   }
 
-  @Post('link-card')
+  @Post(':id/link-card')
   @UseGuards(JwtAuthGuard)
-  linkCard(@Body() dto: LinkCardDto) {
-    return this.usersService.linkCardToUser(dto.userId, dto.approximationId);
+  async linkCard(
+    @Param('id', ParseIntPipe) userId: number,
+    @Body() dto: { cardId: string },
+    @Req() req
+  ) {
+    // Verifica permissões
+    await this.checkAdminOrSelf(req.user.userId, userId);
+    
+    return this.usersService.linkCardByCardId(userId, dto.cardId);
+  }
+
+  @Delete(':id/cards/:approximationId')
+  @UseGuards(JwtAuthGuard)
+  async unlinkCard(
+    @Param('id', ParseIntPipe) userId: number,
+    @Param('approximationId', ParseIntPipe) approximationId: number,
+    @Req() req
+  ) {
+    // Verifica permissões
+    await this.checkAdminOrSelf(req.user.userId, userId);
+    
+    return this.usersService.unlinkCard(userId, approximationId);
   }
 
   @Get(':id/cards')
   getUserCards(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.getUserCards(id);
+  }
+
+  private async checkAdminOrSelf(currentUserId: number, targetUserId: number) {
+    if (currentUserId === targetUserId) return;
+    
+    const user = await this.prisma.user.findUnique({
+      where: { id: currentUserId },
+      include: { roles: { include: { role: true } } }
+    });
+
+    const isAdmin = user?.roles.some(r => 
+      r.role.name === 'admin' || r.role.name === 'superuser'
+    );
+
+    if (!isAdmin) {
+      throw new UnauthorizedException(
+        'Você não tem permissão para realizar esta ação'
+      );
+    }
   }
 }

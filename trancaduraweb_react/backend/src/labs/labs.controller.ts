@@ -34,9 +34,9 @@ export class LabsController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async getMyLabs(@Req() req) {
-    const userId = req.user.userId;
-    return this.labsService.getLabsByUser(userId);
+  async getMyLabs() {
+    //const userId = req.user.userId;
+    return this.labsService.findAll();
   }
 
   @Get(':id')

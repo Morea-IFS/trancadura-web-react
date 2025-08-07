@@ -31,6 +31,7 @@ export default function Header({
   const carregarLabs = async () => {
     try {
       const res = await api.get("/labs/me");
+      console.log(res.data)
       setLabs(res.data);
       const savedLab = localStorage.getItem("labSelecionado");
       const parsedSavedLab = savedLab ? Number(savedLab) : null;
