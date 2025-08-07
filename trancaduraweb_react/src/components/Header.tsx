@@ -15,6 +15,8 @@ import { FiChevronsDown } from "react-icons/fi";
 import { FaHistory } from "react-icons/fa";
 import { IoPeopleSharp } from "react-icons/io5";
 import { MdOutlineLock } from "react-icons/md";
+import { BsDeviceSsd } from "react-icons/bs";
+import { LuHotel } from "react-icons/lu";
 
 type HeaderProps = {
   labSelecionado: number | null;
@@ -150,6 +152,20 @@ export default function Header({
           >
             <IoPeopleSharp className="w-6 h-6" />
             <span className="hidden md:block text-xl font-bold">Membros</span>
+          </Link>
+          <Link
+            href="/dispLabs"
+            className="w-20 h-12 md:w-50 gap-2 bg-white/20 border border-white/20 rounded-lg flex items-center justify-center cursor-pointer shadow-md transition-transform duration-300 hover:scale-120 md:hover:scale-105 hover:bg-white/30"
+          >
+            <div className="flex items-center gap-2">
+              <BsDeviceSsd className="w-6 h-6" />
+              <span className="hidden md:block text-xl font-bold">Disp</span>
+            </div>
+            <span>|</span>
+            <div className="flex items-center gap-2">
+              <span className="hidden md:block text-xl font-bold">Labs</span>
+              <LuHotel className="w-6 h-6" />
+            </div>
           </Link>
         </div>
       </div>
