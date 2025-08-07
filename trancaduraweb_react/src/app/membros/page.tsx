@@ -84,21 +84,31 @@ export default function Membros() {
         const usersWithDetails = await Promise.all(
           labUsers.map(async (u: LabUser) => {
             try {
-              const userRes = await api.get(`/users/${u.userId}`);
+              const userRes = await api.get(
+                `/users/${u.userId}?includeLabs=true`
+              );
               return {
                 ...userRes.data,
-                id: u.userId, // Garante que o ID está presente
-                labs: userRes.data.labs?.filter((lab: any) => lab.id === labSelecionado) || []
+                id: u.userId,
+                // Garante que temos a informação de isStaff para este lab específico
+                labs:
+                  userRes.data.labs?.map((lab: any) => ({
+                    ...lab,
+                    isStaff:
+                      lab.id === labSelecionado ? u.isStaff : lab.isStaff,
+                  })) || [],
               };
             } catch (error) {
-              console.error(`Erro ao buscar detalhes do usuário ${u.userId}:`, error);
+              console.error(
+                `Erro ao buscar detalhes do usuário ${u.userId}:`,
+                error
+              );
               return null;
             }
           })
         );
 
-        // Filtra quaisquer usuários nulos e garante que cada um tem um ID
-        setUsers(usersWithDetails.filter((u): u is UserDetails => u !== null && !!u.id));
+        setUsers(usersWithDetails.filter(Boolean));
       } catch (err) {
         console.error("Erro ao buscar usuários:", err);
         setUsers([]);
@@ -118,13 +128,16 @@ export default function Membros() {
   // Função para adicionar um novo usuário à lista
   function handleUserAdd(newUser: any) {
     // Verifica se o novo usuário tem um ID e não está já na lista
-    if (newUser.id && !users.some(u => u.id === newUser.id)) {
-      setUsers(prevUsers => [...prevUsers, {
-        ...newUser,
-        // Garante que as propriedades necessárias existam
-        labs: newUser.labs || [],
-        roles: newUser.roles || []
-      }]);
+    if (newUser.id && !users.some((u) => u.id === newUser.id)) {
+      setUsers((prevUsers) => [
+        ...prevUsers,
+        {
+          ...newUser,
+          // Garante que as propriedades necessárias existam
+          labs: newUser.labs || [],
+          roles: newUser.roles || [],
+        },
+      ]);
     }
   }
 
@@ -227,7 +240,9 @@ export default function Membros() {
           </div>
           {/* Lista de Membros */}
           {users.length > 0 ? (
-            <div className="space-y-4"> {/* Container para a lista */}
+            <div className="space-y-4">
+              {" "}
+              {/* Container para a lista */}
               {users.map((user) => (
                 <MemberCard
                   key={`user-${user.id}-${labSelecionado}`} // Key única composta
