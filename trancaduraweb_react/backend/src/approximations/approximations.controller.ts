@@ -83,4 +83,15 @@ export class ApproximationsController {
       userId: dto.userId
     };
   }
+
+  // ApproximationsController
+  @Get('available')
+  async getAvailableCards() {
+    const allCards = await this.prisma.approximation.findMany();
+    const usedCards = await this.prisma.userCard.findMany();
+    
+    return allCards.filter(card => 
+      !usedCards.some(uc => uc.approximationId === card.id)
+    );
+  }
 }
