@@ -44,7 +44,6 @@ export class ApproximationsController {
     return result;
   }
 
-  // approximations.controller.ts
   @Post('newcard')
   async registerNewCard(@Body() dto: RegisterCardDto) {
     // 1. Verifica se o cartão já existe com outro ID

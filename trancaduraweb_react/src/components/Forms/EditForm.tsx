@@ -60,19 +60,33 @@ export default function EditForm({
   useEffect(() => {
     async function fetchData() {
       try {
+        // 1. Busca dados do usuário atual
         const me = await api.get("/users/me");
-        const userId = me.data.userId;
+        const currentUserId = me.data.userId;
+        const isSuperUser = me.data.roles?.some((r: any) => r.role.name === "superuser");
 
-        const labsRes = await api.get("/labs/me");
-        const labsStaffOnly = labsRes.data.filter((lab: any) =>
-          lab.users?.some((u: any) => u.userId === userId && u.isStaff)
-        );
-        setLabs(labsStaffOnly);
+        // 2. Busca os laboratórios
+        let labsToShow;
+        if (isSuperUser) {
+          // Se for superUser, busca todos os laboratórios
+          const allLabs = await api.get("/labs");
+          labsToShow = allLabs.data;
+        } else {
+          // Se não for superUser, busca apenas os labs onde é staff
+          const myLabs = await api.get("/labs/me");
+          labsToShow = myLabs.data.filter((lab: any) => 
+            lab.users?.some((u: any) => u.userId === currentUserId && u.isStaff)
+          );
+        }
 
+        setLabs(labsToShow);
+
+        // 3. Busca o ID da role "staff" (para uso posterior)
         const rolesRes = await api.get("/roles");
         const staff = rolesRes.data.find((r: any) => r.name === "staff");
         if (staff) setStaffRoleId(staff.id);
 
+        // 4. Configura os laboratórios selecionados do usuário sendo editado
         if (initialData?.labs) {
           setSelectedLabs(initialData.labs.map((lab) => lab.id));
           const staffMap: { [labId: number]: boolean } = {};

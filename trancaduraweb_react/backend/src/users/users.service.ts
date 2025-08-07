@@ -1,4 +1,4 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -97,6 +97,56 @@ export class UsersService {
         approximationId,
       },
     });
+  }
+
+  async linkCardByCardId(userId: number, cardId: string) {
+    // Encontra o cartão pelo cardId
+    const card = await this.prisma.approximation.findUnique({
+      where: { cardId }
+    });
+
+    if (!card) {
+      throw new NotFoundException('Cartão não encontrado');
+    }
+
+    // Verifica se já existe o vínculo
+    const existing = await this.prisma.userCard.findUnique({
+      where: {
+        userId_approximationId: {
+          userId,
+          approximationId: card.id
+        }
+      }
+    });
+
+    if (existing) {
+      throw new ConflictException('Cartão já está vinculado a este usuário');
+    }
+
+    // Cria o vínculo
+    return this.prisma.userCard.create({
+      data: {
+        userId,
+        approximationId: card.id
+      },
+      include: {
+        approximation: true
+      }
+    });
+  }
+
+  async unlinkCard(userId: number, approximationId: number) {
+    // Remove o vínculo
+    await this.prisma.userCard.delete({
+      where: {
+        userId_approximationId: {
+          userId,
+          approximationId
+        }
+      }
+    });
+
+    return { success: true };
   }
 
   async getUserCards(userId: number) {
