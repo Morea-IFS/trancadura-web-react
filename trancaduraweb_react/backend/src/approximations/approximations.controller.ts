@@ -46,43 +46,38 @@ export class ApproximationsController {
 
   @Post('newcard')
   async registerNewCard(@Body() dto: RegisterCardDto) {
-    // 1. Verifica se o cartão já existe com outro ID
-    const existingCard = await this.prisma.approximation.findUnique({
-      where: { cardId: dto.hexid }
-    });
+    const { hexid, deviceId, userId } = dto;
 
-    if (existingCard) {
-      throw new ConflictException('Este cartão já está cadastrado');
+    // 1) cria/ativa o cartão
+    let card = await this.prisma.approximation.findUnique({ where: { cardId: hexid }});
+    if (!card) {
+      card = await this.prisma.approximation.create({
+        data: {
+          cardId: hexid,
+          permission: true,
+          name: `Cartão ${hexid.slice(0,4)}...`
+        }
+      });
+    } else {
+      await this.prisma.approximation.update({
+        where: { id: card.id },
+        data: { permission: true }
+      });
     }
 
-    // 2. Cria o cartão (ou atualiza se estiver em modo de edição)
-    const card = await this.prisma.approximation.upsert({
-      where: { id: dto.deviceId }, // ou outro identificador
-      create: {
-        cardId: dto.hexid,
-        permission: true,
-        name: `Cartão ${dto.hexid.slice(0, 4)}...`
-      },
-      update: {
-        cardId: dto.hexid,
-        permission: true
-      }
+    // 2) vincula ao usuário (se não já vinculado)
+    const existing = await this.prisma.userCard.findUnique({
+      where: { userId_approximationId: { userId, approximationId: card.id } }
     });
+    if (!existing) {
+      await this.prisma.userCard.create({
+        data: { userId, approximationId: card.id }
+      });
+    }
 
-    // 3. Vincula ao usuário
-    await this.prisma.userCard.create({
-      data: {
-        userId: dto.userId,
-        approximationId: card.id
-      }
-    });
-
-    return { 
-      success: true,
-      cardId: card.id,
-      userId: dto.userId
-    };
+    return { success: true, cardId: card.id, userId };
   }
+
 
   // ApproximationsController
   @Get('available')
