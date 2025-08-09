@@ -121,6 +121,7 @@ export class DevicesController {
     return {
       message: 'Dispositivo pronto para ler cartão',
       apiToken: device.apiToken,
+      deviceIp: device.ipAddress,
       timeout: 15000 // 15 segundos (igual ao ESP32)
     };
   }
