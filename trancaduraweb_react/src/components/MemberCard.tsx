@@ -20,7 +20,6 @@ interface MemberCardProps {
   labId: number | null;
 }
 
-
 export default function MemberCard({
   user,
   isStaff,
@@ -38,10 +37,10 @@ export default function MemberCard({
       });
 
       if (onUpdate) {
-        onUpdate({ 
-          ...updatedUser.data, 
-          labs: user.labs || [], 
-          roles: user.roles || [] 
+        onUpdate({
+          ...updatedUser.data,
+          labs: user.labs || [],
+          roles: user.roles || [],
         });
       }
     } catch (error) {
@@ -52,20 +51,19 @@ export default function MemberCard({
   };
 
   const getUserRoleForLab = () => {
-    if (!user) return "aluno";
-    
-    // Verifica se é superuser (role global)
-    const isSuperuser = user.roles?.some((r: any) => 
-      r.role?.name?.toLowerCase() === "superuser"
+    if (!user || !labId) return "aluno";
+
+    // 1. Verifica se é superuser (role global)
+    const isSuperuser = user.roles?.some(
+      (r: any) => r.role?.name?.toLowerCase() === "superuser"
     );
     if (isSuperuser) return "superuser";
 
-    // Verifica se é staff no lab específico
-    if (labId) {
-      const userLab = user.labs?.find((lab: any) => lab.id === labId);
-      if (userLab?.isStaff) return "staff";
-    }
+    // 2. Verifica se é staff no lab específico
+    const userLab = user.labs?.find((lab: any) => lab.id === labId);
+    if (userLab?.isStaff) return "staff";
 
+    // 3. Caso padrão
     return "aluno";
   };
   const roleName = getUserRoleForLab();
@@ -78,11 +76,14 @@ export default function MemberCard({
 
   const statusColors = {
     active: "bg-green-200 text-green-800",
-    inactive: "bg-red-200 text-red-800"
+    inactive: "bg-red-200 text-red-800",
   };
 
-  const roleClass = roleColors[roleName.toLowerCase()] || "bg-gray-200 text-gray-800";
-  const statusClass = user.isActive ? statusColors.active : statusColors.inactive;
+  const roleClass =
+    roleColors[roleName.toLowerCase()] || "bg-gray-200 text-gray-800";
+  const statusClass = user.isActive
+    ? statusColors.active
+    : statusColors.inactive;
 
   return (
     <div className="w-full">
@@ -93,10 +94,14 @@ export default function MemberCard({
         </div>
 
         <div className="flex gap-2 text-xs font-bold justify-end">
-          <span className={`px-3 py-1 rounded-lg border border-white/20 backdrop-blur-sm shadow-md ${roleClass}`}>
+          <span
+            className={`px-3 py-1 rounded-lg border border-white/20 backdrop-blur-sm shadow-md ${roleClass}`}
+          >
             {roleName.charAt(0).toUpperCase() + roleName.slice(1)}
           </span>
-          <span className={`px-3 py-1 rounded-lg border border-white/20 backdrop-blur-sm shadow-md ${statusClass}`}>
+          <span
+            className={`px-3 py-1 rounded-lg border border-white/20 backdrop-blur-sm shadow-md ${statusClass}`}
+          >
             {user.isActive ? "Ativo" : "Inativo"}
           </span>
         </div>
@@ -112,7 +117,9 @@ export default function MemberCard({
           </button>
           <button
             className={`w-1/2 text-sm font-bold cursor-pointer text-white p-2 rounded-lg shadow-md border border-2 transition-colors ${
-              user.isActive ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"
+              user.isActive
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-green-600 hover:bg-green-700"
             }`}
             onClick={toggleActiveStatus}
             disabled={loading}
@@ -132,7 +139,9 @@ export default function MemberCard({
             >
               ×
             </button>
-            <h2 className="text-2xl font-bold mb-6 text-center">Editar Usuário</h2>
+            <h2 className="text-2xl font-bold mb-6 text-center">
+              Editar Usuário
+            </h2>
             <EditForm
               initialData={{
                 id: user.id,
@@ -143,11 +152,12 @@ export default function MemberCard({
               }}
               onClose={() => setOpen(false)}
               onSave={(updatedUser) => {
-                if (onUpdate) onUpdate({
-                  ...updatedUser,
-                  roles: updatedUser.roles || user.roles,
-                  labs: updatedUser.labs || user.labs
-                });
+                if (onUpdate)
+                  onUpdate({
+                    ...updatedUser,
+                    roles: updatedUser.roles || user.roles,
+                    labs: updatedUser.labs || user.labs,
+                  });
               }}
             />
           </div>
