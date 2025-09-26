@@ -78,8 +78,6 @@ export class ApproximationsController {
     return { success: true, cardId: card.id, userId };
   }
 
-
-  // ApproximationsController
   @Get('available')
   async getAvailableCards() {
     const allCards = await this.prisma.approximation.findMany();
@@ -89,4 +87,10 @@ export class ApproximationsController {
       !usedCards.some(uc => uc.approximationId === card.id)
     );
   }
+
+  @Post('ingest')
+  async ingestNewCards(@Body() data: { hexid: string; macaddress: string }) {
+    return this.service.ingestCard(data.hexid, data.macaddress);
+  }
+  
 }

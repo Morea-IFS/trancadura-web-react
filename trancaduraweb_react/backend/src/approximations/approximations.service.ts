@@ -106,5 +106,27 @@ export class ApproximationsService {
     return hasCommonRole ? "Authorized" : "Unauthorized";
   }
 
+  async ingestCard(hexid: string, macaddress: string) {
+    // Verifica se o cartão já existe
+    const existingCard = await this.prisma.approximation.findUnique({
+      where: { cardId: hexid}
+    });
+    if (existingCard) {
+      throw new Error('Este cartão já está cadastrado no sistema.');
+    }
+
+    // Criar o novo cartão (sem usuario associado)
+    const newCard = await this.prisma.approximation.create({
+      data: {
+        cardId: hexid,
+        permission: true,
+        name: `Novo Cartão (${hexid.substring(0, 4)}...)`,
+      }
+    });
+
+    console.log(`Cartão ${hexid} ingerido pelo dispositivo ${macaddress}.`);
+    return newCard;
+
+  }
 
 }
