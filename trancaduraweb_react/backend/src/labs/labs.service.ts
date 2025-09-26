@@ -72,21 +72,37 @@ export class LabsService {
   async unlock(userId: number, labId: number) {
     const lab = await this.prisma.lab.findUnique({
       where: { id: labId },
-      include: { device: true, users: true },
+      include: { device: true },
     });
 
-    if (!lab) throw new NotFoundException('Laboratório não encontrado');
-    if (!lab.device)
-      throw new NotFoundException('Dispositivo não vinculado ao laboratório');
+    if (!lab) {
+      throw new NotFoundException('Laboratório não encontrado');
+    }
+    if (!lab.device) {
+      throw new NotFoundException(
+        'Nenhum dispositivo de acesso está vinculado a este laboratório',
+      );
+    }
+    if (!lab.device.ipAddress || !lab.device.apiToken) {
+        throw new NotFoundException(
+          'O dispositivo vinculado não possui IP ou Token de API configurado para a comunicação',
+        );
+    }
 
+    // Verifica se o usuário tem permissão para acessar o laboratório
     const userInLab = await this.prisma.userLab.findUnique({
       where: { userId_labId: { userId, labId } },
     });
 
-    if (!userInLab)
-      throw new NotFoundException('Usuário não faz parte deste laboratório');
+    if (!userInLab) {
+      throw new NotFoundException(
+        'Usuário não tem permissão para acessar este laboratório',
+      );
+    }
 
     const device = lab.device;
+
+    // Registra a tentativa de acesso no banco de dados
     const access = await this.prisma.userAccess.create({
       data: {
         userId,
@@ -96,20 +112,28 @@ export class LabsService {
       },
     });
 
-    if (device.ipAddress) {
-      try {
-        await fetch(`http://${device.ipAddress}/unlock`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, accessId: access.id }),
-        });
-      } catch (e) {
-        console.error('Erro ao comunicar com o ESP:', e);
-      }
+    // Envia o comando de abertura para o dispositivo (ESP32)
+    try {
+      // Monta a URL esperada pelo ESP32
+      const espUrl = `http://${device.ipAddress}/open?apiToken=${device.apiToken}`;
+      
+      console.log(`Enviando comando de abertura para: ${espUrl}`);
+
+      // Realiza a requisição GET, sem corpo (body)
+      await fetch(espUrl);
+
+      console.log(`Comando de destravamento para o lab ${labId} enviado com sucesso.`);
+
+    } catch (error) {
+      console.error(
+        `Falha ao comunicar com o dispositivo ${device.ipAddress}:`,
+        error,
+      );
+      // throw new Error('Não foi possível comunicar com o dispositivo de acesso.');
     }
 
     return {
-      message: 'Acesso autorizado',
+      message: 'Comando de acesso enviado ao dispositivo.',
       access,
     };
   }
