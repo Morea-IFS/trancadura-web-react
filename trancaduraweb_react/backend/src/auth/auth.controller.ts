@@ -24,7 +24,7 @@ interface LoginResponse {
     username: string;
     email: string;
     isActive: boolean;
-    roles?: string[]; // Adicione esta linha
+    roles?: string[];
   };
 }
 
