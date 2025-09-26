@@ -103,7 +103,12 @@ export class ApproximationsService {
       },
     });
 
-    return hasCommonRole ? "Authorized" : "Unauthorized";
+    if (hasCommonRole) {
+      const username = userCard.user.username;
+      return `Authorized?first_name=${username}`
+    } else {
+      return "Unauthorized";
+    }
   }
 
   async ingestCard(hexid: string, macaddress: string) {
