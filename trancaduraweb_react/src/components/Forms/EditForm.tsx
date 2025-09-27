@@ -32,6 +32,12 @@ interface EditFormProps {
   onSave?: (updatedUser: any) => void;
 }
 
+interface Card {
+  id: number;
+  cardId: string;
+  name: string;
+}
+
 const statusOptions = [
   { value: "ativo", label: "Ativo" },
   { value: "inativo", label: "Inativo" },
@@ -50,6 +56,10 @@ export default function EditForm({
     initialData?.status || "ativo"
   );
 
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [initiallyLinkedCard, setInitiallyLinkedCard] = useState<Card | null>(null);
+  const [availableCards, setAvailableCards] = useState<Card[]>([]);
+
   const [labs, setLabs] = useState<{ id: number; name: string }[]>([]);
   const [selectedLabs, setSelectedLabs] = useState<number[]>([]);
   const [labsStaff, setLabsStaff] = useState<{ [labId: number]: boolean }>({});
@@ -59,7 +69,21 @@ export default function EditForm({
   // Busca os laboratórios do usuário e o ID da role "staff"
   useEffect(() => {
     async function fetchData() {
+      if (!initialData?.id) return;
+
       try {
+        // Busca os cartões disponíveis (não vinculados a ninguém)
+        const availableCardsRes = await api.get("/approximations/available");
+        setAvailableCards(availableCardsRes.data);
+
+        // Busca o cartão atualmente vinculado a este usuário
+        const linkedCardsRes = await api.get(`/users/${initialData.id}/cards`);
+        if (linkedCardsRes.data && linkedCardsRes.data.length > 0) {
+          const currentCard = linkedCardsRes.data[0].approximation;
+          setInitiallyLinkedCard(currentCard);
+          setSelectedCardId(currentCard.cardId);
+        }
+
         // 1. Busca dados do usuário atual
         const me = await api.get("/users/me");
         const currentUserId = me.data.userId;
@@ -124,6 +148,17 @@ export default function EditForm({
 
     setLoading(true);
     try {
+      if (selectedCardId !== initiallyLinkedCard?.cardId) {
+        // Se havia um cartão vinculado e agora não há mais (ou mudou), desvincula o antigo
+        if (initiallyLinkedCard) {
+          await api.delete(`/users/${initialData.id}/cards/${initiallyLinkedCard.id}`); //
+        }
+        // Se um novo cartão foi selecionado, vincula-o
+        if (selectedCardId) {
+          await api.post(`/users/${initialData.id}/link-card`, { cardId: selectedCardId }); //
+        }
+      }
+
       // 1. Atualiza os dados básicos do usuário
       await api.patch(`/users/${initialData.id}`, {
         username,
@@ -191,6 +226,13 @@ export default function EditForm({
     }
   };
 
+  
+  const cardOptions = [...availableCards];
+  if (initiallyLinkedCard && !cardOptions.some(c => c.id === initiallyLinkedCard.id)) {
+    cardOptions.unshift(initiallyLinkedCard);
+  }
+  const selectedCardName = cardOptions.find(c => c.cardId === selectedCardId)?.name || "Sem cartão";
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {/* Nome */}
@@ -239,50 +281,37 @@ export default function EditForm({
       </div>
 
       {/* LinkCard */}
-      <div>
-        <div className="flex items-center gap-1">
-          <FaRegIdCard className="w-4 h-4 text-blue-400" />
-          <label>ID do Card</label>
-        </div>
-        <input
-          type="text"
-          value={idCard}
-          onChange={(e) => setIdCard(e.target.value)}
-          placeholder="Sem cartão linkado"
-          className={`w-full rounded-md border px-3 py-2 text-gray-800 shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 ${
-            idCard.length > 0
-              ? "bg-gray-100 border-gray-400 focus:ring-blue-400"
-              : "bg-white border-gray-300 focus:ring-blue-300"
-          }`}
-        />
-      </div>
+      
 
       {/* Status */}
       <div>
         <div className="flex items-center gap-1">
-          <HiOutlineStatusOnline className="w-4 h-4 text-blue-400" />
-          <label>Status</label>
+          <FaRegIdCard className="w-4 h-4 text-blue-400" />
+          <label>Cartão Vinculado</label>
         </div>
-        <Listbox value={status} onChange={setStatus}>
+        <Listbox value={selectedCardId} onChange={setSelectedCardId}>
           <div className="relative mt-1">
             <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white p-3 text-left text-gray-800 font-semibold border border-gray-300 shadow-sm">
-              {statusOptions.find((opt) => opt.value === status)?.label}
+              <span className="block truncate">{selectedCardName}</span>
               <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                 <FiChevronsDown className="h-4 w-4 text-gray-600" />
               </span>
             </ListboxButton>
             <ListboxOptions className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white p-2 text-sm shadow-lg ring-1 ring-black/5">
-              {statusOptions.map((opt) => (
+              <ListboxOption
+                key="no-card"
+                value={null}
+                className={({ selected }) => `cursor-pointer select-none p-2 rounded ${selected ? "bg-teal-200 font-bold" : "hover:bg-gray-100"}`}
+              >
+                Sem cartão
+              </ListboxOption>
+              {cardOptions.map((card) => (
                 <ListboxOption
-                  key={opt.value}
-                  value={opt.value}
-                  className={({ selected }) =>
-                    `cursor-pointer select-none p-2 rounded ${
-                      selected ? "bg-teal-200 font-bold" : "hover:bg-gray-100"
-                    }`
-                  }
+                  key={card.id}
+                  value={card.cardId}
+                  className={({ selected }) => `cursor-pointer select-none p-2 rounded ${selected ? "bg-teal-200 font-bold" : "hover:bg-gray-100"}`}
                 >
-                  {opt.label}
+                  {card.name} ({card.cardId.substring(0, 6)}...)
                 </ListboxOption>
               ))}
             </ListboxOptions>

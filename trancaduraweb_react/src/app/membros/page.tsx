@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import MemberCard from "@/components/MemberCard";
 import RegisterForm from "@/components/Forms/RegisterForm";
+import ScanCardButton from "@/components/ScanCardButton";
 
 // Import dos ícones
 import { IoPeopleSharp } from "react-icons/io5";
@@ -28,11 +29,12 @@ interface UserDetails {
 }
 
 export default function Membros() {
-  const [open, setOpen] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
   const [isStaff, setIsStaff] = useState(false);
   const [isSuperuser, setIsSuperuser] = useState(false);
   const [labSelecionado, setLabSelecionado] = useState<number | null>(null);
+  const [registerModalOpen, setRegisterModalOpen] = useState(false);
+  const [scanCardModalOpen, setScanCardModalOpen] = useState(false);
 
   // Estado para armazenar os laboratórios do usuário
   useEffect(() => {
@@ -198,15 +200,24 @@ export default function Membros() {
             />
           </div>
 
+          {/* Botões de Ação */}
           {podeGerenciar && (
+          <div className="w-full flex flex-col md:flex-row gap-4 mt-4">
             <button
-              className="flex-1 md:w-auto text-sm font-semibold px-4 py-2 bg-gradient-to-r from-green-500 to-lime-300 text-white rounded-md shadow-lg border border-green-600 flex items-center justify-center gap-2 cursor-pointer"
-              onClick={() => setOpen(true)}
+              className="w-full md:w-1/2 p-3 bg-gradient-to-r from-green-500 to-lime-300 text-white font-bold rounded-lg shadow-md hover:scale-105 transition"
+              onClick={() => setRegisterModalOpen(true)}
             >
-              <FaPlus className="w-4 h-4" />
-              <span>Adicionar Membro</span>
+              Adicionar Membro
             </button>
-          )}
+            {/* Escanear cartão */}
+            <button
+              className="w-full md:w-1/2 p-3 bg-gradient-to-r from-blue-600 to-teal-500 text-white font-bold rounded-lg shadow-md hover:scale-105 transition"
+              onClick={() => setScanCardModalOpen(true)}
+            >
+              Escanear Novo Cartão
+            </button>
+          </div>
+        )}
         </div>
 
         {/* Lista de Membros */}
@@ -245,12 +256,12 @@ export default function Membros() {
       </section>
 
       {/* Modal de Registro */}
-      {open && podeGerenciar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+      {registerModalOpen && podeGerenciar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <div className="bg-white rounded-lg shadow-lg p-8 w-80 sm:w-full max-w-md relative">
             <button
               className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-4xl"
-              onClick={() => setOpen(false)}
+              onClick={() => setRegisterModalOpen(false)}
               aria-label="Fechar"
             >
               ×
@@ -259,12 +270,35 @@ export default function Membros() {
               Registrar Novo Membro
             </h2>
             <RegisterForm
-              onClose={() => setOpen(false)}
+              onClose={() => setRegisterModalOpen(false)}
               onSave={(newUser) => {
                 handleUserAdd(newUser);
-                setOpen(false);
+                setRegisterModalOpen(false);
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* 4. Adicione o novo Modal para Escanear Cartão */}
+      {scanCardModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md relative">
+            <button
+              className="cursor-pointer absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-4xl"
+              onClick={() => setScanCardModalOpen(false)}
+              aria-label="Fechar"
+            >
+              ×
+            </button>
+            <h2 className="text-2xl font-bold mb-6 text-center">
+              Escanear Novo Cartão
+            </h2>
+            <p className="text-center text-gray-600 mb-4">
+              Selecione o leitor e clique no botão para iniciar. O novo cartão
+              ficará disponível para ser vinculado a um usuário.
+            </p>
+            <ScanCardButton />
           </div>
         </div>
       )}
