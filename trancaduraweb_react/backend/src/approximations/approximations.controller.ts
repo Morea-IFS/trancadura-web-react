@@ -23,6 +23,25 @@ export class ApproximationsController {
     return this.service.findAll();
   }
 
+  @Get('available')
+  async getAvailableCards() {
+    const usedCardIds = await this.prisma.userCard.findMany({
+      select: {
+        approximationId: true,
+      },
+    });
+
+    const idsInUse = usedCardIds.map(uc => uc.approximationId);
+
+    return this.prisma.approximation.findMany({
+      where: {
+        id: {
+          notIn: idsInUse,
+        },
+      },
+    });
+  }
+
   @Get(':id')
   findOne(@Param('id') id: number) {
     return this.service.findOne(id);
@@ -78,15 +97,7 @@ export class ApproximationsController {
     return { success: true, cardId: card.id, userId };
   }
 
-  @Get('available')
-  async getAvailableCards() {
-    const allCards = await this.prisma.approximation.findMany();
-    const usedCards = await this.prisma.userCard.findMany();
-    
-    return allCards.filter(card => 
-      !usedCards.some(uc => uc.approximationId === card.id)
-    );
-  }
+  
 
   @Post('ingest')
   async ingestNewCards(@Body() data: { hexid: string; macaddress: string }) {

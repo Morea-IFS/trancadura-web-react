@@ -123,7 +123,7 @@ export default function MemberCard({
       )}
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <div className="bg-white rounded-lg shadow-lg p-8 w-80 sm:w-full max-w-md relative">
             <button
               className="cursor-pointer absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-4xl"
