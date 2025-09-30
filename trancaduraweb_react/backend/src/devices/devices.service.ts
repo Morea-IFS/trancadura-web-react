@@ -16,7 +16,11 @@ export class DevicesService {
   }
 
   async findAll() {
-    return this.prisma.device.findMany();
+    return this.prisma.device.findMany({
+      include: {
+        lab: true,
+      },
+    });
   }
 
   async findOne(id: number) {
@@ -73,34 +77,35 @@ export class DevicesService {
       };
     }
 
-    async setDeviceIp(dto: UpdateDeviceIpDto) {
-      const { deviceId, deviceIp, apiToken } = dto;
+  async setDeviceIp(dto: UpdateDeviceIpDto) {
+    const { deviceId, deviceIp, apiToken } = dto;
 
-      const device = await this.prisma.device.findUnique({
-        where: { uuid: deviceId },
-      });
+    const device = await this.prisma.device.findUnique({
+      where: { uuid: deviceId },
+    });
 
-      if (!device) {
-        throw new UnauthorizedException('device does not exist.');
-      }
-
-      if (device.apiToken !== apiToken) {
-        throw new BadRequestException('api token does not exist.');
-      }
-
-      if (!deviceIp) {
-        throw new BadRequestException('ip not received.');
-      }
-
-      await this.prisma.device.update({
-        where: { uuid: deviceId },
-        data: {
-          ipAddress: deviceIp,
-        },
-      });
-
-      return { message: 'ip received.' };
+    if (!device) {
+      throw new UnauthorizedException('device does not exist.');
     }
+
+    if (device.apiToken !== apiToken) {
+      throw new BadRequestException('api token does not exist.');
+    }
+
+    if (!deviceIp) {
+      throw new BadRequestException('ip not received.');
+    }
+
+    await this.prisma.device.update({
+      where: { uuid: deviceId },
+      data: {
+        ipAddress: deviceIp,
+      },
+    });
+
+    return { message: 'ip received.' };
+  }
 
 
 }
+
