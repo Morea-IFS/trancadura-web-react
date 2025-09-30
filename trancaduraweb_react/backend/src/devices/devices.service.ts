@@ -16,7 +16,11 @@ export class DevicesService {
   }
 
   async findAll() {
-    return this.prisma.device.findMany();
+    return this.prisma.device.findMany({
+      include: {
+        lab: true,
+      },
+    });
   }
 
   async findOne(id: number) {

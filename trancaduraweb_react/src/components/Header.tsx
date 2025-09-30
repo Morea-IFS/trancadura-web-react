@@ -15,6 +15,7 @@ import { FiChevronsDown } from "react-icons/fi";
 import { FaHistory } from "react-icons/fa";
 import { IoPeopleSharp } from "react-icons/io5";
 import { MdOutlineLock } from "react-icons/md";
+import { CiRouter } from "react-icons/ci";
 
 type HeaderProps = {
   labSelecionado: number | null;
@@ -151,6 +152,13 @@ export default function Header({
           >
             <IoPeopleSharp className="w-6 h-6" />
             <span className="hidden md:block text-xl font-bold">Membros</span>
+          </Link>
+          <Link
+            href="/dispositivos"
+            className="w-12 h-12 md:w-40 md:gap-2 bg-white/20 border border-white/20 rounded-lg flex items-center justify-center cursor-pointer shadow-md transition-transform duration-300 hover:scale-120 md:hover:scale-105 hover:bg-white/30"
+          >
+            <CiRouter className="w-6 h-6" />
+            <span className="hidden md:block text-xl font-bold">Dispositivos</span>
           </Link>
         </div>
       </div>
