@@ -83,11 +83,7 @@ export class LabsService {
         'Nenhum dispositivo de acesso está vinculado a este laboratório',
       );
     }
-    if (!lab.device.ipAddress || !lab.device.apiToken) {
-        throw new NotFoundException(
-          'O dispositivo vinculado não possui IP ou Token de API configurado para a comunicação',
-        );
-    }
+    
 
     // Verifica se o usuário tem permissão para acessar o laboratório
     const userInLab = await this.prisma.userLab.findUnique({
