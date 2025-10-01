@@ -35,12 +35,14 @@ export default function Membros() {
   const [labSelecionado, setLabSelecionado] = useState<number | null>(null);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [scanCardModalOpen, setScanCardModalOpen] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   // Estado para armazenar os laboratórios do usuário
   useEffect(() => {
     async function fetchRoles() {
       try {
         const userRes = await api.get("/users/me");
+        setCurrentUserId(userRes.data.userId);
 
         const rolesArray: any[] = userRes.data.roles || [];
 
@@ -298,7 +300,7 @@ export default function Membros() {
               Selecione o leitor e clique no botão para iniciar. O novo cartão
               ficará disponível para ser vinculado a um usuário.
             </p>
-            <ScanCardButton />
+            <ScanCardButton userId={currentUserId} />
           </div>
         </div>
       )}

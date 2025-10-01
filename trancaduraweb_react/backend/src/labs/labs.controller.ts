@@ -9,6 +9,7 @@ import {
   UseGuards,
   Req,
   ForbiddenException,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { LabsService } from './labs.service';
 import { CreateLabDto } from './dto/create-lab.dto';
@@ -23,6 +24,8 @@ export class LabsController {
   constructor(private readonly labsService: LabsService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('superuser', 'staff')
   create(@Body() dto: CreateLabDto) {
     return this.labsService.create(dto);
   }
@@ -45,11 +48,15 @@ export class LabsController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('superuser', 'staff')
   update(@Param('id') id: number, @Body() dto: UpdateLabDto) {
     return this.labsService.update(id, dto);
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('superuser', 'staff')
   remove(@Param('id') id: number) {
     return this.labsService.remove(id);
   }
@@ -82,6 +89,12 @@ export class LabsController {
     @Body() dto: { labIds: number[], userId: number }
   ) {
     return this.labsService.removeUsersFromLab(dto);
+  }
+
+  @Get(':id/accesses')
+  @UseGuards(JwtAuthGuard)
+  async getLabAccesses(@Param('id', ParseIntPipe) labId: number ) {
+    return this.labsService.getAccessesByLab(labId);
   }
 
   @Post('unlock/:labId')
