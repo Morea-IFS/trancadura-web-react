@@ -41,9 +41,13 @@ export default function Home() {
 
   // Pega os acessos do usuário no laboratório selecionado
   useEffect(() => {
-    if (!usuarioId || !labSelecionado) return;
+    if (!usuarioId || !labSelecionado) {
+      setAcessos([]);
+      return;
+    }
+
     api
-      .get(`/devices/${labSelecionado}/all`)
+      .get(`/labs/${labSelecionado}/accesses`)
       .then((res) => {
         const filtrados = res.data
           .filter((item: any) => item.userId === usuarioId)
@@ -76,16 +80,14 @@ export default function Home() {
     setUltimoStatus(null);
 
     try {
-      const response = await api.post(`/labs/unlock/${labSelecionado}`, {
-        deviceId: usuarioId,
-      });
+      const response = await api.post(`/labs/unlock/${labSelecionado}`, {});
 
-      console.log("Id do lab:", labSelecionado);
       const status = response.data.access?.permission ? "autorizado" : "negado";
       setUltimoStatus(status);
+
       alert(response.data.message || "Requisição enviada com sucesso!");
 
-      const res = await api.get(`/devices/${labSelecionado}/all`);
+      const res = await api.get(`/labs/${labSelecionado}/accesses`);
       const filtrados = res.data
         .filter((item: any) => item.userId === usuarioId)
         .slice(0, 3)

@@ -16,6 +16,7 @@ import { FaHistory } from "react-icons/fa";
 import { IoPeopleSharp } from "react-icons/io5";
 import { MdOutlineLock } from "react-icons/md";
 import { CiRouter } from "react-icons/ci";
+import { LuHotel } from "react-icons/lu";
 
 type HeaderProps = {
   labSelecionado: number | null;
@@ -159,6 +160,13 @@ export default function Header({
           >
             <CiRouter className="w-6 h-6" />
             <span className="hidden md:block text-xl font-bold">Dispositivos</span>
+          </Link>
+          <Link
+            href="/laboratorios"
+            className="w-12 h-12 md:w-40 md:gap-2 bg-white/20 border border-white/20 rounded-lg flex items-center justify-center cursor-pointer shadow-md transition-transform duration-300 hover:scale-120 md:hover:scale-105 hover:bg-white/30"
+          >
+            <LuHotel className="w-6 h-6" />
+            <span className="hidden md:block text-xl font-bold">Labs</span>
           </Link>
         </div>
       </div>

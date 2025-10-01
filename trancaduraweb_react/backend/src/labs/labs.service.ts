@@ -13,7 +13,13 @@ export class LabsService {
   }
 
   findAll() {
-    return this.prisma.lab.findMany();
+    return this.prisma.lab.findMany({
+      include: {
+        _count: {
+          select: { users: true },
+        },
+      },
+    });
   }
 
   findOne(id: number) {
@@ -153,6 +159,25 @@ export class LabsService {
       include: {
         users: true,
       },
+    });
+  }
+
+  async getAccessesByLab(labId: number) {
+    // Encontra o lab para descobrir qual dispositivo está vinculado a ele
+    const lab = await this.prisma.lab.findUnique({
+      where: { id: labId },
+    });
+
+    // Se o lab não existir ou não tiver dispositivo, retorna uma lista vazia
+    if (!lab || !lab.deviceId) {
+      return [];
+    }
+
+    // Busca todos os acessos do dispositivo vinculado àquele lab
+    return this.prisma.userAccess.findMany({
+      where: { deviceId: lab.deviceId },
+      include: { user: true },
+      orderBy: { date: 'desc' },
     });
   }
 }

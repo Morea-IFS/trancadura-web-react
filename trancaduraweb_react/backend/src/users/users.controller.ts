@@ -62,17 +62,6 @@ export class UsersController {
     };
   }
 
-  // @UseGuards(JwtAuthGuard)
-  // @Get('me')
-  // getMe(
-  //   @Req()
-  //   req: {
-  //     user: { id: number; name: string; email: string };
-  //   },
-  // ) {
-  //   return req.user;
-  // }
-
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
     const user = await this.usersService.findOne(id);

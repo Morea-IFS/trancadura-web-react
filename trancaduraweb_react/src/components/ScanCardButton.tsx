@@ -1,3 +1,4 @@
+// src/components/ScanCardButton.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -13,31 +14,29 @@ import { FaRegIdCard } from "react-icons/fa";
 
 interface Device {
   id: number;
-  uuid: string;
-  section: string;
   location: string;
 }
 
-export default function ScanCardButton() {
+interface ScanCardButtonProps {
+  userId: number | null;
+}
+
+export default function ScanCardButton({ userId }: ScanCardButtonProps) {
   const [devices, setDevices] = useState<Device[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState<number | null>(null);
-  const [status, setStatus] = useState<
-    "idle" | "loading" | "scanning" | "success" | "error"
-  >("idle");
+  // 1. Renomeado para maior clareza: agora guarda apenas o ID
+  const [selectedDeviceId, setSelectedDeviceId] = useState<number | null>(null);
+  const [status, setStatus] = useState<"idle" | "loading" | "scanning" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    // Busca os dispositivos (leitores) disponíveis na API
     const fetchDevices = async () => {
       try {
         const res = await api.get("/devices");
         setDevices(res.data);
-        // Pré-seleciona o primeiro dispositivo da lista
         if (res.data.length > 0) {
-          setSelectedDevice(res.data[0].id);
+          setSelectedDeviceId(res.data[0].id);
         }
       } catch (err) {
-        console.error("Erro ao buscar dispositivos:", err);
         setMessage("Falha ao carregar os leitores.");
         setStatus("error");
       }
@@ -46,8 +45,8 @@ export default function ScanCardButton() {
   }, []);
 
   const handleScan = async () => {
-    if (!selectedDevice) {
-      setMessage("Por favor, selecione um leitor.");
+    if (!selectedDeviceId || !userId) {
+      setMessage("Selecione um leitor e certifique-se de estar logado.");
       setStatus("error");
       return;
     }
@@ -56,8 +55,8 @@ export default function ScanCardButton() {
     setMessage("");
 
     try {
-      // 1. Pede ao backend as credenciais do dispositivo
-      const res = await api.post(`/devices/${selectedDevice}/hexid`);
+      const res = await api.post(`/devices/${selectedDeviceId}/hexid`, { userId });
+      // ... (resto da função handleScan sem alterações)
       const { deviceIp, apiToken } = res.data;
 
       if (!deviceIp || !apiToken) {
@@ -66,19 +65,15 @@ export default function ScanCardButton() {
 
       setStatus("scanning");
       setMessage("Aproxime o novo cartão do leitor...");
-
-      // 2. Faz a chamada diretamente para o ESP32
-      // Usamos um timeout para não deixar a requisição pendurada para sempre
+      
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 segundos de timeout
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
 
       await fetch(`http://${deviceIp}/hexid?apiToken=${apiToken}`, {
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
 
-      // O ESP responde ao frontend, e em paralelo envia o hexid para o backend.
-      // Se a chamada ao ESP for bem-sucedida, consideramos que o processo funcionou.
       setStatus("success");
       setMessage("Cartão escaneado com sucesso! Agora ele pode ser vinculado a um usuário.");
 
@@ -93,16 +88,27 @@ export default function ScanCardButton() {
     }
   };
 
-  const selectedDeviceName =
-    devices.find((d) => d.id === selectedDevice)?.location || "Selecione um leitor";
+  // 2. Lógica de exibição corrigida e mais robusta
+  const getSelectedDeviceName = () => {
+    if (selectedDeviceId === null) {
+      return "Selecione um leitor";
+    }
+    const device = devices.find((d) => d.id === selectedDeviceId);
+    if (!device) {
+      return "Selecione um leitor";
+    }
+    // Usa a mesma lógica das opções: `location` ou um nome padrão
+    return device.location || `Dispositivo ${device.id}`;
+  };
 
   return (
     <div className="flex flex-col gap-2 w-full">
       <p className="font-bold text-sm">Leitor a ser utilizado:</p>
-      <Listbox value={selectedDevice} onChange={setSelectedDevice}>
+      <Listbox value={selectedDeviceId} onChange={setSelectedDeviceId}>
         <div className="relative w-full">
           <ListboxButton className="relative w-full cursor-pointer rounded-lg bg-white p-3 text-left text-gray-800 font-semibold border border-gray-200 shadow-sm">
-            {selectedDeviceName}
+            {/* 3. Chama a nova função para obter o nome */}
+            {getSelectedDeviceName()}
             <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
               <FiChevronsDown className="h-4 w-4 text-gray-600" />
             </span>
@@ -121,6 +127,7 @@ export default function ScanCardButton() {
         </div>
       </Listbox>
 
+      {/* ... (botão de escanear e mensagem de status, sem alterações) ... */}
       <button
         onClick={handleScan}
         disabled={status === "loading" || status === "scanning"}
@@ -136,11 +143,7 @@ export default function ScanCardButton() {
       {message && (
         <p
           className={`text-sm text-center mt-2 font-semibold ${
-            status === "success"
-              ? "text-green-600"
-              : status === "error"
-              ? "text-red-600"
-              : "text-gray-600"
+            status === "success" ? "text-green-600" : status === "error" ? "text-red-600" : "text-gray-600"
           }`}
         >
           {message}
