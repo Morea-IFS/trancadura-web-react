@@ -8,7 +8,6 @@ import {
   ListboxOption,
 } from "@headlessui/react";
 
-// Import dos icones
 import { MdOutlineSensorDoor } from "react-icons/md";
 import { IoExitOutline } from "react-icons/io5";
 import { FiChevronsDown } from "react-icons/fi";
@@ -29,7 +28,6 @@ export default function Header({
 }: HeaderProps) {
   const [labs, setLabs] = useState<{ id: number; name: string }[]>([]);
 
-  // Função para carregar os laboratórios da base de dados
   const carregarLabs = async () => {
     try {
       const res = await api.get("/labs/me");
@@ -50,7 +48,6 @@ export default function Header({
     }
   };
 
-  // Função para setar os laboratórios selecionados no localStorage
   useEffect(() => {
     const savedLab = localStorage.getItem("labSelecionado");
     if (savedLab) {
@@ -60,7 +57,6 @@ export default function Header({
     carregarLabs();
   }, []);
 
-  // Função para atualizar o localStorage quando o labSelecionado mudar
   useEffect(() => {
     if (labSelecionado !== null) {
       localStorage.setItem("labSelecionado", labSelecionado.toString());

@@ -25,7 +25,7 @@ export default function CreateLabForm({ onClose, onSave }: CreateLabFormProps) {
     setError("");
 
     try {
-      const response = await api.post("/labs", { name }); // Chama a API para criar o lab
+      const response = await api.post("/labs", { name });
       onSave(response.data);
       onClose();
     } catch (err: any) {
