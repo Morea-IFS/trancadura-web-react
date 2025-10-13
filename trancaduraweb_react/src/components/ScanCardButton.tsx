@@ -23,7 +23,6 @@ interface ScanCardButtonProps {
 
 export default function ScanCardButton({ userId }: ScanCardButtonProps) {
   const [devices, setDevices] = useState<Device[]>([]);
-  // 1. Renomeado para maior clareza: agora guarda apenas o ID
   const [selectedDeviceId, setSelectedDeviceId] = useState<number | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "scanning" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -56,7 +55,6 @@ export default function ScanCardButton({ userId }: ScanCardButtonProps) {
 
     try {
       const res = await api.post(`/devices/${selectedDeviceId}/hexid`, { userId });
-      // ... (resto da função handleScan sem alterações)
       const { deviceIp, apiToken } = res.data;
 
       if (!deviceIp || !apiToken) {
@@ -88,7 +86,6 @@ export default function ScanCardButton({ userId }: ScanCardButtonProps) {
     }
   };
 
-  // 2. Lógica de exibição corrigida e mais robusta
   const getSelectedDeviceName = () => {
     if (selectedDeviceId === null) {
       return "Selecione um leitor";
@@ -97,7 +94,6 @@ export default function ScanCardButton({ userId }: ScanCardButtonProps) {
     if (!device) {
       return "Selecione um leitor";
     }
-    // Usa a mesma lógica das opções: `location` ou um nome padrão
     return device.location || `Dispositivo ${device.id}`;
   };
 
@@ -107,7 +103,6 @@ export default function ScanCardButton({ userId }: ScanCardButtonProps) {
       <Listbox value={selectedDeviceId} onChange={setSelectedDeviceId}>
         <div className="relative w-full">
           <ListboxButton className="relative w-full cursor-pointer rounded-lg bg-white p-3 text-left text-gray-800 font-semibold border border-gray-200 shadow-sm">
-            {/* 3. Chama a nova função para obter o nome */}
             {getSelectedDeviceName()}
             <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
               <FiChevronsDown className="h-4 w-4 text-gray-600" />
@@ -127,7 +122,6 @@ export default function ScanCardButton({ userId }: ScanCardButtonProps) {
         </div>
       </Listbox>
 
-      {/* ... (botão de escanear e mensagem de status, sem alterações) ... */}
       <button
         onClick={handleScan}
         disabled={status === "loading" || status === "scanning"}
