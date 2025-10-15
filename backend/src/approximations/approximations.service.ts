@@ -73,7 +73,7 @@ export class ApproximationsService {
     // 2. Verifica o dispositivo
     const device = await this.prisma.device.findUnique({
       where: { macAddress: macaddress },
-      include: { roles: { include: { role: true } } }, // Carrega os papéis
+      include: { roles: { include: { role: true } } },
     });
 
     if (!device) return "Unauthorized";

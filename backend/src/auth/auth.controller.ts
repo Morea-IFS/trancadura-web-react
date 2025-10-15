@@ -143,7 +143,7 @@ export class AuthController {
         username: user.username,
         email: user.email,
         isActive: user.isActive,
-        roles: user.roles?.map((r) => r.role.name), // Adiciona os roles
+        roles: user.roles?.map((r) => r.role.name),
       },
     };
   }

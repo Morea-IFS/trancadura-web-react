@@ -55,10 +55,10 @@ export class UsersController {
     if (!user) return null;
 
     return {
-      userId: user.id, // <- necessário para o frontend funcionar
+      userId: user.id,
       username: user.username,
       email: user.email,
-      roles: user.roles, // [{ role: { name: 'superuser' } }]
+      roles: user.roles,
     };
   }
 

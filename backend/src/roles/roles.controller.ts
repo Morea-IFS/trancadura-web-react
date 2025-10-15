@@ -49,7 +49,6 @@ export class RolesController {
     return this.rolesService.removeRoleByNameFromUser({ userId, roleName });
   }
 
-  // src/roles/roles.controller.ts
   @Post('assign')
   assignRoleToUser(@Body() dto: AssignRoleDto) {
     return this.rolesService.assignRoleToUser(dto);
