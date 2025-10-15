@@ -15,6 +15,11 @@ export class LabsService {
   findAll() {
     return this.prisma.lab.findMany({
       include: {
+        users: {
+          include: {
+            user: true,
+          },
+        },
         _count: {
           select: { users: true },
         },
