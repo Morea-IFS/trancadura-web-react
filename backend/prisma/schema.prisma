@@ -154,16 +154,19 @@ model UserAccess {
   @@map("user_accesses")
 }
 
-model TemporaryAccessRequest {
-  id         Int      @id @default(autoincrement())
-  labId      Int
-  userId     Int
-  expiresAt  DateTime?
-  isOneTime  Boolean  @default(false)
-  approved   Boolean? // null = pendente, true/false = resposta
-  createdAt  DateTime @default(now())
+model Reservation {
+  id        Int      @id @default(autoincrement())
+  startTime DateTime
+  endTime   DateTime
 
-  user User @relation(fields: [userId], references: [id])
-  lab  Lab  @relation(fields: [labId], references: [id])
+  userId    Int
+  labId     Int
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lab       Lab      @relation(fields: [labId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  // Garante que um usuário não possa reservar o mesmo lab no mesmo horário
+  @@unique([userId, labId, startTime]) 
 }
-
