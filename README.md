@@ -23,3 +23,4 @@
 - /historico = Acessa a página de históricos de acesso, recusas e etc...
 - /membros = (Apenas para admins) Acessa a página de membros com CRUD para gerenciar todos os membros.
 
+![Alt](https://repobeats.axiom.co/api/embed/ed32c9fea885c2a51e89feddaa2e2276564bbc08.svg "Repobeats analytics image")
