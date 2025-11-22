@@ -194,13 +194,6 @@ export default function Membros() {
         </div>
         {/* Busca e Adicionar Membros */}
         <div className="w-full flex flex-col md:flex-row gap-2 bg-white rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.25)] p-4">
-          <div className="relative flex-1">
-            <input
-              type="text"
-              placeholder="Inativa por enquanto..."
-              className="w-full bg-white border border-gray-300 rounded-md shadow-sm px-4 py-2 text-sm outline-none placeholder:text-gray-400"
-            />
-          </div>
 
           {/* Botões de Ação */}
           {podeGerenciar && (
