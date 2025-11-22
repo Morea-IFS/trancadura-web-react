@@ -5,6 +5,7 @@ import { UpdateDeviceDto } from './dto/update-device.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateDeviceIpDto } from './dto/update-device-ip.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth/jwt-auth.guard';
+import { PinAuthDto } from './dto/pin-auth.dto';
 
 @Controller('devices')
 export class DevicesController {
@@ -159,5 +160,10 @@ export class DevicesController {
         deviceId_roleId: { deviceId, roleId }
       }
     });
+  }
+
+  @Post('auth/pin')
+  async validatePin(@Body() dto: PinAuthDto) {
+    return this.devicesService.validatePinAccess(dto);
   }
 }

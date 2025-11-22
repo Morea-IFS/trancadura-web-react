@@ -14,6 +14,7 @@ import {
   IoPersonCircle,
   IoMailOpenOutline,
   IoLockClosedOutline,
+  IoKeypadOutline,
 } from "react-icons/io5";
 import { HiOutlineStatusOnline } from "react-icons/hi";
 import { LuHotel } from "react-icons/lu";
@@ -26,6 +27,7 @@ interface EditFormProps {
     username?: string;
     email?: string;
     status?: "ativo" | "inativo";
+    accessPin?: string;
     labs?: { id: number; name: string; isStaff: boolean }[];
   };
   onClose?: () => void;
@@ -51,7 +53,9 @@ export default function EditForm({
   const [username, setUsername] = useState(initialData?.username || "");
   const [email, setEmail] = useState(initialData?.email || "");
   const [password, setPassword] = useState("");
-  const [idCard, setIdCard] = useState(""); // Precisa ser implementado
+  // Estado individual para o PIN
+  const [accessPin, setAccessPin] = useState(initialData?.accessPin || ""); 
+  
   const [status, setStatus] = useState<"ativo" | "inativo">(
     initialData?.status || "ativo"
   );
@@ -66,17 +70,17 @@ export default function EditForm({
   const [staffRoleId, setStaffRoleId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Busca os laboratórios do usuário e o ID da role "staff"
+  // Busca os dados iniciais
   useEffect(() => {
     async function fetchData() {
       if (!initialData?.id) return;
 
       try {
-        // Busca os cartões disponíveis (não vinculados a ninguém)
+        // Busca os cartões disponíveis
         const availableCardsRes = await api.get("/approximations/available");
         setAvailableCards(availableCardsRes.data);
 
-        // Busca o cartão atualmente vinculado a este usuário
+        // Busca o cartão atualmente vinculado
         const linkedCardsRes = await api.get(`/users/${initialData.id}/cards`);
         if (linkedCardsRes.data && linkedCardsRes.data.length > 0) {
           const currentCard = linkedCardsRes.data[0].approximation;
@@ -84,7 +88,7 @@ export default function EditForm({
           setSelectedCardId(currentCard.cardId);
         }
 
-        // 1. Busca dados do usuário atual
+        // 1. Busca dados do usuário logado para saber permissões
         const me = await api.get("/users/me");
         const currentUserId = me.data.userId;
         const isSuperUser = me.data.roles?.some((r: any) => r.role.name === "superuser");
@@ -92,11 +96,9 @@ export default function EditForm({
         // 2. Busca os laboratórios
         let labsToShow;
         if (isSuperUser) {
-          // Se for superUser, busca todos os laboratórios
           const allLabs = await api.get("/labs");
           labsToShow = allLabs.data;
         } else {
-          // Se não for superUser, busca apenas os labs onde é staff
           const myLabs = await api.get("/labs/me");
           labsToShow = myLabs.data.filter((lab: any) => 
             lab.users?.some((u: any) => u.userId === currentUserId && u.isStaff)
@@ -105,7 +107,7 @@ export default function EditForm({
 
         setLabs(labsToShow);
 
-        // 3. Busca o ID da role "staff" (para uso posterior)
+        // 3. Busca o ID da role "staff"
         const rolesRes = await api.get("/roles");
         const staff = rolesRes.data.find((r: any) => r.name === "staff");
         if (staff) setStaffRoleId(staff.id);
@@ -136,51 +138,49 @@ export default function EditForm({
     );
   };
 
-  // Manipula a mudança de permissões de staff por laboratório
+  // Manipula a mudança de permissões de staff
   const handleStaffChange = (labId: number, isStaff: boolean) => {
     setLabsStaff((prev) => ({ ...prev, [labId]: isStaff }));
   };
 
-  // Envia o formulário de registro
+  // Envia o formulário
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!initialData?.id) return alert("ID de usuário inválido");
 
     setLoading(true);
     try {
+      // Atualiza vínculo do cartão
       if (selectedCardId !== initiallyLinkedCard?.cardId) {
-        // Se havia um cartão vinculado e agora não há mais (ou mudou), desvincula o antigo
         if (initiallyLinkedCard) {
-          await api.delete(`/users/${initialData.id}/cards/${initiallyLinkedCard.id}`); //
+          await api.delete(`/users/${initialData.id}/cards/${initiallyLinkedCard.id}`);
         }
-        // Se um novo cartão foi selecionado, vincula-o
         if (selectedCardId) {
-          await api.post(`/users/${initialData.id}/link-card`, { cardId: selectedCardId }); //
+          await api.post(`/users/${initialData.id}/link-card`, { cardId: selectedCardId });
         }
       }
 
-      // 1. Atualiza os dados básicos do usuário
+      // 1. Atualiza dados básicos
       await api.patch(`/users/${initialData.id}`, {
         username,
         email,
         password: password || undefined,
         isActive: status === "ativo",
+        accessPin: accessPin || null,
       });
 
-      // 2. Atualiza as associações com laboratórios
+      // 2. Atualiza associações com laboratórios
       const labsToSend = selectedLabs.map((labId) => ({
         userId: initialData.id!,
         labId,
         isStaff: !!labsStaff[labId],
       }));
 
-      // Primeiro remove todas as associações existentes
       await api.post("/labs/remove-users", {
         labIds: selectedLabs,
         userId: initialData.id,
       });
 
-      // Adiciona as novas associações
       for (const lab of labsToSend) {
         await api.post("/labs/add-users", {
           labId: lab.labId,
@@ -188,7 +188,7 @@ export default function EditForm({
         });
       }
 
-      // 3. Atualiza a role staff
+      // 3. Atualiza role staff global
       const isStaffAnywhere = labsToSend.some((l) => l.isStaff);
       if (staffRoleId !== null) {
         if (isStaffAnywhere) {
@@ -197,18 +197,18 @@ export default function EditForm({
             roleId: staffRoleId,
           });
         } else {
-          // Remove a role staff completamente
           await api.delete(`/roles/user/${initialData.id}/role-name/staff`);
         }
       }
 
-      // 4. Atualiza o usuário no estado local
+      // 4. Retorna dados atualizados
       if (onSave) {
         onSave({
           id: initialData.id,
           username,
           email,
           isActive: status === "ativo",
+          accessPin,
           labs: labsToSend.map((l) => ({
             id: l.labId,
             isStaff: l.isStaff,
@@ -226,7 +226,6 @@ export default function EditForm({
     }
   };
 
-  
   const cardOptions = [...availableCards];
   if (initiallyLinkedCard && !cardOptions.some(c => c.id === initiallyLinkedCard.id)) {
     cardOptions.unshift(initiallyLinkedCard);
@@ -234,74 +233,119 @@ export default function EditForm({
   const selectedCardName = cardOptions.find(c => c.cardId === selectedCardId)?.name || "Sem cartão";
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Nome */}
-      <div>
-        <div className="flex items-center gap-1">
+      <div className="col-span-1">
+        <div className="flex items-center gap-1 mb-1">
           <IoPersonCircle className="w-4 h-4 text-blue-400" />
-          <label>Nome</label>
+          <label className="text-sm font-medium">Nome</label>
         </div>
         <input
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           placeholder="Nome do usuário"
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-800 shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="w-full rounded-md border border-gray-300 p-2 text-sm"
         />
       </div>
 
       {/* Email */}
-      <div>
-        <div className="flex items-center gap-1">
+      <div className="col-span-1">
+        <div className="flex items-center gap-1 mb-1">
           <IoMailOpenOutline className="w-4 h-4 text-blue-400" />
-          <label>E-Mail</label>
+          <label className="text-sm font-medium">E-Mail</label>
         </div>
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="E-mail"
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-800 shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="w-full rounded-md border border-gray-300 p-2 text-sm"
         />
       </div>
 
       {/* Senha */}
-      <div>
-        <div className="flex items-center gap-1">
+      <div className="col-span-1">
+        <div className="flex items-center gap-1 mb-1">
           <IoLockClosedOutline className="w-4 h-4 text-blue-400" />
-          <label>Nova Senha</label>
+          <label className="text-sm font-medium">Nova Senha</label>
         </div>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Deixe em branco para não alterar"
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-800 shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          placeholder="Vazio para manter"
+          className="w-full rounded-md border border-gray-300 p-2 text-sm"
         />
       </div>
 
-      {/* LinkCard */}
-      
+      {/* Access PIN - Corrigido */}
+      <div className="col-span-1">
+        <div className="flex items-center gap-1 mb-1">
+          <IoKeypadOutline className="w-4 h-4 text-blue-400" />
+          <label className="text-sm font-medium">PIN de Acesso</label>
+        </div>
+        <input
+          type="text"
+          name="accessPin"
+          maxLength={6}
+          className="w-full border border-gray-300 rounded-md p-2 text-sm"
+          placeholder="Ex: 123456"
+          value={accessPin}
+          onChange={(e) => {
+            const val = e.target.value.replace(/\D/g, '');
+            setAccessPin(val);
+          }}
+        />
+      </div>
 
       {/* Status */}
-      <div>
-        <div className="flex items-center gap-1">
+      <div className="col-span-1">
+        <div className="flex items-center gap-1 mb-1">
+          <HiOutlineStatusOnline className="w-4 h-4 text-blue-400" />
+          <label className="text-sm font-medium">Status</label>
+        </div>
+        <Listbox value={status} onChange={setStatus}>
+          <div className="relative">
+            <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white p-2 text-left text-gray-800 text-sm border border-gray-300 shadow-sm flex justify-between items-center h-[38px]">
+              {statusOptions.find((opt) => opt.value === status)?.label}
+              <FiChevronsDown className="h-4 w-4 text-gray-600" />
+            </ListboxButton>
+            <ListboxOptions className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white p-1 text-sm shadow-lg ring-1 ring-black/5">
+              {statusOptions.map((opt) => (
+                <ListboxOption
+                  key={opt.value}
+                  value={opt.value}
+                  className={({ selected }) =>
+                    `cursor-pointer select-none p-2 rounded ${
+                      selected ? "bg-teal-200 font-bold" : "hover:bg-gray-100"
+                    }`
+                  }
+                >
+                  {opt.label}
+                </ListboxOption>
+              ))}
+            </ListboxOptions>
+          </div>
+        </Listbox>
+      </div>
+
+      {/* Cartão Vinculado */}
+      <div className="col-span-1">
+        <div className="flex items-center gap-1 mb-1">
           <FaRegIdCard className="w-4 h-4 text-blue-400" />
-          <label>Cartão Vinculado</label>
+          <label className="text-sm font-medium">Cartão Vinculado</label>
         </div>
         <Listbox value={selectedCardId} onChange={setSelectedCardId}>
-          <div className="relative mt-1">
-            <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white p-3 text-left text-gray-800 font-semibold border border-gray-300 shadow-sm">
+          <div className="relative">
+            <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white p-2 text-left text-gray-800 text-sm border border-gray-300 shadow-sm flex justify-between items-center h-[38px]">
               <span className="block truncate">{selectedCardName}</span>
-              <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                <FiChevronsDown className="h-4 w-4 text-gray-600" />
-              </span>
+              <FiChevronsDown className="h-4 w-4 text-gray-600" />
             </ListboxButton>
-            <ListboxOptions className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white p-2 text-sm shadow-lg ring-1 ring-black/5">
+            <ListboxOptions className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white p-1 text-sm shadow-lg ring-1 ring-black/5">
               <ListboxOption
-                key="no-card"
                 value={null}
-                className={({ selected }) => `cursor-pointer select-none p-2 rounded ${selected ? "bg-teal-200 font-bold" : "hover:bg-gray-100"}`}
+                className="cursor-pointer p-2 hover:bg-gray-100"
               >
                 Sem cartão
               </ListboxOption>
@@ -309,7 +353,11 @@ export default function EditForm({
                 <ListboxOption
                   key={card.id}
                   value={card.cardId}
-                  className={({ selected }) => `cursor-pointer select-none p-2 rounded ${selected ? "bg-teal-200 font-bold" : "hover:bg-gray-100"}`}
+                  className={({ selected }) =>
+                    `cursor-pointer p-2 rounded ${
+                      selected ? "bg-teal-200 font-bold" : "hover:bg-gray-100"
+                    }`
+                  }
                 >
                   {card.name} ({card.cardId.substring(0, 6)}...)
                 </ListboxOption>
@@ -319,76 +367,65 @@ export default function EditForm({
         </Listbox>
       </div>
 
-      {/* Salas */}
-      <div>
-        <div className="flex items-center gap-1">
+      {/* Salas (Labs) - Scrollable */}
+      <div className="col-span-full">
+        <div className="flex items-center gap-1 mb-1">
           <LuHotel className="w-4 h-4 text-blue-400" />
-          <label>Sala</label>
+          <label className="text-sm font-medium">Laboratórios</label>
         </div>
-        <div className="flex flex-col gap-2 border border-gray-300 rounded-md p-2">
+        <div className="flex flex-col gap-2 border border-gray-300 rounded-md p-2 max-h-32 overflow-y-auto bg-gray-50">
           {labs.map((lab) => (
             <div key={lab.id} className="flex items-center gap-2">
               <input
                 type="checkbox"
                 id={`lab-${lab.id}`}
+                className="w-4 h-4"
                 checked={selectedLabs.includes(lab.id)}
                 onChange={() => handleLabSelect(lab.id)}
               />
-              <label htmlFor={`lab-${lab.id}`}>{lab.name}</label>
+              <label htmlFor={`lab-${lab.id}`} className="text-sm cursor-pointer">
+                {lab.name}
+              </label>
             </div>
           ))}
         </div>
       </div>
 
       {selectedLabs.length > 0 && (
-        <div>
+        <div className="col-span-full">
           <label className="block text-sm font-medium mb-1">
-            Definir permissões por laboratório
+            Permissões de Staff
           </label>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 max-h-32 overflow-y-auto pr-1">
             {selectedLabs.map((labId) => {
               const lab = labs.find((l) => l.id === labId);
               const currentValue = labsStaff[labId] ? "staff" : "default";
 
               return (
-                <div key={labId} className="flex items-center gap-2">
-                  <span className="w-24">{lab?.name}</span>
-
+                <div
+                  key={labId}
+                  className="flex items-center justify-between gap-2 border-b border-gray-100 pb-1"
+                >
+                  <span className="text-sm truncate flex-1">{lab?.name}</span>
                   <Listbox
                     value={currentValue}
-                    onChange={(val) =>
-                      handleStaffChange(labId, val === "staff")
-                    }
+                    onChange={(val) => handleStaffChange(labId, val === "staff")}
                   >
-                    <div className="relative w-full">
-                      <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white p-2 text-left text-gray-800 font-semibold border border-gray-300 shadow-sm flex justify-between items-center">
+                    <div className="relative w-36">
+                      <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white py-1 px-2 text-left text-xs border border-gray-300 flex justify-between items-center">
                         {currentValue === "staff" ? "Staff" : "Colaborador"}
-                        <FiChevronsDown className="h-4 w-4 text-gray-600" />
+                        <FiChevronsDown className="h-3 w-3 text-gray-600" />
                       </ListboxButton>
-
-                      <ListboxOptions className="absolute z-50 mt-1 max-h-40 w-full overflow-auto rounded-md bg-white p-1 text-sm shadow-lg">
+                      <ListboxOptions className="absolute z-50 mt-1 w-full rounded-md bg-white text-xs shadow-lg border border-gray-200">
                         <ListboxOption
                           value="default"
-                          className={({ selected }) =>
-                            `cursor-pointer select-none rounded p-2 ${
-                              selected
-                                ? "bg-teal-200 font-bold"
-                                : "hover:bg-gray-100"
-                            }`
-                          }
+                          className="cursor-pointer p-2 hover:bg-gray-100"
                         >
                           Colaborador
                         </ListboxOption>
-
                         <ListboxOption
                           value="staff"
-                          className={({ selected }) =>
-                            `cursor-pointer select-none rounded p-2 ${
-                              selected
-                                ? "bg-teal-200 font-bold"
-                                : "hover:bg-gray-100"
-                            }`
-                          }
+                          className="cursor-pointer p-2 hover:bg-gray-100"
                         >
                           Staff
                         </ListboxOption>
@@ -403,11 +440,11 @@ export default function EditForm({
       )}
 
       {/* Botões */}
-      <div className="flex gap-2 mt-4">
+      <div className="col-span-full flex gap-3 mt-2 pt-2 border-t border-gray-100">
         {onClose && (
           <button
             type="button"
-            className="w-1/2 px-4 py-2 bg-white border border-black/10 text-gray-700 rounded-md cursor-pointer"
+            className="flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 transition"
             onClick={onClose}
             disabled={loading}
           >
@@ -416,7 +453,7 @@ export default function EditForm({
         )}
         <button
           type="submit"
-          className="w-1/2 px-4 py-2 bg-gradient-to-r from-green-500 border border-black/10 to-lime-300 text-white rounded-md cursor-pointer"
+          className="flex-1 px-4 py-2 bg-gradient-to-r from-green-500 to-lime-500 text-white text-sm font-bold rounded-md shadow-md hover:opacity-90 transition disabled:opacity-50"
           disabled={loading}
         >
           {loading ? "Salvando..." : "Salvar"}

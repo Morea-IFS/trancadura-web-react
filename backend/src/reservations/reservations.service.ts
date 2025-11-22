@@ -11,7 +11,12 @@ export class ReservationsService {
     async create(createReservationDto: CreateReservationDto) {
         return this.prisma.reservation.create({
             data: {
-                ...createReservationDto,
+            userId: createReservationDto.userId,
+            
+            // CORREÇÃO AQUI: Use os nomes exatos do schema.prisma
+            labId: createReservationDto.roomId,      // Era roomId
+            startTime: createReservationDto.startDate, // Era startDate
+            endTime: createReservationDto.endDate,     // Era endDate
             },
         });
     }
