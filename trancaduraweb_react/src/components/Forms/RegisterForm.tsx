@@ -15,6 +15,7 @@ import {
   IoPersonCircle,
   IoMailOpenOutline,
   IoLockClosedOutline,
+  IoKeypadOutline,
 } from "react-icons/io5";
 import { HiOutlineStatusOnline } from "react-icons/hi";
 import { LuHotel } from "react-icons/lu";
@@ -37,6 +38,7 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
     password: "",
     status: "ativo" as "ativo" | "inativo",
     idCard: "",
+    accessPin: "",
   });
   const [loading, setLoading] = useState(false);
   const [labs, setLabs] = useState<{ id: number; name: string }[]>([]);
@@ -95,6 +97,7 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
           labId,
           isStaff: !!labsStaff[labId],
         })),
+        accessPin: formData.accessPin || undefined,
       });
 
       if (onSave) onSave(response.data);
@@ -108,19 +111,19 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {error && <div className="text-red-500 text-sm">{error}</div>}
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {error && <div className="col-span-full text-red-500 text-sm text-center font-semibold">{error}</div>}
 
       {/* Nome */}
-      <div>
-        <div className="flex items-center gap-1">
+      <div className="col-span-1">
+        <div className="flex items-center gap-1 mb-1">
           <IoPersonCircle className="w-4 h-4 text-blue-400" />
-          <label>Nome</label>
+          <label className="text-sm font-medium">Nome</label>
         </div>
         <input
           type="text"
           name="username"
-          className="w-full border border-gray-300 rounded-md p-2"
+          className="w-full border border-gray-300 rounded-md p-2 text-sm"
           placeholder="Nome do usuário"
           value={formData.username}
           onChange={handleChange}
@@ -128,15 +131,15 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
       </div>
 
       {/* Email */}
-      <div>
-        <div className="flex items-center gap-1">
+      <div className="col-span-1">
+        <div className="flex items-center gap-1 mb-1">
           <IoMailOpenOutline className="w-4 h-4 text-blue-400" />
-          <label>E-mail</label>
+          <label className="text-sm font-medium">E-mail</label>
         </div>
         <input
           type="email"
           name="email"
-          className="w-full border border-gray-300 rounded-md p-2"
+          className="w-full border border-gray-300 rounded-md p-2 text-sm"
           placeholder="E-mail"
           value={formData.email}
           onChange={handleChange}
@@ -144,42 +147,62 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
       </div>
 
       {/* Senha */}
-      <div>
-        <div className="flex items-center gap-1">
+      <div className="col-span-1">
+        <div className="flex items-center gap-1 mb-1">
           <IoLockClosedOutline className="w-4 h-4 text-blue-400" />
-          <label>Senha</label>
+          <label className="text-sm font-medium">Senha</label>
         </div>
         <input
           type="password"
           name="password"
-          className="w-full border border-gray-300 rounded-md p-2"
+          className="w-full border border-gray-300 rounded-md p-2 text-sm"
           placeholder="Senha"
           value={formData.password}
           onChange={handleChange}
         />
       </div>
 
+      {/* Access PIN */}
+      <div className="col-span-1">
+        <div className="flex items-center gap-1 mb-1">
+          <IoKeypadOutline className="w-4 h-4 text-blue-400" />
+          <label className="text-sm font-medium">PIN de Acesso</label>
+        </div>
+        <input
+          type="text"
+          name="accessPin"
+          maxLength={6}
+          className="w-full border border-gray-300 rounded-md p-2 text-sm"
+          placeholder="Ex: 123456"
+          value={formData.accessPin}
+          onChange={(e) => {
+            const val = e.target.value.replace(/\D/g, '');
+            setFormData(prev => ({ ...prev, accessPin: val }))
+          }}
+        />
+      </div>
+
       {/* LinkCard */}
-      <div>
-        <div className="flex items-center gap-1">
+      <div className="col-span-1">
+        <div className="flex items-center gap-1 mb-1">
           <FaRegIdCard className="w-4 h-4 text-blue-400" />
-          <label>ID do Card</label>
+          <label className="text-sm font-medium">ID do Card</label>
         </div>
         <input
           type="text"
           name="idCard"
-          className="w-full border border-gray-300 rounded-md p-2"
-          placeholder="Sem cartão linkado"
+          className="w-full border border-gray-300 rounded-md p-2 text-sm"
+          placeholder="Sem cartão"
           value={formData.idCard}
           onChange={handleChange}
         />
       </div>
 
       {/* Status */}
-      <div>
-        <div className="flex items-center gap-1">
+      <div className="col-span-1">
+        <div className="flex items-center gap-1 mb-1">
           <HiOutlineStatusOnline className="w-4 h-4 text-blue-400" />
-          <label>Status</label>
+          <label className="text-sm font-medium">Status</label>
         </div>
         <Listbox
           value={formData.status}
@@ -187,15 +210,12 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
             setFormData((prev) => ({ ...prev, status: value }))
           }
         >
-          <div className="relative mt-1">
-            <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white p-3 text-left text-gray-800 font-semibold border border-gray-300 shadow-sm flex justify-between items-center">
-              {
-                statusOptions.find((opt) => opt.value === formData.status)
-                  ?.label
-              }
+          <div className="relative">
+            <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white p-2 text-left text-gray-800 text-sm border border-gray-300 shadow-sm flex justify-between items-center h-[38px]">
+              {statusOptions.find((opt) => opt.value === formData.status)?.label}
               <FiChevronsDown className="h-4 w-4 text-gray-600" />
             </ListboxButton>
-            <ListboxOptions className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white p-2 text-sm shadow-lg ring-1 ring-black/5">
+            <ListboxOptions className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white p-1 text-sm shadow-lg ring-1 ring-black/5">
               {statusOptions.map((opt) => (
                 <ListboxOption
                   key={opt.value}
@@ -214,24 +234,23 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
         </Listbox>
       </div>
 
-      {/* Laboratórios */}
-      <div>
-        <div className="flex items-center gap-1">
+      {/* Laboratórios (Ocupa largura total e tem scroll) */}
+      <div className="col-span-full">
+        <div className="flex items-center gap-1 mb-1">
           <LuHotel className="w-4 h-4 text-blue-400" />
-          <label>Selecionar Laboratórios</label>
+          <label className="text-sm font-medium">Selecionar Laboratórios</label>
         </div>
-        <div className="flex flex-col gap-2 border border-gray-300 rounded-md p-2">
+        <div className="flex flex-col gap-2 border border-gray-300 rounded-md p-2 max-h-32 overflow-y-auto bg-gray-50">
           {labs.map((lab) => (
             <div key={`lab-${lab.id}`} className="flex items-center gap-2">
-              {" "}
-              {/* Adicionei a key aqui */}
               <input
                 type="checkbox"
                 id={`lab-checkbox-${lab.id}`}
+                className="w-4 h-4"
                 checked={selectedLabs.includes(lab.id)}
                 onChange={() => handleLabSelect(lab.id)}
               />
-              <label htmlFor={`lab-checkbox-${lab.id}`}>{lab.name}</label>
+              <label htmlFor={`lab-checkbox-${lab.id}`} className="text-sm cursor-pointer">{lab.name}</label>
             </div>
           ))}
         </div>
@@ -239,56 +258,33 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
 
       {/* Permissões Staff por laboratório */}
       {selectedLabs.length > 0 && (
-        <div>
+        <div className="col-span-full">
           <label className="block text-sm font-medium mb-1">
-            Definir permissões de Staff por laboratório
+            Definir permissões de Staff
           </label>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 max-h-32 overflow-y-auto pr-1">
             {selectedLabs.map((labId) => {
               const lab = labs.find((l) => l.id === labId);
               const currentValue = labsStaff[labId] ? "staff" : "default";
 
               return (
-                <div key={`staff-${labId}`} className="flex items-center gap-2">
-                  <span className="w-24">{lab?.name}</span>
+                <div key={`staff-${labId}`} className="flex items-center justify-between gap-2 border-b border-gray-100 pb-1">
+                  <span className="text-sm truncate flex-1">{lab?.name}</span>
                   <Listbox
                     value={currentValue}
                     onChange={(val) =>
                       handleStaffChange(labId, val === "staff")
                     }
                   >
-                    <div className="relative w-full">
-                      <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white p-2 text-left text-gray-800 font-semibold border border-gray-300 shadow-sm flex justify-between items-center">
+                    <div className="relative w-36">
+                      <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white py-1 px-2 text-left text-xs border border-gray-300 flex justify-between items-center">
                         {currentValue === "staff" ? "Staff" : "Colaborador"}
-                        <FiChevronsDown className="h-4 w-4 text-gray-600" />
+                        <FiChevronsDown className="h-3 w-3 text-gray-600" />
                       </ListboxButton>
 
-                      <ListboxOptions className="absolute z-50 mt-1 max-h-40 w-full overflow-auto rounded-md bg-white p-1 text-sm shadow-lg">
-                        <ListboxOption
-                          value="default"
-                          className={({ selected }) =>
-                            `cursor-pointer select-none rounded p-2 ${
-                              selected
-                                ? "bg-teal-200 font-bold"
-                                : "hover:bg-gray-100"
-                            }`
-                          }
-                        >
-                          Colaborador
-                        </ListboxOption>
-
-                        <ListboxOption
-                          value="staff"
-                          className={({ selected }) =>
-                            `cursor-pointer select-none rounded p-2 ${
-                              selected
-                                ? "bg-teal-200 font-bold"
-                                : "hover:bg-gray-100"
-                            }`
-                          }
-                        >
-                          Staff
-                        </ListboxOption>
+                      <ListboxOptions className="absolute z-50 mt-1 w-full rounded-md bg-white text-xs shadow-lg border border-gray-200">
+                        <ListboxOption value="default" className="cursor-pointer p-2 hover:bg-gray-100">Colaborador</ListboxOption>
+                        <ListboxOption value="staff" className="cursor-pointer p-2 hover:bg-gray-100">Staff</ListboxOption>
                       </ListboxOptions>
                     </div>
                   </Listbox>
@@ -300,11 +296,11 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
       )}
 
       {/* Botões */}
-      <div className="flex gap-2 mt-4">
+      <div className="col-span-full flex gap-3 mt-2 pt-2 border-t border-gray-100">
         {onClose && (
           <button
             type="button"
-            className="w-1/2 px-4 py-2 bg-white border border-black/10 text-gray-700 rounded-md cursor-pointer"
+            className="flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 transition"
             onClick={onClose}
             disabled={loading}
           >
@@ -313,7 +309,7 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
         )}
         <button
           type="submit"
-          className="w-1/2 px-4 py-2 bg-gradient-to-r from-green-500 border border-black/10 to-lime-300 text-white rounded-md cursor-pointer"
+          className="flex-1 px-4 py-2 bg-gradient-to-r from-green-500 to-lime-500 text-white text-sm font-bold rounded-md shadow-md hover:opacity-90 transition disabled:opacity-50"
           disabled={loading}
         >
           {loading ? "Registrando..." : "Registrar"}

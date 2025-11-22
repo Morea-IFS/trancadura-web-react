@@ -12,6 +12,7 @@ model User {
   id        Int       @id @default(autoincrement())
   email     String    @unique
   username  String    @unique
+  accessPin String? @unique @map("access_pin")
   password  String
   labs      UserLab[]
   accessRequests TemporaryAccessRequest[]
@@ -23,6 +24,7 @@ model User {
   pinCodes DevicePinCode[]
   cards    UserCard[]
   accesses UserAccess[]
+  reservations Reservation[]
 
   @@map("users")
 }
@@ -34,6 +36,8 @@ model Lab {
   accessRequests TemporaryAccessRequest[]
   deviceId Int?      @unique @map("device_id")
   device   Device?   @relation(fields: [deviceId], references: [id])
+
+  reservations Reservation[]
 }
 
 model UserLab {
@@ -169,4 +173,17 @@ model Reservation {
 
   // Garante que um usuário não possa reservar o mesmo lab no mesmo horário
   @@unique([userId, labId, startTime]) 
+}
+
+model TemporaryAccessRequest {
+  id         Int      @id @default(autoincrement())
+  labId      Int
+  userId     Int
+  expiresAt  DateTime?
+  isOneTime  Boolean  @default(false)
+  approved   Boolean? // null = pendente, true/false = resposta
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  lab  Lab  @relation(fields: [labId], references: [id])
 }

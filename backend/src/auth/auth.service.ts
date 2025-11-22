@@ -95,6 +95,7 @@ export class AuthService {
       username: dto.username,
       password: hashedPassword,
       isActive: dto.isActive ?? true,
+      accessPin: dto.accessPin,
     });
 
     if (dto.labs?.length) {
