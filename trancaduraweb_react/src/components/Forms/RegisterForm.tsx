@@ -31,32 +31,48 @@ interface RegisterFormProps {
   onSave?: (newUser: any) => void;
 }
 
+interface Card {
+  id: number;
+  cardId: string;
+  name: string;
+}
+
 export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
     status: "ativo" as "ativo" | "inativo",
-    idCard: "",
     accessPin: "",
   });
+  
   const [loading, setLoading] = useState(false);
   const [labs, setLabs] = useState<{ id: number; name: string }[]>([]);
   const [selectedLabs, setSelectedLabs] = useState<number[]>([]);
   const [labsStaff, setLabsStaff] = useState<{ [labId: number]: boolean }>({});
+  
+  // Estados para o cartão
+  const [availableCards, setAvailableCards] = useState<Card[]>([]);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  
   const [error, setError] = useState("");
 
-  // Busca os laboratórios disponíveis
+  // Busca os laboratórios e cartões disponíveis
   useEffect(() => {
-    async function fetchLabs() {
+    async function fetchData() {
       try {
-        const res = await api.get("/labs/me");
-        setLabs(res.data);
+        const [labsRes, cardsRes] = await Promise.all([
+          api.get("/labs/me"),
+          api.get("/approximations/available")
+        ]);
+        
+        setLabs(labsRes.data);
+        setAvailableCards(cardsRes.data);
       } catch (err) {
-        console.error("Erro ao carregar laboratórios:", err);
+        console.error("Erro ao carregar dados:", err);
       }
     }
-    fetchLabs();
+    fetchData();
   }, []);
 
   const handleLabSelect = (labId: number) => {
@@ -85,9 +101,11 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
       // Validação básica
       if (!formData.username || !formData.email || !formData.password) {
         setError("Preencha todos os campos obrigatórios");
+        setLoading(false);
         return;
       }
 
+      // 1. Cria o usuário
       const response = await api.post("/auth/signup", {
         username: formData.username,
         email: formData.email,
@@ -100,6 +118,20 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
         accessPin: formData.accessPin || undefined,
       });
 
+      const newUser = response.data.user || response.data;
+
+      // 2. Se um cartão foi selecionado, vincula ao usuário recém-criado
+      if (selectedCardId && newUser.id) {
+        try {
+          await api.post(`/users/${newUser.id}/link-card`, { 
+            cardId: selectedCardId 
+          });
+        } catch (linkError) {
+          console.error("Usuário criado, mas erro ao vincular cartão:", linkError);
+          alert("Usuário criado, mas houve um erro ao vincular o cartão. Tente vincular manualmente na edição.");
+        }
+      }
+
       if (onSave) onSave(response.data);
       if (onClose) onClose();
     } catch (error: any) {
@@ -109,6 +141,8 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
       setLoading(false);
     }
   };
+
+  const selectedCardName = availableCards.find(c => c.cardId === selectedCardId)?.name || "Sem cartão";
 
   return (
     <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -182,20 +216,45 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
         />
       </div>
 
-      {/* LinkCard */}
+      {/* LinkCard (Agora com Listbox) */}
       <div className="col-span-1">
         <div className="flex items-center gap-1 mb-1">
           <FaRegIdCard className="w-4 h-4 text-blue-400" />
-          <label className="text-sm font-medium">ID do Card</label>
+          <label className="text-sm font-medium">Vincular Cartão</label>
         </div>
-        <input
-          type="text"
-          name="idCard"
-          className="w-full border border-gray-300 rounded-md p-2 text-sm"
-          placeholder="Sem cartão"
-          value={formData.idCard}
-          onChange={handleChange}
-        />
+        <Listbox value={selectedCardId} onChange={setSelectedCardId}>
+          <div className="relative">
+            <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white p-2 text-left text-gray-800 text-sm border border-gray-300 shadow-sm flex justify-between items-center h-[38px]">
+              <span className="block truncate">{selectedCardName}</span>
+              <FiChevronsDown className="h-4 w-4 text-gray-600" />
+            </ListboxButton>
+            <ListboxOptions className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white p-1 text-sm shadow-lg ring-1 ring-black/5">
+              <ListboxOption
+                value={null}
+                className="cursor-pointer p-2 hover:bg-gray-100 text-gray-500 italic"
+              >
+                Nenhum cartão
+              </ListboxOption>
+              {availableCards.length > 0 ? (
+                availableCards.map((card) => (
+                  <ListboxOption
+                    key={card.id}
+                    value={card.cardId}
+                    className={({ selected }) =>
+                      `cursor-pointer p-2 rounded ${
+                        selected ? "bg-teal-200 font-bold" : "hover:bg-gray-100"
+                      }`
+                    }
+                  >
+                    {card.name} ({card.cardId.substring(0, 6)}...)
+                  </ListboxOption>
+                ))
+              ) : (
+                <div className="p-2 text-gray-500 text-center">Nenhum cartão disponível</div>
+              )}
+            </ListboxOptions>
+          </div>
+        </Listbox>
       </div>
 
       {/* Status */}
@@ -241,18 +300,24 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
           <label className="text-sm font-medium">Selecionar Laboratórios</label>
         </div>
         <div className="flex flex-col gap-2 border border-gray-300 rounded-md p-2 max-h-32 overflow-y-auto bg-gray-50">
-          {labs.map((lab) => (
-            <div key={`lab-${lab.id}`} className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id={`lab-checkbox-${lab.id}`}
-                className="w-4 h-4"
-                checked={selectedLabs.includes(lab.id)}
-                onChange={() => handleLabSelect(lab.id)}
-              />
-              <label htmlFor={`lab-checkbox-${lab.id}`} className="text-sm cursor-pointer">{lab.name}</label>
-            </div>
-          ))}
+          {labs.length > 0 ? (
+            labs.map((lab) => (
+              <div key={`lab-${lab.id}`} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id={`lab-checkbox-${lab.id}`}
+                  className="w-4 h-4"
+                  checked={selectedLabs.includes(lab.id)}
+                  onChange={() => handleLabSelect(lab.id)}
+                />
+                <label htmlFor={`lab-checkbox-${lab.id}`} className="text-sm cursor-pointer">
+                  {lab.name}
+                </label>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-gray-500 text-center">Nenhum laboratório disponível.</p>
+          )}
         </div>
       </div>
 
@@ -268,23 +333,33 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
               const currentValue = labsStaff[labId] ? "staff" : "default";
 
               return (
-                <div key={`staff-${labId}`} className="flex items-center justify-between gap-2 border-b border-gray-100 pb-1">
+                <div
+                  key={labId}
+                  className="flex items-center justify-between gap-2 border-b border-gray-100 pb-1"
+                >
                   <span className="text-sm truncate flex-1">{lab?.name}</span>
                   <Listbox
                     value={currentValue}
-                    onChange={(val) =>
-                      handleStaffChange(labId, val === "staff")
-                    }
+                    onChange={(val) => handleStaffChange(labId, val === "staff")}
                   >
                     <div className="relative w-36">
                       <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white py-1 px-2 text-left text-xs border border-gray-300 flex justify-between items-center">
                         {currentValue === "staff" ? "Staff" : "Colaborador"}
                         <FiChevronsDown className="h-3 w-3 text-gray-600" />
                       </ListboxButton>
-
                       <ListboxOptions className="absolute z-50 mt-1 w-full rounded-md bg-white text-xs shadow-lg border border-gray-200">
-                        <ListboxOption value="default" className="cursor-pointer p-2 hover:bg-gray-100">Colaborador</ListboxOption>
-                        <ListboxOption value="staff" className="cursor-pointer p-2 hover:bg-gray-100">Staff</ListboxOption>
+                        <ListboxOption
+                          value="default"
+                          className="cursor-pointer p-2 hover:bg-gray-100"
+                        >
+                          Colaborador
+                        </ListboxOption>
+                        <ListboxOption
+                          value="staff"
+                          className="cursor-pointer p-2 hover:bg-gray-100"
+                        >
+                          Staff
+                        </ListboxOption>
                       </ListboxOptions>
                     </div>
                   </Listbox>
