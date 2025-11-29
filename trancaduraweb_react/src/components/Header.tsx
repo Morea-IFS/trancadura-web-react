@@ -13,7 +13,7 @@ import { IoExitOutline } from "react-icons/io5";
 import { FiChevronsDown } from "react-icons/fi";
 import { FaHistory } from "react-icons/fa";
 import { IoPeopleSharp } from "react-icons/io5";
-import { MdOutlineLock } from "react-icons/md";
+import { MdOutlineLock, MdDateRange } from "react-icons/md";
 import { CiRouter } from "react-icons/ci";
 import { LuHotel } from "react-icons/lu";
 
@@ -163,6 +163,13 @@ export default function Header({
           >
             <LuHotel className="w-6 h-6" />
             <span className="hidden md:block text-xl font-bold">Labs</span>
+          </Link>
+          <Link
+            href="/reservas"
+            className="w-12 h-12 md:w-40 md:gap-2 bg-white/20 border border-white/20 rounded-lg flex items-center justify-center cursor-pointer shadow-md transition-transform duration-300 hover:scale-120 md:hover:scale-105 hover:bg-white/30"
+          >
+            <MdDateRange className="w-6 h-6" />
+            <span className="hidden md:block text-xl font-bold">Reservas</span>
           </Link>
         </div>
       </div>

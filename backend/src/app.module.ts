@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, Res } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
@@ -13,6 +13,7 @@ import { DevicesModule } from './devices/devices.module';
 import { RolesModule } from './roles/roles.module';
 import { ApproximationsModule } from './approximations/approximations.module';
 import { LabsModule } from './labs/labs.module'; // Assuming LabsModule is defined in labs.module.ts
+import { ReservationsModule } from './reservations/reservations.module';
 
 @Module({
   imports: [
@@ -29,7 +30,8 @@ import { LabsModule } from './labs/labs.module'; // Assuming LabsModule is defin
     DevicesModule,
     RolesModule,
     ApproximationsModule,
-    LabsModule, // Importing LabsModule
+    LabsModule,
+    ReservationsModule,
   ],
   controllers: [AppController],
   providers: [

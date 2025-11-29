@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateLabDto } from './dto/create-lab.dto';
 import { UpdateLabDto } from './dto/update-lab.dto';
@@ -86,63 +86,62 @@ export class LabsService {
       include: { device: true },
     });
 
-    if (!lab) {
-      throw new NotFoundException('Laboratório não encontrado');
-    }
-    if (!lab.device) {
-      throw new NotFoundException(
-        'Nenhum dispositivo de acesso está vinculado a este laboratório',
-      );
-    }
-    
+    if (!lab) throw new NotFoundException('Laboratório não encontrado');
+    if (!lab.device) throw new NotFoundException('Nenhum dispositivo vinculado');
 
-    // Verifica se o usuário tem permissão para acessar o laboratório
-    const userInLab = await this.prisma.userLab.findUnique({
-      where: { userId_labId: { userId, labId } },
-    });
+    // Checagem de Permissão
+    let hasPermission = false;
 
-    if (!userInLab) {
-      throw new NotFoundException(
-        'Usuário não tem permissão para acessar este laboratório',
-      );
+    // 1. Superuser
+    const userRoles = await this.getUserRoles(userId);
+    if (userRoles.includes('superuser')) hasPermission = true;
+
+    // 2. Permissão Permanente (Staff/Membro)
+    if (!hasPermission) {
+      const userInLab = await this.prisma.userLab.findUnique({
+        where: { userId_labId: { userId, labId } },
+      });
+      if (userInLab) hasPermission = true;
     }
 
-    const device = lab.device;
+    // 3. Permissão Temporária (Reserva) - NOVO
+    if (!hasPermission) {
+      const now = new Date();
+      const reservation = await this.prisma.reservation.findFirst({
+        where: {
+          userId,
+          labId,
+          startTime: { lte: now },
+          endTime: { gte: now },
+        },
+      });
+      if (reservation) hasPermission = true;
+    }
 
-    // Registra a tentativa de acesso no banco de dados
+    // Registro e Ação
     const access = await this.prisma.userAccess.create({
       data: {
         userId,
-        deviceId: device.id,
+        deviceId: lab.device.id,
         date: new Date(),
-        permission: true,
+        permission: hasPermission,
       },
     });
 
-    // Envia o comando de abertura para o dispositivo (ESP32)
-    try {
-      // Monta a URL esperada pelo ESP32
-      const espUrl = `http://${device.ipAddress}/open?apiToken=${device.apiToken}`;
-      
-      console.log(`Enviando comando de abertura para: ${espUrl}`);
-
-      // Realiza a requisição GET, sem corpo (body)
-      await fetch(espUrl);
-
-      console.log(`Comando de destravamento para o lab ${labId} enviado com sucesso.`);
-
-    } catch (error) {
-      console.error(
-        `Falha ao comunicar com o dispositivo ${device.ipAddress}:`,
-        error,
-      );
-      // throw new Error('Não foi possível comunicar com o dispositivo de acesso.');
+    if (!hasPermission) {
+      throw new ForbiddenException('Sem permissão ou reserva ativa para este laboratório');
     }
 
-    return {
-      message: 'Comando de acesso enviado ao dispositivo.',
-      access,
-    };
+    // Envia comando ao ESP32
+    try {
+      const espUrl = `http://${lab.device.ipAddress}/open?apiToken=${lab.device.apiToken}`;
+      console.log(`Enviando comando para: ${espUrl}`);
+      await fetch(espUrl);
+    } catch (error) {
+      console.error(`Falha ao comunicar com dispositivo:`, error);
+    }
+
+    return { message: 'Comando enviado.', access };
   }
 
   async removeUsersFromLab(dto: { labIds: number[], userId: number }) {

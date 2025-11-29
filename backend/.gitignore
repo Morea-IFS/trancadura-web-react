@@ -65,6 +65,9 @@ typings/
 # Yarn Integrity file
 .yarn-integrity
 
+# project config
+google-credentials.json
+
 # dotenv environment variables file
 .env
 .env.test

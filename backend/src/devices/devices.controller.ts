@@ -166,4 +166,6 @@ export class DevicesController {
   async validatePin(@Body() dto: PinAuthDto) {
     return this.devicesService.validatePinAccess(dto);
   }
+
+  
 }

@@ -114,7 +114,10 @@ export class DevicesService {
     // 1. Validar Dispositivo
     const device = await this.prisma.device.findUnique({
       where: { macAddress },
-      include: { roles: { include: { role: true } } },
+      include: { 
+        roles: { include: { role: true } },
+        lab: true // Importante: precisamos saber qual lab é esse
+      },
     });
 
     if (!device) return "Unauthorized";
@@ -127,30 +130,44 @@ export class DevicesService {
 
     if (!user || !user.isActive) return "Unauthorized";
 
-    // 3. Verificar Roles (Lógica de Interseção)
-    // Se o dispositivo não tem roles restritas, ou se o usuário tem a role necessária
+    // 3. Verificar Permissões
     const deviceRoles = device.roles.map(dr => dr.role.name);
     const userRoles = user.roles.map(ur => ur.role.name);
-
-    // Se o dispositivo não tiver roles definidas, assume-se que é restrito ou público? 
-    // Seguindo sua lógica anterior: verifica interseção.
-    
-    // Adição: Superuser sempre entra
     const isSuperUser = userRoles.includes('superuser');
     
-    const hasCommonRole = isSuperUser || deviceRoles.some(role => userRoles.includes(role));
+    // Permissão 1: Roles permanentes (ex: Staff)
+    let hasAccess = isSuperUser || deviceRoles.some(role => userRoles.includes(role));
+
+    // Permissão 2: Reserva Ativa (NOVO)
+    if (!hasAccess && device.lab) {
+      const now = new Date();
+      // Busca uma reserva para este usuário, neste laboratório, que englobe o horário atual
+      const activeReservation = await this.prisma.reservation.findFirst({
+        where: {
+          userId: user.id,
+          labId: device.lab.id,
+          startTime: { lte: now }, // Começou antes de agora
+          endTime: { gte: now },   // Termina depois de agora
+        },
+      });
+
+      if (activeReservation) {
+        hasAccess = true;
+        console.log(`Acesso concedido por reserva: Usuário ${user.username} no Lab ${device.lab.name}`);
+      }
+    }
 
     // 4. Registrar Acesso
     await this.prisma.userAccess.create({
       data: {
         userId: user.id,
         deviceId: device.id,
-        permission: hasCommonRole,
+        permission: hasAccess,
         date: new Date(),
       },
     });
 
-    if (hasCommonRole) {
+    if (hasAccess) {
       return `Authorized?first_name=${user.username}`;
     } else {
       return "Unauthorized";
