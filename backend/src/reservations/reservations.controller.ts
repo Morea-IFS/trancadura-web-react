@@ -35,17 +35,6 @@ export class ReservationsController {
     return this.reservationsService.remove(id);
   }
 
-  @Post('import-schedule')
-  @UseInterceptors(FileInterceptor('file'))
-  async importSchedule(@UploadedFile() file: Express.Multer.File) {
-    if (!file) {
-      throw new BadRequestException('Nenhum arquivo enviado.');
-    }
-
-    // Chama o serviço para processar o PDF
-    return this.reservationsService.processSchedulePdf(file);
-  }
-
   @Get('sync-google')
   async syncGoogle() {
     return this.reservationsService.syncGoogleCalendar();
@@ -57,5 +46,18 @@ export class ReservationsController {
       throw new BadRequestException('Envie uma lista de reservas válida.');
     }
     return this.reservationsService.createBatch(reservations);
+  }
+
+  @Post('populate-calendar')
+  @UseInterceptors(FileInterceptor('file'))
+  async populateCalendar(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('startDate') startDate: string,
+    @Body('endDate') endDate: string
+  ) {
+    if (!file || !startDate || !endDate) {
+        throw new BadRequestException('Arquivo, data de início e fim são obrigatórios.');
+    }
+    return this.reservationsService.populateCalendarFromPdf(file, startDate, endDate);
   }
 }

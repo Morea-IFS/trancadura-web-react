@@ -9,29 +9,31 @@ export class GoogleCalendarService {
 
   constructor(private configService: ConfigService) {}
 
-  // Pega o ID da variável de ambiente
+  // Pega o ID da variável de ambiente ou usa um fallback
   private get CALENDAR_ID(): string {
     const calendarId = this.configService.get<string>('GOOGLE_CALENDAR_ID');
     
-    // Fallback de segurança se não tiver no .env
     if (!calendarId) {
-       // DICA: Substitua pelo seu email se ainda não configurou o .env
-       // return 'seu.email@gmail.com'; 
-       throw new Error('A variável de ambiente GOOGLE_CALENDAR_ID não foi definida!');
+       return 'officegenisson@gmail.com'; 
     }
     return calendarId;
   }
 
+  // Helper privado para autenticação (Centraliza a config de auth)
+  private async getAuth() {
+    return new google.auth.GoogleAuth({
+      keyFile: path.join(process.cwd(), 'google-credentials.json'),
+      scopes: ['https://www.googleapis.com/auth/calendar'], 
+    });
+  }
+
+  // --- Método de Leitura (Sincronização) ---
   async getEventsFromCalendar() {
     this.logger.log(`Conectando ao Google Calendar ID: ${this.CALENDAR_ID}...`);
 
     try {
-      // Autenticação
-      const auth = new google.auth.GoogleAuth({
-        keyFile: path.join(process.cwd(), 'google-credentials.json'), 
-        scopes: ['https://www.googleapis.com/auth/calendar.readonly'],
-      });
-
+      // Usa o helper de auth
+      const auth = await this.getAuth();
       const calendar = google.calendar({ version: 'v3', auth });
 
       // Intervalo de tempo (Próximos 7 dias)
@@ -55,24 +57,22 @@ export class GoogleCalendarService {
 
       const mappedEvents = events
         .map((event) => {
-          // --- CORREÇÃO 1: Verificação Defensiva ---
-          // Se o evento não tiver objeto de início ou fim, retornamos null
+          // 1. Verificação Defensiva
           if (!event.start || !event.end) {
             return null;
           }
 
-          // --- CORREÇÃO 2: Extração Segura ---
-          // O Google pode mandar 'dateTime' (evento com hora) ou 'date' (dia inteiro)
+          // 2. Extração Segura
           const startString = event.start.dateTime || event.start.date;
           const endString = event.end.dateTime || event.end.date;
 
-          // Se mesmo assim as strings estiverem vazias, ignoramos
           if (!startString || !endString) {
             return null;
           }
 
           const dateObj = new Date(startString);
           
+          // Formatação visual
           const timeString = dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
           const dateString = dateObj.toISOString().split('T')[0];
 
@@ -89,8 +89,7 @@ export class GoogleCalendarService {
             selectedDate: dateString, 
           };
         })
-        // --- CORREÇÃO 3: Filtragem ---
-        // Removemos os itens nulos da lista final
+        // 3. Filtragem de nulos
         .filter((event): event is NonNullable<typeof event> => event !== null);
 
       return mappedEvents;
@@ -98,6 +97,45 @@ export class GoogleCalendarService {
     } catch (error: any) {
       this.logger.error('Erro ao buscar agenda do Google', error);
       throw new Error(`Falha Google Calendar: ${error.message}`);
+    }
+  }
+
+  // --- Método de Criação de Evento ---
+  async createEvent(eventData: {
+    summary: string;
+    location: string;
+    description: string;
+    startDateTime: string;
+    endDateTime: string;
+    recurrenceRule: string[]; // Ex: ["RRULE:FREQ=WEEKLY;UNTIL=20250630T235959Z"]
+  }) {
+    try {
+      const auth = await this.getAuth();
+      const calendar = google.calendar({ version: 'v3', auth });
+
+      await calendar.events.insert({
+        calendarId: this.CALENDAR_ID,
+        requestBody: {
+          summary: eventData.summary,
+          location: eventData.location,
+          description: eventData.description,
+          start: {
+            dateTime: eventData.startDateTime,
+            timeZone: 'America/Sao_Paulo',
+          },
+          end: {
+            dateTime: eventData.endDateTime,
+            timeZone: 'America/Sao_Paulo',
+          },
+          recurrence: eventData.recurrenceRule,
+        },
+      });
+      
+      this.logger.log(`Evento criado com sucesso: ${eventData.summary}`);
+      return true;
+    } catch (error: any) {
+      this.logger.error(`Erro ao criar evento ${eventData.summary}`, error);
+      return false;
     }
   }
 }

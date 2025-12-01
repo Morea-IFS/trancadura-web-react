@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Header from "@/components/Header";
 import api from "@/lib/api";
+import Link from "next/link";
 import { 
   FaCheckCircle, 
   FaExclamationTriangle, 
@@ -10,20 +11,21 @@ import {
   FaUserCheck,
   FaSave,
   FaGoogle,
-  FaSync
+  FaSync,
+  FaCog
 } from "react-icons/fa";
 import { MdCalendarMonth } from "react-icons/md";
 
-// Interface atualizada com os campos que vêm do Google Service
+// Interface para os dados do Google
 interface ExtractedClass {
   subject: string;
   professor: string;
   lab: string;
-  detectedStartTime: string; // Ex: "10:00"
-  selectedDate: string;      // Ex: "2025-11-29"
-  startTimeISO: string;      // Ex: "2025-11-29T10:00:00.000Z" (Data exata do Google)
-  endTimeISO: string;        // Ex: "2025-11-29T11:00:00.000Z"
-  status: string;            // 'PRONTO', 'ERRO_USER', 'ERRO_LAB'
+  detectedStartTime: string; 
+  selectedDate: string;      
+  startTimeISO: string;      
+  endTimeISO: string;        
+  status: string;            
   statusMessage: string;
   dbUserId?: number;
   dbLabId?: number;
@@ -37,7 +39,6 @@ export default function ReservasPage() {
   const [extractedData, setExtractedData] = useState<ExtractedClass[]>([]);
   const [error, setError] = useState("");
 
-  // Função que chama a API para ler o Google Calendar
   const handleSyncGoogle = async () => {
     setLoading(true);
     setError("");
@@ -47,7 +48,6 @@ export default function ReservasPage() {
       const response = await api.get("/reservations/sync-google");
       
       if (response.data && response.data.data) {
-        // Adiciona o estado local de salvamento
         const dataWithLocalState = response.data.data.map((item: any) => ({
           ...item,
           saveStatus: 'idle'
@@ -64,36 +64,30 @@ export default function ReservasPage() {
     }
   };
 
-  // Salva no banco de dados usando as datas exatas do Google
   const handleSaveReservations = async () => {
-    // Filtra apenas os itens válidos (Verdes) que ainda não foram salvos
     const itemsToSave = extractedData.filter(
       item => item.status === 'PRONTO' && item.saveStatus !== 'saved'
     );
 
     if (itemsToSave.length === 0) {
-      alert("Nenhum item válido para salvar. Verifique se os usuários e laboratórios foram encontrados.");
+      alert("Nenhum item válido para salvar.");
       return;
     }
 
     setSaving(true);
 
-    // O payload agora é muito mais simples e seguro, pois usamos os ISOs do Google
     const payload = itemsToSave.map(item => ({
       userId: item.dbUserId,
       labId: item.dbLabId,
-      startTime: item.startTimeISO, // Data exata do evento
-      endTime: item.endTimeISO      // Data exata do fim
+      startTime: item.startTimeISO,
+      endTime: item.endTimeISO      
     }));
 
     try {
       const response = await api.post("/reservations/batch", payload);
       const results = response.data.results;
       
-      // Atualiza visualmente quem foi salvo
       setExtractedData(prev => prev.map(item => {
-        // Verifica se este item específico teve sucesso no lote
-        // Comparamos o horário exato para garantir
         const myResult = results.find((r: any) => 
             r.reservation && 
             r.reservation.userId === item.dbUserId && 
@@ -116,7 +110,7 @@ export default function ReservasPage() {
     }
   };
 
-  // Renderiza os ícones de status (Agendável, Erro, etc)
+  // Ícones de status
   const renderStatus = (item: ExtractedClass) => {
     if (item.status === 'PRONTO') {
       return (
@@ -149,9 +143,20 @@ export default function ReservasPage() {
       <Header labSelecionado={labSelecionado} setLabSelecionado={setLabSelecionado} />
 
       <section className="p-4 md:w-[90%] mx-auto flex flex-col gap-6 mb-10">
-        <h1 className="font-bold text-2xl md:text-4xl text-center">
-          Sincronização <span className="bg-gradient-to-r from-blue-800 to-teal-500 bg-clip-text text-transparent">Google Calendar</span>
-        </h1>
+        
+        {/* Cabeçalho da página com link para Configuração */}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <h1 className="font-bold text-2xl md:text-4xl text-center md:text-left">
+            Sincronização <span className="bg-gradient-to-r from-blue-800 to-teal-500 bg-clip-text text-transparent">Google Calendar</span>
+            </h1>
+            
+            <Link 
+                href="/reservas/upload" 
+                className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-bold text-sm transition"
+            >
+                <FaCog /> Configurar Semestre (PDF)
+            </Link>
+        </div>
 
         {/* Card Principal de Ação */}
         <div className="bg-white rounded-lg shadow-md border border-black/5 p-8 flex flex-col items-center gap-6 text-center">
@@ -162,7 +167,7 @@ export default function ReservasPage() {
           <div>
             <h2 className="font-bold text-xl text-gray-800">Sincronizar Agenda Acadêmica</h2>
             <p className="text-gray-500 max-w-md mx-auto mt-2">
-              O sistema irá buscar os eventos dos próximos 7 dias na agenda do Google configurada e tentará vincular Professores e Laboratórios automaticamente.
+              O sistema irá buscar os eventos dos próximos 7 dias na agenda do Google e tentará vincular Professores e Laboratórios automaticamente.
             </p>
           </div>
 
@@ -231,7 +236,6 @@ export default function ReservasPage() {
                         ) : renderStatus(item)}
                       </td>
                       <td className="px-4 py-3 font-medium text-gray-900">
-                         {/* Formata a data para ficar bonitinha (ex: 29/11/2025) */}
                          {new Date(item.startTimeISO).toLocaleDateString('pt-BR')}
                       </td>
                       <td className="px-4 py-3">
