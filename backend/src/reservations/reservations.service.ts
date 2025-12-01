@@ -9,11 +9,25 @@ const pdf = require('pdf-extraction');
 @Injectable()
 export class ReservationsService {
   private readonly logger = new Logger(ReservationsService.name);
-  private readonly TIME_SLOTS: Record<string, string> = {
-    '1': '07:30', '2': '08:20', '3': '09:10', '4': '10:10',
-    '5': '11:00', '5,5': '11:50', '6': '13:00', '7': '13:50',
-    '8': '14:40', '9': '15:50', '10': '16:40', '11': '19:00',
-    '12': '19:50', '13': '20:40', '14': '21:30',
+  private readonly DAY_MAP: Record<string, number> = {
+    'SEG': 1, 'TER': 2, 'QUA': 3, 'QUI': 4, 'SEX': 5, 'SAB': 6, 'DOM': 0
+  };
+  private readonly TIME_SLOTS_FULL: Record<string, { start: string, end: string }> = {
+    '1': { start: '07:30', end: '08:20' },
+    '2': { start: '08:20', end: '09:10' },
+    '3': { start: '09:10', end: '10:00' },
+    '4': { start: '10:10', end: '11:00' },
+    '5': { start: '11:00', end: '11:50' },
+    '5,5': { start: '11:50', end: '12:40' },
+    '6': { start: '13:00', end: '13:50' },
+    '7': { start: '13:50', end: '14:40' },
+    '8': { start: '14:40', end: '15:30' },
+    '9': { start: '15:50', end: '16:40' },
+    '10': { start: '16:40', end: '17:30' },
+    '11': { start: '19:00', end: '19:50' },
+    '12': { start: '19:50', end: '20:40' },
+    '13': { start: '20:40', end: '21:30' },
+    '14': { start: '21:30', end: '22:20' },
   };
 
   constructor(
@@ -77,130 +91,6 @@ export class ReservationsService {
 
   async remove(id: number) {
     return this.prisma.reservation.delete({ where: { id } });
-  }
-
-  // --- LÓGICA DE PDF COM VERIFICAÇÃO ---
-  async processSchedulePdf(file: Express.Multer.File) {
-    this.logger.log(`Iniciando processamento do arquivo: ${file.originalname}`);
-
-    try {
-      const data = await pdf(file.buffer);
-      let text = data.text;
-
-      // Limpeza
-      text = text.replace(/LAB\s*\.?\s*\n\s*(INFORMÁTICA|REDES|ROBÓTICA|DADOS)/gi, 'LAB. $1');
-      text = text.replace(/(LAB\.[^\n]+)\n\s*(\d{2,}-?COINF[-\w]*)/gi, '$1 $2');
-      text = text.replace(/(LAB\.[^\n]+)\n\s*(\d{2,}-?BL\d{2}[-\w]*)/gi, '$1 $2');
-      text = text.replace(/^\s*-\s*$/gm, '');
-
-      // CORREÇÃO: Tipagem do array como 'any[]' para evitar erro de 'never'
-      const extractedClasses: any[] = [];
-      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-
-      const userCache = new Map(); 
-      const labCache = new Map();
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-
-        if (line.toUpperCase().includes('LAB.') || line.toUpperCase().includes('SALA ')) {
-          
-          let labName = line; 
-          
-          let timeSlot = '';
-          let startTime = 'Manual';
-          const nextLine = lines[i + 1];
-          if (nextLine && /^(\d{1,2}(,\d)?)$/.test(nextLine)) {
-             timeSlot = nextLine;
-             startTime = this.TIME_SLOTS[timeSlot] || 'Manual';
-          }
-
-          let professorName = lines[i - 1] || 'Desconhecido';
-          let subject = lines[i - 2] || 'Desconhecido';
-          const preSubject = lines[i - 3];
-          if (preSubject && !preSubject.includes('LAB') && !/^\d+$/.test(preSubject) && preSubject.length > 2) {
-             subject = `${preSubject} ${subject}`;
-          }
-
-          if (labName.length > 4 && professorName.length > 2) {
-            
-            // CORREÇÃO: Tipagem explicita 'any' para aceitar o objeto do Prisma ou null
-            let dbLab: any = null;
-            if (labCache.has(labName)) {
-                dbLab = labCache.get(labName);
-            } else {
-                dbLab = await this.prisma.lab.findFirst({
-                    where: { 
-                        name: { contains: labName.split(' ')[0] } 
-                    } 
-                });
-                
-                const codeMatch = labName.match(/\d{2}-COINF/);
-                if (!dbLab && codeMatch) {
-                    dbLab = await this.prisma.lab.findFirst({
-                        where: { name: { contains: codeMatch[0] } }
-                    });
-                }
-                labCache.set(labName, dbLab);
-            }
-
-            // CORREÇÃO: Tipagem explicita 'any' e remoção do mode: 'insensitive'
-            let dbUser: any = null;
-            if (userCache.has(professorName)) {
-                dbUser = userCache.get(professorName);
-            } else {
-                dbUser = await this.prisma.user.findFirst({
-                    where: { 
-                        username: { 
-                            contains: professorName.split(' ')[0], 
-                            // Removido mode: 'insensitive' pois causava erro de tipo
-                        } 
-                    }
-                });
-                userCache.set(professorName, dbUser);
-            }
-
-            let status = 'PENDENTE';
-            let statusMessage = '';
-
-            if (dbUser && dbLab) {
-                status = 'PRONTO';
-                statusMessage = 'Usuário e Lab encontrados';
-            } else if (!dbUser && !dbLab) {
-                status = 'ERRO';
-                statusMessage = 'Usuário e Lab não cadastrados';
-            } else if (!dbUser) {
-                status = 'ERRO_USER';
-                statusMessage = `Professor '${professorName}' não encontrado`;
-            } else {
-                status = 'ERRO_LAB';
-                statusMessage = `Lab '${labName}' não encontrado`;
-            }
-
-            extractedClasses.push({
-              subject,
-              professor: professorName,
-              lab: labName,
-              detectedSlot: timeSlot || '?',
-              detectedStartTime: startTime,
-              status,
-              statusMessage,
-              dbUserId: dbUser?.id,
-              dbLabId: dbLab?.id
-            });
-          }
-        }
-      }
-
-      return {
-        message: 'PDF processado e verificado',
-        data: extractedClasses,
-      };
-
-    } catch (error) {
-      this.logger.error('Erro ao processar PDF', error);
-      throw new Error('Falha ao ler o arquivo PDF.');
-    }
   }
 
   async syncGoogleCalendar() {
@@ -300,5 +190,108 @@ export class ReservationsService {
       successCount,
       results
     };
+  }
+
+  async populateCalendarFromPdf(file: Express.Multer.File, semesterStart: string, semesterEnd: string) {
+    this.logger.log(`Populando Calendar via PDF. Início: ${semesterStart}, Fim: ${semesterEnd}`);
+    
+    if (!semesterStart || !semesterEnd) {
+        throw new BadRequestException("Datas de início e fim do semestre são obrigatórias.");
+    }
+
+    try {
+      const data = await pdf(file.buffer);
+      let text = data.text;
+
+      // Limpeza do texto
+      text = text.replace(/LAB\s*\.?\s*\n\s*(INFORMÁTICA|REDES|ROBÓTICA|DADOS)/gi, 'LAB. $1');
+      text = text.replace(/(LAB\.[^\n]+)\n\s*(\d{2,}-?COINF[-\w]*)/gi, '$1 $2');
+      text = text.replace(/^\s*-\s*$/gm, '');
+
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      let createdCount = 0;
+
+      // Variável de estado para rastrear em qual "Dia da Semana" estamos no PDF
+      let currentDay = ''; 
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        // Tenta detectar o dia da semana no texto
+        if (/^(SEG|TER|QUA|QUI|SEX|SAB|DOM)/i.test(line)) {
+            const match = line.match(/^(SEG|TER|QUA|QUI|SEX|SAB|DOM)/i);
+            if (match) currentDay = match[0].toUpperCase();
+        }
+
+        if (line.toUpperCase().includes('LAB.') || line.toUpperCase().includes('SALA ')) {
+          const labName = line;
+          
+          // Tenta achar horário
+          const nextLine = lines[i + 1];
+          let slotInfo = null as { start: string, end: string } | null;
+          if (nextLine && /^(\d{1,2}(,\d)?)$/.test(nextLine)) {
+             slotInfo = this.TIME_SLOTS_FULL[nextLine];
+          }
+
+          const professorName = lines[i - 1] || 'Desconhecido';
+          let subject = lines[i - 2] || 'Desconhecido';
+          const preSubject = lines[i - 3];
+          if (preSubject && !preSubject.includes('LAB') && !/^\d+$/.test(preSubject) && preSubject.length > 2) {
+             subject = `${preSubject} ${subject}`;
+          }
+
+          // Se temos dia, hora, lab e prof, podemos criar o evento!
+          if (currentDay && slotInfo && labName.length > 4) {
+             
+             // 1. Calcular a data da primeira aula
+             const firstClassDate = this.calculateFirstClassDate(semesterStart, currentDay);
+             const startDateTime = `${firstClassDate}T${slotInfo.start}:00`;
+             const endDateTime = `${firstClassDate}T${slotInfo.end}:00`;
+
+             // 2. Formatar regra de repetição (RRULE) para o Google
+             // Formato: YYYYMMDDThhmmssZ
+             const untilDate = semesterEnd.replace(/-/g, '') + 'T235959Z';
+             const rrule = [`RRULE:FREQ=WEEKLY;UNTIL=${untilDate}`];
+
+             // 3. Chamar serviço do Google
+             const success = await this.googleService.createEvent({
+                 summary: subject,
+                 description: professorName,
+                 location: labName,
+                 startDateTime: startDateTime,
+                 endDateTime: endDateTime,
+                 recurrenceRule: rrule
+             });
+
+             if (success) createdCount++;
+          }
+        }
+      }
+
+      return {
+        message: 'Processamento concluído',
+        eventsCreated: createdCount,
+        details: 'Verifique seu Google Calendar. As aulas foram criadas como eventos recorrentes.'
+      };
+
+    } catch (error) {
+      this.logger.error('Erro ao popular calendar', error);
+      throw new Error('Falha ao processar PDF.');
+    }
+  }
+
+  private calculateFirstClassDate(semesterStartISO: string, dayName: string): string {
+      const start = new Date(semesterStartISO);
+      const targetDay = this.DAY_MAP[dayName.substring(0, 3)]; // SEG -> 1
+      
+      const currentDay = start.getUTCDay(); // 0-6
+      
+      let daysToAdd = targetDay - currentDay;
+      if (daysToAdd < 0) {
+          daysToAdd += 7;
+      }
+      
+      start.setDate(start.getDate() + daysToAdd);
+      return start.toISOString().split('T')[0];
   }
 }
