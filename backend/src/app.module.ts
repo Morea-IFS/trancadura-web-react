@@ -12,8 +12,9 @@ import { UsersModule } from './users/users.module';
 import { DevicesModule } from './devices/devices.module';
 import { RolesModule } from './roles/roles.module';
 import { ApproximationsModule } from './approximations/approximations.module';
-import { LabsModule } from './labs/labs.module'; // Assuming LabsModule is defined in labs.module.ts
+import { LabsModule } from './labs/labs.module';
 import { ReservationsModule } from './reservations/reservations.module';
+import { MeteringModule } from './metering/metering.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ReservationsModule } from './reservations/reservations.module';
     ApproximationsModule,
     LabsModule,
     ReservationsModule,
+    MeteringModule,
   ],
   controllers: [AppController],
   providers: [
