@@ -18,7 +18,7 @@ import {
 } from "react-icons/io5";
 import { HiOutlineStatusOnline } from "react-icons/hi";
 import { LuHotel } from "react-icons/lu";
-import { FiChevronsDown } from "react-icons/fi";
+import { FiChevronsDown, FiEdit3 } from "react-icons/fi"; // Adicionei FiEdit3
 import { FaRegIdCard } from "react-icons/fa";
 
 interface EditFormProps {
@@ -53,7 +53,6 @@ export default function EditForm({
   const [username, setUsername] = useState(initialData?.username || "");
   const [email, setEmail] = useState(initialData?.email || "");
   const [password, setPassword] = useState("");
-  // Estado individual para o PIN
   const [accessPin, setAccessPin] = useState(initialData?.accessPin || ""); 
   
   const [status, setStatus] = useState<"ativo" | "inativo">(
@@ -61,6 +60,7 @@ export default function EditForm({
   );
 
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [cardName, setCardName] = useState(""); // NOVO: Estado para editar o nome do cartão
   const [initiallyLinkedCard, setInitiallyLinkedCard] = useState<Card | null>(null);
   const [availableCards, setAvailableCards] = useState<Card[]>([]);
 
@@ -86,14 +86,13 @@ export default function EditForm({
           const currentCard = linkedCardsRes.data[0].approximation;
           setInitiallyLinkedCard(currentCard);
           setSelectedCardId(currentCard.cardId);
+          setCardName(currentCard.name || ""); // Preenche o nome para edição
         }
 
-        // 1. Busca dados do usuário logado para saber permissões
         const me = await api.get("/users/me");
         const currentUserId = me.data.userId;
         const isSuperUser = me.data.roles?.some((r: any) => r.role.name === "superuser");
 
-        // 2. Busca os laboratórios
         let labsToShow;
         if (isSuperUser) {
           const allLabs = await api.get("/labs");
@@ -107,12 +106,10 @@ export default function EditForm({
 
         setLabs(labsToShow);
 
-        // 3. Busca o ID da role "staff"
         const rolesRes = await api.get("/roles");
         const staff = rolesRes.data.find((r: any) => r.name === "staff");
         if (staff) setStaffRoleId(staff.id);
 
-        // 4. Configura os laboratórios selecionados do usuário sendo editado
         if (initialData?.labs) {
           setSelectedLabs(initialData.labs.map((lab) => lab.id));
           const staffMap: { [labId: number]: boolean } = {};
@@ -129,7 +126,22 @@ export default function EditForm({
     fetchData();
   }, [initialData]);
 
-  // Manipula a seleção de laboratórios
+  // Atualiza o nome do cartão no input quando o cartão selecionado muda
+  useEffect(() => {
+    if (selectedCardId) {
+      // Tenta achar nos disponíveis ou no vinculado inicialmente
+      const card = availableCards.find(c => c.cardId === selectedCardId) || 
+                   (initiallyLinkedCard?.cardId === selectedCardId ? initiallyLinkedCard : null);
+      
+      if (card) {
+        setCardName(card.name);
+      }
+    } else {
+      setCardName("");
+    }
+  }, [selectedCardId, availableCards, initiallyLinkedCard]);
+
+
   const handleLabSelect = (labId: number) => {
     setSelectedLabs((prev) =>
       prev.includes(labId)
@@ -138,29 +150,37 @@ export default function EditForm({
     );
   };
 
-  // Manipula a mudança de permissões de staff
   const handleStaffChange = (labId: number, isStaff: boolean) => {
     setLabsStaff((prev) => ({ ...prev, [labId]: isStaff }));
   };
 
-  // Envia o formulário
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!initialData?.id) return alert("ID de usuário inválido");
 
     setLoading(true);
     try {
-      // Atualiza vínculo do cartão
-      if (selectedCardId !== initiallyLinkedCard?.cardId) {
-        if (initiallyLinkedCard) {
-          await api.delete(`/users/${initialData.id}/cards/${initiallyLinkedCard.id}`);
-        }
-        if (selectedCardId) {
-          await api.post(`/users/${initialData.id}/link-card`, { cardId: selectedCardId });
-        }
+      // 1. Atualiza vínculo e NOME do cartão
+      if (selectedCardId) {
+         // Se mudou o cartão vinculado
+         if (selectedCardId !== initiallyLinkedCard?.cardId) {
+            if (initiallyLinkedCard) {
+              await api.delete(`/users/${initialData.id}/cards/${initiallyLinkedCard.id}`);
+            }
+            await api.post(`/users/${initialData.id}/link-card`, { cardId: selectedCardId });
+         }
+
+         // NOVO: Atualiza o nome do cartão se tiver mudado
+         // Precisamos do ID numérico (pk) do cartão, não o hexId
+         const cardObj = availableCards.find(c => c.cardId === selectedCardId) || initiallyLinkedCard;
+         if (cardObj && cardName !== cardObj.name) {
+            await api.put(`/approximations/${cardObj.id}`, { name: cardName });
+         }
+      } else if (initiallyLinkedCard) {
+         // Se removeu o cartão
+         await api.delete(`/users/${initialData.id}/cards/${initiallyLinkedCard.id}`);
       }
 
-      // 1. Atualiza dados básicos
       await api.patch(`/users/${initialData.id}`, {
         username,
         email,
@@ -169,7 +189,6 @@ export default function EditForm({
         accessPin: accessPin || null,
       });
 
-      // 2. Atualiza associações com laboratórios
       const labsToSend = selectedLabs.map((labId) => ({
         userId: initialData.id!,
         labId,
@@ -188,7 +207,6 @@ export default function EditForm({
         });
       }
 
-      // 3. Atualiza role staff global
       const isStaffAnywhere = labsToSend.some((l) => l.isStaff);
       if (staffRoleId !== null) {
         if (isStaffAnywhere) {
@@ -201,7 +219,6 @@ export default function EditForm({
         }
       }
 
-      // 4. Retorna dados atualizados
       if (onSave) {
         onSave({
           id: initialData.id,
@@ -279,7 +296,7 @@ export default function EditForm({
         />
       </div>
 
-      {/* Access PIN - Corrigido */}
+      {/* Access PIN */}
       <div className="col-span-1">
         <div className="flex items-center gap-1 mb-1">
           <IoKeypadOutline className="w-4 h-4 text-blue-400" />
@@ -330,45 +347,63 @@ export default function EditForm({
         </Listbox>
       </div>
 
-      {/* Cartão Vinculado */}
+      {/* Cartão Vinculado e Edição de Nome */}
       <div className="col-span-1">
         <div className="flex items-center gap-1 mb-1">
           <FaRegIdCard className="w-4 h-4 text-blue-400" />
           <label className="text-sm font-medium">Cartão Vinculado</label>
         </div>
-        <Listbox value={selectedCardId} onChange={setSelectedCardId}>
-          <div className="relative">
-            <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white p-2 text-left text-gray-800 text-sm border border-gray-300 shadow-sm flex justify-between items-center h-[38px]">
-              <span className="block truncate">{selectedCardName}</span>
-              <FiChevronsDown className="h-4 w-4 text-gray-600" />
-            </ListboxButton>
-            <ListboxOptions className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white p-1 text-sm shadow-lg ring-1 ring-black/5">
-              <ListboxOption
-                value={null}
-                className="cursor-pointer p-2 hover:bg-gray-100"
-              >
-                Sem cartão
-              </ListboxOption>
-              {cardOptions.map((card) => (
+        <div className="flex flex-col gap-2">
+            {/* Dropdown de Seleção */}
+            <Listbox value={selectedCardId} onChange={setSelectedCardId}>
+            <div className="relative">
+                <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white p-2 text-left text-gray-800 text-sm border border-gray-300 shadow-sm flex justify-between items-center h-[38px]">
+                <span className="block truncate">{selectedCardName}</span>
+                <FiChevronsDown className="h-4 w-4 text-gray-600" />
+                </ListboxButton>
+                <ListboxOptions className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white p-1 text-sm shadow-lg ring-1 ring-black/5">
                 <ListboxOption
-                  key={card.id}
-                  value={card.cardId}
-                  className={({ selected }) =>
-                    `cursor-pointer p-2 rounded ${
-                      selected ? "bg-teal-200 font-bold" : "hover:bg-gray-100"
-                    }`
-                  }
+                    value={null}
+                    className="cursor-pointer p-2 hover:bg-gray-100"
                 >
-                  {card.name} ({card.cardId.substring(0, 6)}...)
+                    Sem cartão
                 </ListboxOption>
-              ))}
-            </ListboxOptions>
-          </div>
-        </Listbox>
+                {cardOptions.map((card) => (
+                    <ListboxOption
+                    key={card.id}
+                    value={card.cardId}
+                    className={({ selected }) =>
+                        `cursor-pointer p-2 rounded ${
+                        selected ? "bg-teal-200 font-bold" : "hover:bg-gray-100"
+                        }`
+                    }
+                    >
+                    {card.name} ({card.cardId.substring(0, 6)}...)
+                    </ListboxOption>
+                ))}
+                </ListboxOptions>
+            </div>
+            </Listbox>
+
+            {/* Input para Renomear o Cartão (Só aparece se tiver cartão selecionado) */}
+            {selectedCardId && (
+                <div className="flex items-center gap-2">
+                    <FiEdit3 className="text-gray-400" />
+                    <input 
+                        type="text" 
+                        value={cardName}
+                        onChange={(e) => setCardName(e.target.value)}
+                        placeholder="Nome/Apelido do Cartão"
+                        className="flex-1 border-b border-gray-300 focus:border-blue-500 outline-none text-sm p-1"
+                    />
+                </div>
+            )}
+        </div>
       </div>
 
-      {/* Salas (Labs) - Scrollable */}
+      {/* Salas (Labs) */}
       <div className="col-span-full">
+        {/* ... (resto do componente igual) ... */}
         <div className="flex items-center gap-1 mb-1">
           <LuHotel className="w-4 h-4 text-blue-400" />
           <label className="text-sm font-medium">Laboratórios</label>
@@ -393,7 +428,8 @@ export default function EditForm({
 
       {selectedLabs.length > 0 && (
         <div className="col-span-full">
-          <label className="block text-sm font-medium mb-1">
+            {/* ... (Renderização das permissões de staff - igual) ... */}
+           <label className="block text-sm font-medium mb-1">
             Permissões de Staff
           </label>
           <div className="flex flex-col gap-2 max-h-32 overflow-y-auto pr-1">

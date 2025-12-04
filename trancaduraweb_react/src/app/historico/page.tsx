@@ -64,50 +64,58 @@ export default function HistoricoPage() {
 
   // Buscar os acessos do usuário selecionado
   useEffect(() => {
-    if (!usuarioId || !labSelecionado) return;
+    if (!labSelecionado) return;
 
-    api
-      .get(`/devices/${labSelecionado}/all`)
-      .then((res) => {
-        let filtrados = res.data.filter(
-          (item: any) => item.userId === usuarioId
-        );
+    api.get(`/labs/${labSelecionado}`).then((resLab) => {
+       const lab = resLab.data;
+       setNomeLabSelecionado(lab.name);
+       
+       const deviceId = lab.deviceId || lab.device?.id;
 
-        // Filtra por período
-        const agora = dayjs();
-        filtrados = filtrados.filter((item: any) => {
-          const data = dayjs(item.date);
-          if (filtroPeriodo === "dia") return data.isSame(agora, "day");
-          if (filtroPeriodo === "semana") return data.isSame(agora, "week");
-          if (filtroPeriodo === "mes") return data.isSame(agora, "month");
-          if (filtroPeriodo === "ano") return data.isSame(agora, "year");
-          return true;
+       if (!deviceId) {
+         console.warn("Este laboratório não possui dispositivo vinculado.");
+         setAcessos([]);
+         return;
+       }
+
+       api.get(`/devices/${deviceId}/all`)
+        .then((res) => {
+          console.log(`Acessos encontrados para Device ${deviceId}:`, res.data.length);
+          let filtrados = res.data;
+
+          // Filtra por período
+          const agora = dayjs();
+          filtrados = filtrados.filter((item: any) => {
+            const dataAcesso = dayjs(item.date);
+            if (filtroPeriodo === "dia") return dataAcesso.isSame(agora, "day");
+            if (filtroPeriodo === "semana") return dataAcesso.isSame(agora, "week");
+            if (filtroPeriodo === "mes") return dataAcesso.isSame(agora, "month");
+            if (filtroPeriodo === "ano") return dataAcesso.isSame(agora, "year");
+            return true;
+          });
+
+          // Filtra por status
+          if (statusFiltro === "autorizado") {
+            filtrados = filtrados.filter((item: any) => item.permission === true);
+          } else if (statusFiltro === "nao-autorizado") {
+            filtrados = filtrados.filter((item: any) => item.permission === false);
+          }
+
+          filtrados = filtrados.map((item: any) => ({
+            ...item,
+            nomeLab: lab.name,
+          }));
+
+          setAcessos(filtrados);
+        })
+        .catch((err) => {
+          console.error("Erro ao buscar acessos:", err);
+          setAcessos([]);
         });
+    });
 
-        // Filtra por status
-        if (statusFiltro === "autorizado") {
-          filtrados = filtrados.filter((item: any) => item.permission === true);
-        } else if (statusFiltro === "nao-autorizado") {
-          filtrados = filtrados.filter(
-            (item: any) => item.permission === false
-          );
-        }
-
-        filtrados = filtrados.map((item: any) => ({
-          ...item,
-          nomeLab: nomeLabSelecionado,
-        }));
-
-        setAcessos(filtrados);
-      })
-      .catch((err) => {
-        console.error("Erro ao buscar acessos:", err);
-        setAcessos([]);
-      });
   }, [
-    usuarioId,
     labSelecionado,
-    nomeLabSelecionado,
     filtroPeriodo,
     statusFiltro,
   ]);
