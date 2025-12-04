@@ -10,7 +10,7 @@ import {
   ListboxOption,
 } from "@headlessui/react";
 import { FiChevronsDown } from "react-icons/fi";
-import { FaRegIdCard } from "react-icons/fa";
+import { FaRegIdCard, FaSpinner } from "react-icons/fa";
 
 interface Device {
   id: number;
@@ -19,9 +19,10 @@ interface Device {
 
 interface ScanCardButtonProps {
   userId: number | null;
+  onSuccess?: () => void;
 }
 
-export default function ScanCardButton({ userId }: ScanCardButtonProps) {
+export default function ScanCardButton({ userId, onSuccess }: ScanCardButtonProps) {
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<number | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "scanning" | "success" | "error">("idle");
@@ -51,69 +52,101 @@ export default function ScanCardButton({ userId }: ScanCardButtonProps) {
     }
 
     setStatus("loading");
-    setMessage("");
+    setMessage("Conectando ao dispositivo...");
 
     try {
+      // 1. Snapshot: Pega a quantidade atual de cartões
+      const initialCardsRes = await api.get(`/users/${userId}/cards`);
+      const initialCount = initialCardsRes.data.length;
+
+      // 2. Prepara dados do ESP32
       const res = await api.post(`/devices/${selectedDeviceId}/hexid`, { userId });
       const { deviceIp, apiToken } = res.data;
 
       if (!deviceIp || !apiToken) {
-        throw new Error("Dispositivo não configurado para escaneamento.");
+        throw new Error("Dispositivo não configurado ou IP desconhecido.");
       }
 
+      // 3. Tenta disparar o comando no ESP32
+      // TRUQUE: Envolvemos isso num try/catch isolado.
+      // Se o navegador bloquear a resposta (CORS/Network Error), a gente ignora e segue para o polling.
+      try {
+        await fetch(`http://${deviceIp}/hexid?apiToken=${apiToken}&userId=${userId}`, {
+          method: 'GET',
+          mode: 'no-cors', // Tenta forçar o envio mesmo sem esperar resposta limpa
+        });
+      } catch (fetchErr) {
+        console.warn("Aviso: O navegador bloqueou a resposta do ESP32, mas o comando provavelmente chegou. Iniciando verificação...");
+      }
+
+      // 4. Entra no modo de espera (Polling) imediatamente
       setStatus("scanning");
-      setMessage("Aproxime o novo cartão do leitor...");
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000);
+      setMessage("Aproxime o cartão do leitor agora...");
 
-      await fetch(`http://${deviceIp}/hexid?apiToken=${apiToken}`, {
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
+      let attempts = 0;
+      const maxAttempts = 15; // 30 segundos (15 * 2s)
+      let cardDetected = false;
 
-      setStatus("success");
-      setMessage("Cartão escaneado com sucesso! Agora ele pode ser vinculado a um usuário.");
+      while (attempts < maxAttempts) {
+        // Espera 2 segundos
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        
+        // Verifica se o número de cartões aumentou no Backend
+        const currentCardsRes = await api.get(`/users/${userId}/cards`);
+        const currentCount = currentCardsRes.data.length;
+
+        if (currentCount > initialCount) {
+          cardDetected = true;
+          break; // Cartão novo detectado!
+        }
+        
+        attempts++;
+      }
+
+      if (cardDetected) {
+        setStatus("success");
+        setMessage("Cartão vinculado com sucesso!");
+        if (onSuccess) onSuccess();
+      } else {
+        setStatus("error");
+        setMessage("Tempo esgotado. O cartão não foi identificado.");
+      }
 
     } catch (err: any) {
-      console.error("Erro durante o escaneamento:", err);
+      console.error("Erro geral no fluxo:", err);
       setStatus("error");
-      if (err.name === 'AbortError') {
-        setMessage("Tempo esgotado. Nenhuma cartão foi aproximado.");
-      } else {
-        setMessage(err.response?.data?.message || "Falha na comunicação com o leitor.");
-      }
+      setMessage(err.response?.data?.message || "Falha ao iniciar processo.");
     }
   };
 
   const getSelectedDeviceName = () => {
-    if (selectedDeviceId === null) {
-      return "Selecione um leitor";
-    }
+    if (selectedDeviceId === null) return "Selecione um leitor";
     const device = devices.find((d) => d.id === selectedDeviceId);
-    if (!device) {
-      return "Selecione um leitor";
-    }
-    return device.location || `Dispositivo ${device.id}`;
+    return device ? (device.location || `Dispositivo ${device.id}`) : "Selecione um leitor";
   };
 
   return (
     <div className="flex flex-col gap-2 w-full">
-      <p className="font-bold text-sm">Leitor a ser utilizado:</p>
+      <p className="font-bold text-sm text-gray-700">Leitor a ser utilizado:</p>
+      
       <Listbox value={selectedDeviceId} onChange={setSelectedDeviceId}>
         <div className="relative w-full">
-          <ListboxButton className="relative w-full cursor-pointer rounded-lg bg-white p-3 text-left text-gray-800 font-semibold border border-gray-200 shadow-sm">
+          <ListboxButton className="relative w-full cursor-pointer rounded-lg bg-white p-3 text-left text-gray-800 font-semibold border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
             {getSelectedDeviceName()}
-            <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-              <FiChevronsDown className="h-4 w-4 text-gray-600" />
+            <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+              <FiChevronsDown className="h-5 w-5 text-gray-500" />
             </span>
           </ListboxButton>
-          <ListboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white text-black p-2 text-sm shadow-lg ring-1 ring-black/5 z-50">
+          <ListboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white text-black py-1 text-sm shadow-lg ring-1 ring-black/5 z-50 focus:outline-none">
             {devices.map((device) => (
               <ListboxOption
                 key={device.id}
                 value={device.id}
-                className="cursor-pointer select-none p-2 m-1 rounded hover:bg-gray-100"
+                className={({ active }) =>
+                  `cursor-pointer select-none p-2 px-4 ${
+                    active ? 'bg-blue-100 text-blue-900' : 'text-gray-900'
+                  }`
+                }
               >
                 {device.location || `Dispositivo ${device.id}`}
               </ListboxOption>
@@ -125,23 +158,36 @@ export default function ScanCardButton({ userId }: ScanCardButtonProps) {
       <button
         onClick={handleScan}
         disabled={status === "loading" || status === "scanning"}
-        className="w-full flex items-center justify-center gap-2 p-3 mt-2 font-bold text-white bg-gradient-to-r from-blue-600 to-teal-500 rounded-lg shadow-md transition hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+        className={`w-full flex items-center justify-center gap-2 p-3 mt-2 font-bold text-white rounded-lg shadow-md transition-all
+          ${status === "success" 
+            ? "bg-green-600 hover:bg-green-700" 
+            : status === "error" 
+              ? "bg-red-500 hover:bg-red-600"
+              : "bg-gradient-to-r from-blue-600 to-teal-500 hover:scale-[1.02]"
+          }
+          disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none`}
       >
-        <FaRegIdCard />
-        {status === "loading" && "Iniciando..."}
-        {status === "scanning" && "Aguardando cartão..."}
-        {(status === "idle" || status === "success" || status === "error") &&
-          "Escanear Novo Cartão"}
+        {status === "loading" || status === "scanning" ? (
+          <FaSpinner className="animate-spin" />
+        ) : (
+          <FaRegIdCard />
+        )}
+        
+        {status === "loading" && "Conectando..."}
+        {status === "scanning" && "Aguardando Cartão..."}
+        {status === "success" && "Sucesso!"}
+        {status === "error" && "Tentar Novamente"}
+        {status === "idle" && "Escanear Novo Cartão"}
       </button>
 
       {message && (
-        <p
-          className={`text-sm text-center mt-2 font-semibold ${
-            status === "success" ? "text-green-600" : status === "error" ? "text-red-600" : "text-gray-600"
-          }`}
-        >
+        <div className={`text-sm text-center mt-2 font-medium p-2 rounded bg-opacity-10 
+          ${status === "success" ? "bg-green-500 text-green-700" : 
+            status === "error" ? "bg-red-500 text-red-700" : 
+            status === "scanning" ? "bg-blue-500 text-blue-700 animate-pulse" : "text-gray-600"}`
+        }>
           {message}
-        </p>
+        </div>
       )}
     </div>
   );

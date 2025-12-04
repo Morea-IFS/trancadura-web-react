@@ -271,7 +271,7 @@ export class ReservationsService {
       return {
         message: 'Processamento concluído',
         eventsCreated: createdCount,
-        details: 'Verifique seu Google Calendar. As aulas foram criadas como eventos recorrentes.'
+        details: 'Verifique no Google Calendar. As aulas foram criadas como eventos recorrentes.'
       };
 
     } catch (error) {
