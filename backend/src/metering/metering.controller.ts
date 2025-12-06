@@ -3,7 +3,7 @@ import { MeteringService } from './metering.service';
 import { StoreDataDto } from './dto/store-data.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth/jwt-auth.guard';
 
-@Controller() // Deixamos vazio para assumir a raiz do prefixo global (/api)
+@Controller()
 export class MeteringController {
   constructor(private readonly meteringService: MeteringService) {}
 
