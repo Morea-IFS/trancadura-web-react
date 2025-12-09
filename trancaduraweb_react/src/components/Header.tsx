@@ -83,7 +83,7 @@ export default function Header({
                 <p className="text-base md:text-xl font-bold bg-gradient-to-r from-green-200 to-teal-200 bg-clip-text text-transparent">
                   MOREA
                 </p>
-                <p className="text-xs md:text-base">Trancadura WEB</p>
+                <p className="text-xs md:text-base">Sistema Geral</p>
               </div>
             </div>
           </Link>
@@ -153,12 +153,12 @@ export default function Header({
         <div className="hidden md:flex items-center gap-4 overflow-x-auto pb-2 scrollbar-hide">
            <NavLink href="/" icon={<FaHome className="w-6 h-6" />} label="Home" />
            <NavLink href="/trancadura" icon={<MdOutlineLock className="w-6 h-6" />} label="Tranca" />
+           <NavLink href="/dashboard/metering" icon={<FiBarChart2 className="w-6 h-6" />} label="Consumo" title="Consumo" />
            <NavLink href="/historico" icon={<FaHistory className="w-6 h-6" />} label="Histórico" />
            <NavLink href="/membros" icon={<IoPeopleSharp className="w-6 h-6" />} label="Membros" />
            <NavLink href="/dispositivos" icon={<CiRouter className="w-6 h-6" />} label="Dispositivos" />
            <NavLink href="/laboratorios" icon={<LuHotel className="w-6 h-6" />} label="Labs" />
            <NavLink href="/reservas" icon={<MdDateRange className="w-6 h-6" />} label="Reservas" />
-           <NavLink href="/dashboard/metering" icon={<FiBarChart2 className="w-6 h-6" />} label="Consumo" title="Consumo" />
         </div>
 
         {/* Menu Mobile (Dropdown) */}
@@ -166,12 +166,12 @@ export default function Header({
           <div className="md:hidden flex flex-col gap-2 mt-2 bg-white/10 rounded-lg p-4 border border-white/10 backdrop-blur-md animate-fade-in-down">
              <MobileNavLink href="/" icon={<FaHome className="w-5 h-5" />} label="Home" onClick={closeMobileMenu} />
              <MobileNavLink href="/trancadura" icon={<MdOutlineLock className="w-5 h-5" />} label="Tranca" onClick={closeMobileMenu} />
+             <MobileNavLink href="/dashboard/metering" icon={<FiBarChart2 className="w-5 h-5" />} label="Consumo" onClick={closeMobileMenu} />
              <MobileNavLink href="/historico" icon={<FaHistory className="w-5 h-5" />} label="Histórico" onClick={closeMobileMenu} />
              <MobileNavLink href="/membros" icon={<IoPeopleSharp className="w-5 h-5" />} label="Membros" onClick={closeMobileMenu} />
              <MobileNavLink href="/dispositivos" icon={<CiRouter className="w-5 h-5" />} label="Dispositivos" onClick={closeMobileMenu} />
              <MobileNavLink href="/laboratorios" icon={<LuHotel className="w-5 h-5" />} label="Labs" onClick={closeMobileMenu} />
              <MobileNavLink href="/reservas" icon={<MdDateRange className="w-5 h-5" />} label="Reservas" onClick={closeMobileMenu} />
-             <MobileNavLink href="/dashboard/metering" icon={<FiBarChart2 className="w-5 h-5" />} label="Consumo" onClick={closeMobileMenu} />
              
              <div className="h-px bg-white/20 my-2"></div>
              
