@@ -25,7 +25,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="pt-br">
       <head>
-        <link rel="icon" href="/lock.svg" />
+        <link rel="icon" href="/images/logo-morea.png" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

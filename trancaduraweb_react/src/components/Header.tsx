@@ -84,7 +84,7 @@ export default function Header({
           <Link href="/">
             <div className="flex items-center gap-2 cursor-pointer">
               <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-r from-green-400 to-teal-400 rounded-lg flex items-center justify-center">
-                <MdOutlineSensorDoor className="w-5 h-5 md:w-8 md:h-8" />
+                <img src="/images/logo-morea.png" alt="MOREA Logo"/>
               </div>
               <div className="font-bold">
                 <p className="text-base md:text-xl font-bold bg-gradient-to-r from-green-200 to-teal-200 bg-clip-text text-transparent">
