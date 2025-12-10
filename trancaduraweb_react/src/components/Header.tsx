@@ -8,12 +8,19 @@ import {
   ListboxOption,
 } from "@headlessui/react";
 
-import { MdOutlineSensorDoor, MdMenu, MdClose, MdOutlineLock, MdDateRange } from "react-icons/md";
+import {
+  MdOutlineSensorDoor,
+  MdMenu,
+  MdClose,
+  MdOutlineLock,
+  MdDateRange,
+} from "react-icons/md";
+
+import { HiServerStack } from "react-icons/hi2";
+
 import { IoExitOutline, IoPeopleSharp } from "react-icons/io5";
 import { FiChevronsDown, FiBarChart2 } from "react-icons/fi";
 import { FaHistory, FaHome } from "react-icons/fa";
-import { CiRouter } from "react-icons/ci";
-import { LuHotel } from "react-icons/lu";
 
 type HeaderProps = {
   labSelecionado: number | null;
@@ -30,7 +37,7 @@ export default function Header({
   const carregarLabs = async () => {
     try {
       const res = await api.get("/labs/me");
-      console.log(res.data)
+      console.log(res.data);
       setLabs(res.data);
       const savedLab = localStorage.getItem("labSelecionado");
       const parsedSavedLab = savedLab ? Number(savedLab) : null;
@@ -83,7 +90,9 @@ export default function Header({
                 <p className="text-base md:text-xl font-bold bg-gradient-to-r from-green-200 to-teal-200 bg-clip-text text-transparent">
                   MOREA
                 </p>
-                <p className="text-xs md:text-base">Sistema Geral</p>
+                <p className="text-xs md:text-base">
+                  Tinha que ser de redes!!!
+                </p>
               </div>
             </div>
           </Link>
@@ -134,11 +143,19 @@ export default function Header({
                     value={lab.id}
                     className={({ active }) =>
                       `relative cursor-pointer select-none p-2 m-2 rounded transition-colors outline-none
-                      ${active ? "bg-teal-300 font-bold text-black" : "bg-white text-black"}`
+                      ${
+                        active
+                          ? "bg-teal-300 font-bold text-black"
+                          : "bg-white text-black"
+                      }`
                     }
                   >
                     {({ selected }) => (
-                      <span className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>
+                      <span
+                        className={`block truncate ${
+                          selected ? "font-medium" : "font-normal"
+                        }`}
+                      >
                         {lab.name}
                       </span>
                     )}
@@ -151,31 +168,93 @@ export default function Header({
 
         {/* Navegação Desktop */}
         <div className="hidden md:flex items-center gap-4 overflow-x-auto pb-2 scrollbar-hide">
-           <NavLink href="/" icon={<FaHome className="w-6 h-6" />} label="Home" />
-           <NavLink href="/trancadura" icon={<MdOutlineLock className="w-6 h-6" />} label="Tranca" />
-           <NavLink href="/dashboard/metering" icon={<FiBarChart2 className="w-6 h-6" />} label="Consumo" title="Consumo" />
-           <NavLink href="/historico" icon={<FaHistory className="w-6 h-6" />} label="Histórico" />
-           <NavLink href="/membros" icon={<IoPeopleSharp className="w-6 h-6" />} label="Membros" />
-           <NavLink href="/dispositivos" icon={<CiRouter className="w-6 h-6" />} label="Dispositivos" />
-           <NavLink href="/laboratorios" icon={<LuHotel className="w-6 h-6" />} label="Labs" />
-           <NavLink href="/reservas" icon={<MdDateRange className="w-6 h-6" />} label="Reservas" />
+          <NavLink
+            href="/"
+            icon={<FaHome className="w-6 h-6" />}
+            label="Home"
+          />
+          <NavLink
+            href="/trancadura"
+            icon={<MdOutlineLock className="w-6 h-6" />}
+            label="Tranca"
+          />
+          <NavLink
+            href="/dashboard/metering"
+            icon={<FiBarChart2 className="w-6 h-6" />}
+            label="Consumo"
+            title="Consumo"
+          />
+          <NavLink
+            href="/historico"
+            icon={<FaHistory className="w-6 h-6" />}
+            label="Histórico"
+          />
+          <NavLink
+            href="/membros"
+            icon={<IoPeopleSharp className="w-6 h-6" />}
+            label="Membros"
+          />
+          <NavLink
+            href="/disp_labs"
+            icon={<HiServerStack className="w-6 h-6" />}
+            label="Disp / Labs"
+          />
+          <NavLink
+            href="/reservas"
+            icon={<MdDateRange className="w-6 h-6" />}
+            label="Reservas"
+          />
         </div>
 
         {/* Menu Mobile (Dropdown) */}
         {isMobileMenuOpen && (
           <div className="md:hidden flex flex-col gap-2 mt-2 bg-white/10 rounded-lg p-4 border border-white/10 backdrop-blur-md animate-fade-in-down">
-             <MobileNavLink href="/" icon={<FaHome className="w-5 h-5" />} label="Home" onClick={closeMobileMenu} />
-             <MobileNavLink href="/trancadura" icon={<MdOutlineLock className="w-5 h-5" />} label="Tranca" onClick={closeMobileMenu} />
-             <MobileNavLink href="/dashboard/metering" icon={<FiBarChart2 className="w-5 h-5" />} label="Consumo" onClick={closeMobileMenu} />
-             <MobileNavLink href="/historico" icon={<FaHistory className="w-5 h-5" />} label="Histórico" onClick={closeMobileMenu} />
-             <MobileNavLink href="/membros" icon={<IoPeopleSharp className="w-5 h-5" />} label="Membros" onClick={closeMobileMenu} />
-             <MobileNavLink href="/dispositivos" icon={<CiRouter className="w-5 h-5" />} label="Dispositivos" onClick={closeMobileMenu} />
-             <MobileNavLink href="/laboratorios" icon={<LuHotel className="w-5 h-5" />} label="Labs" onClick={closeMobileMenu} />
-             <MobileNavLink href="/reservas" icon={<MdDateRange className="w-5 h-5" />} label="Reservas" onClick={closeMobileMenu} />
-             
-             <div className="h-px bg-white/20 my-2"></div>
-             
-             <Link
+            <MobileNavLink
+              href="/"
+              icon={<FaHome className="w-5 h-5" />}
+              label="Home"
+              onClick={closeMobileMenu}
+            />
+            <MobileNavLink
+              href="/trancadura"
+              icon={<MdOutlineLock className="w-5 h-5" />}
+              label="Tranca"
+              onClick={closeMobileMenu}
+            />
+            <MobileNavLink
+              href="/dashboard/metering"
+              icon={<FiBarChart2 className="w-5 h-5" />}
+              label="Consumo"
+              onClick={closeMobileMenu}
+            />
+            <MobileNavLink
+              href="/historico"
+              icon={<FaHistory className="w-5 h-5" />}
+              label="Histórico"
+              onClick={closeMobileMenu}
+            />
+            <MobileNavLink
+              href="/membros"
+              icon={<IoPeopleSharp className="w-5 h-5" />}
+              label="Membros"
+              onClick={closeMobileMenu}
+            />
+            <MobileNavLink
+              href="/disp_labs"
+              icon={<HiServerStack className="w-5 h-5" />}
+              label="Disp / Labs"
+              onClick={closeMobileMenu}
+            />
+            <MobileNavLink
+              href="/reservas"
+              icon={<MdDateRange className="w-5 h-5" />}
+              label="Reservas"
+              onClick={closeMobileMenu}
+            />
+
+            <div className="h-px bg-white/20 my-2"></div>
+
+            <Link
               href="/logout"
               onClick={closeMobileMenu}
               className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/20 transition-colors text-white font-bold"
@@ -192,7 +271,17 @@ export default function Header({
 
 // Componentes Auxiliares para evitar repetição
 
-function NavLink({ href, icon, label, title }: { href: string; icon: React.ReactNode; label: string; title?: string }) {
+function NavLink({
+  href,
+  icon,
+  label,
+  title,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  title?: string;
+}) {
   return (
     <Link
       href={href}
@@ -205,7 +294,17 @@ function NavLink({ href, icon, label, title }: { href: string; icon: React.React
   );
 }
 
-function MobileNavLink({ href, icon, label, onClick }: { href: string; icon: React.ReactNode; label: string; onClick: () => void }) {
+function MobileNavLink({
+  href,
+  icon,
+  label,
+  onClick,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
   return (
     <Link
       href={href}

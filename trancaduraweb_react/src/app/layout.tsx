@@ -12,9 +12,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Trancadura Web",
+  title: "MOREA - Tinha que ser de redes!",
   description:
-    "Site oficial da Trancadura Web, onde você poderá acessar o laboratório do MOREA",
+    "Site oficial do laboratório MOREA (Monitoramento e Operação de Redes Acadêmicas), onde você poderá acessar todo os nossos produtos para automação e modernização do campus",
 };
 
 interface RootLayoutProps {
