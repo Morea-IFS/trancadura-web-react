@@ -3,14 +3,15 @@ CREATE TABLE `users` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `email` VARCHAR(191) NOT NULL,
     `username` VARCHAR(191) NOT NULL,
+    `access_pin` VARCHAR(191) NULL,
     `password` VARCHAR(191) NOT NULL,
     `is_active` BOOLEAN NOT NULL DEFAULT true,
-    `is_staff` BOOLEAN NOT NULL DEFAULT false,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `users_email_key`(`email`),
     UNIQUE INDEX `users_username_key`(`username`),
+    UNIQUE INDEX `users_access_pin_key`(`access_pin`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -30,6 +31,7 @@ CREATE TABLE `UserLab` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` INTEGER NOT NULL,
     `labId` INTEGER NOT NULL,
+    `isStaff` BOOLEAN NOT NULL DEFAULT false,
 
     UNIQUE INDEX `UserLab_userId_labId_key`(`userId`, `labId`),
     PRIMARY KEY (`id`)
@@ -58,17 +60,33 @@ CREATE TABLE `user_roles` (
 CREATE TABLE `devices` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `uuid` VARCHAR(191) NOT NULL,
+    `name` VARCHAR(191) NULL,
     `mac_address` VARCHAR(191) NULL,
-    `section` VARCHAR(191) NULL,
-    `location` VARCHAR(191) NULL,
     `ip_address` VARCHAR(191) NULL,
     `api_token` VARCHAR(191) NULL,
+    `type` ENUM('ACCESS_CONTROL', 'WATER_METER', 'ENERGY_METER', 'GAS_METER') NOT NULL DEFAULT 'ACCESS_CONTROL',
+    `isAuthorized` BOOLEAN NOT NULL DEFAULT false,
+    `section` VARCHAR(191) NULL,
+    `location` VARCHAR(191) NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `devices_uuid_key`(`uuid`),
     UNIQUE INDEX `devices_mac_address_key`(`mac_address`),
     UNIQUE INDEX `devices_api_token_key`(`api_token`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `MeterReading` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `deviceId` INTEGER NOT NULL,
+    `type` INTEGER NOT NULL,
+    `value` DOUBLE NOT NULL,
+    `total` DOUBLE NOT NULL,
+    `collectedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    INDEX `MeterReading_deviceId_collectedAt_idx`(`deviceId`, `collectedAt`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -128,6 +146,32 @@ CREATE TABLE `user_accesses` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `Reservation` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `startTime` DATETIME(3) NOT NULL,
+    `endTime` DATETIME(3) NOT NULL,
+    `userId` INTEGER NOT NULL,
+    `labId` INTEGER NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    UNIQUE INDEX `Reservation_userId_labId_startTime_key`(`userId`, `labId`, `startTime`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `TemporaryAccessRequest` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `labId` INTEGER NOT NULL,
+    `userId` INTEGER NOT NULL,
+    `expiresAt` DATETIME(3) NULL,
+    `isOneTime` BOOLEAN NOT NULL DEFAULT false,
+    `approved` BOOLEAN NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `Lab` ADD CONSTRAINT `Lab_device_id_fkey` FOREIGN KEY (`device_id`) REFERENCES `devices`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -142,6 +186,9 @@ ALTER TABLE `user_roles` ADD CONSTRAINT `user_roles_user_id_fkey` FOREIGN KEY (`
 
 -- AddForeignKey
 ALTER TABLE `user_roles` ADD CONSTRAINT `user_roles_role_id_fkey` FOREIGN KEY (`role_id`) REFERENCES `roles`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `MeterReading` ADD CONSTRAINT `MeterReading_deviceId_fkey` FOREIGN KEY (`deviceId`) REFERENCES `devices`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `device_roles` ADD CONSTRAINT `device_roles_device_id_fkey` FOREIGN KEY (`device_id`) REFERENCES `devices`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -166,3 +213,15 @@ ALTER TABLE `user_accesses` ADD CONSTRAINT `user_accesses_user_id_fkey` FOREIGN 
 
 -- AddForeignKey
 ALTER TABLE `user_accesses` ADD CONSTRAINT `user_accesses_device_id_fkey` FOREIGN KEY (`device_id`) REFERENCES `devices`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Reservation` ADD CONSTRAINT `Reservation_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Reservation` ADD CONSTRAINT `Reservation_labId_fkey` FOREIGN KEY (`labId`) REFERENCES `Lab`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `TemporaryAccessRequest` ADD CONSTRAINT `TemporaryAccessRequest_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `TemporaryAccessRequest` ADD CONSTRAINT `TemporaryAccessRequest_labId_fkey` FOREIGN KEY (`labId`) REFERENCES `Lab`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
