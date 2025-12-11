@@ -15,7 +15,7 @@ export default function Logout() {
       } catch (err) {
         console.error("Erro ao deslogar:", err);
       } finally {
-        router.replace("/login");
+        router.replace("/");
       }
     }
     doLogout();
