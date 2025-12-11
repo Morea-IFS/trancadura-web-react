@@ -254,7 +254,7 @@ export default function Membros() {
       {registerModalOpen && podeGerenciar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <div className="bg-white rounded-lg shadow-lg p-8 w-80 sm:w-full max-w-2xl relative">
-            <div className="overflow-y-auto max-h-[90vh]">
+            <div className="overflow-y-auto max-h-[90vh] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <button
                 className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-4xl"
                 onClick={() => setRegisterModalOpen(false)}
