@@ -327,7 +327,7 @@ export default function RegisterForm({ onClose, onSave }: RegisterFormProps) {
           <label className="block text-sm font-medium mb-1">
             Definir permissões de Staff
           </label>
-          <div className="flex flex-col gap-2 max-h-32 overflow-y-auto pr-1">
+          <div className="flex flex-col gap-2 max-h-32 pr-1">
             {selectedLabs.map((labId) => {
               const lab = labs.find((l) => l.id === labId);
               const currentValue = labsStaff[labId] ? "staff" : "default";

@@ -254,23 +254,25 @@ export default function Membros() {
       {registerModalOpen && podeGerenciar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
           <div className="bg-white rounded-lg shadow-lg p-8 w-80 sm:w-full max-w-2xl relative">
-            <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-4xl"
-              onClick={() => setRegisterModalOpen(false)}
-              aria-label="Fechar"
-            >
-              ×
-            </button>
-            <h2 className="text-2xl font-bold mb-6 text-center">
-              Registrar Novo Membro
-            </h2>
-            <RegisterForm
-              onClose={() => setRegisterModalOpen(false)}
-              onSave={(newUser) => {
-                handleUserAdd(newUser);
-                setRegisterModalOpen(false);
-              }}
-            />
+            <div className="overflow-y-auto max-h-[90vh]">
+              <button
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-4xl"
+                onClick={() => setRegisterModalOpen(false)}
+                aria-label="Fechar"
+              >
+                ×
+              </button>
+              <h2 className="text-2xl font-bold mb-6 text-center">
+                Registrar Novo Membro
+              </h2>
+              <RegisterForm
+                onClose={() => setRegisterModalOpen(false)}
+                onSave={(newUser) => {
+                  handleUserAdd(newUser);
+                  setRegisterModalOpen(false);
+                }}
+              />
+            </div>
           </div>
         </div>
       )}
