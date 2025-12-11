@@ -15,6 +15,9 @@ export default function Logout() {
       } catch (err) {
         console.error("Erro ao deslogar:", err);
       } finally {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+
         router.replace("/");
       }
     }

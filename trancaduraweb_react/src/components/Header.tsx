@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import api from "@/lib/api";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
 import {
   Listbox,
   ListboxButton,
@@ -77,6 +79,13 @@ export default function Header({
     setIsMobileMenuOpen(false);
   };
 
+  const pathname = usePathname();
+  const [isLogged, setIsLogged] = useState(false);
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsLogged(!!token);
+  }, [pathname]);
+
   return (
     <header className="bg-gradient-to-r from-blue-800 to-teal-500 text-background w-full shadow-xl relative z-50">
       <div className="flex flex-col p-4 gap-4 md:gap-6">
@@ -84,7 +93,7 @@ export default function Header({
           <Link href="/">
             <div className="flex items-center gap-2 cursor-pointer">
               <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-r from-green-400 to-teal-400 rounded-lg flex items-center justify-center">
-                <img src="/images/logo-morea.png" alt="MOREA Logo"/>
+                <Image src="/images/logo-morea.png" width={50} height={50} alt="Logo" />
               </div>
               <div className="font-bold">
                 <p className="text-base md:text-xl font-bold bg-gradient-to-r from-green-200 to-teal-200 bg-clip-text text-transparent">
@@ -110,13 +119,23 @@ export default function Header({
           </button>
 
           {/* Botão Sair (Desktop) */}
-          <Link
-            href="/logout"
-            className="hidden md:flex w-12 h-12 md:w-40 md:gap-2 bg-white/20 border border-white/20 rounded-lg items-center justify-center cursor-pointer shadow-md transition-transform duration-300 hover:scale-105 hover:bg-white/30"
-          >
-            <IoExitOutline className="w-6 h-6 md:w-8 md:h-8" />
-            <span className="text-xl font-bold">Sair</span>
-          </Link>
+          {isLogged ? (
+            <Link
+              href="/logout"
+              className="hidden md:flex w-12 h-12 md:w-40 md:gap-2 bg-white/20 border border-white/20 rounded-lg items-center justify-center cursor-pointer shadow-md transition-transform duration-300 hover:scale-105 hover:bg-white/30"
+            >
+              <IoExitOutline className="w-6 h-6 md:w-8 md:h-8" />
+              <span className="text-xl font-bold">Sair</span>
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="hidden md:flex w-12 h-12 md:w-40 md:gap-2 bg-white/20 border border-white/20 rounded-lg items-center justify-center cursor-pointer shadow-md transition-transform duration-300 hover:scale-105 hover:bg-white/30"
+            >
+              <MdOutlineSensorDoor className="w-6 h-6 md:w-8 md:h-8" />
+              <span className="text-xl font-bold">Login</span>
+            </Link>
+          )}
         </div>
 
         {/* Select dos laboratórios (Visível sempre ou condicionalmente no mobile, aqui mantive visível) */}
