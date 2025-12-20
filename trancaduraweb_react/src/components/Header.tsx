@@ -26,7 +26,7 @@ import { FaHistory, FaHome } from "react-icons/fa";
 
 type HeaderProps = {
   labSelecionado: number | null;
-  setLabSelecionado: (id: number) => void;
+  setLabSelecionado: (id: number | null) => void;
 };
 
 export default function Header({
@@ -35,12 +35,21 @@ export default function Header({
 }: HeaderProps) {
   const [labs, setLabs] = useState<{ id: number; name: string }[]>([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const [isLogged, setIsLogged] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsLogged(!!token);
+  }, [pathname]);
 
   const carregarLabs = async () => {
+    if (!isLogged) return;
+
     try {
       const res = await api.get("/labs/me");
-      console.log(res.data);
       setLabs(res.data);
+
       const savedLab = localStorage.getItem("labSelecionado");
       const parsedSavedLab = savedLab ? Number(savedLab) : null;
 
@@ -51,19 +60,14 @@ export default function Header({
       ) {
         setLabSelecionado(res.data[0].id);
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.response?.status === 401) {
+        return;
+      }
+
       console.error("Erro ao carregar labs:", err);
     }
   };
-
-  useEffect(() => {
-    const savedLab = localStorage.getItem("labSelecionado");
-    if (savedLab) {
-      setLabSelecionado(Number(savedLab));
-    }
-
-    carregarLabs();
-  }, []);
 
   useEffect(() => {
     if (labSelecionado !== null) {
@@ -79,12 +83,21 @@ export default function Header({
     setIsMobileMenuOpen(false);
   };
 
-  const pathname = usePathname();
-  const [isLogged, setIsLogged] = useState(false);
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsLogged(!!token);
-  }, [pathname]);
+    if (!isLogged) {
+      setLabs([]);
+      setLabSelecionado(null);
+      localStorage.removeItem("labSelecionado");
+      return;
+    }
+
+    const savedLab = localStorage.getItem("labSelecionado");
+    if (savedLab) {
+      setLabSelecionado(Number(savedLab));
+    }
+
+    carregarLabs();
+  }, [isLogged]);
 
   return (
     <header className="bg-gradient-to-r from-blue-800 to-teal-500 text-background w-full shadow-xl relative z-50">
@@ -92,13 +105,16 @@ export default function Header({
         <div className="flex justify-between items-center">
           <Link href="/">
             <div className="flex items-center gap-2 cursor-pointer">
-              <div className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-r from-green-400 to-teal-400 rounded-lg flex items-center justify-center">
-                <Image src="/images/logo-morea.png" width={50} height={50} alt="Logo" />
+              <div className="w-10 h-10 md:w-14 md:h-14 rounded-lg flex items-center justify-center">
+                <Image
+                  src="/images/logo-morea.png"
+                  width={50}
+                  height={50}
+                  alt="Logo"
+                />
               </div>
               <div className="font-bold">
-                <p className="text-base md:text-xl font-bold bg-gradient-to-r from-green-200 to-teal-200 bg-clip-text text-transparent">
-                  MOREA
-                </p>
+                <p className="text-base md:text-xl font-bold">MOREA</p>
                 <p className="text-xs md:text-base">
                   Tinha que ser de redes!!!
                 </p>
@@ -138,52 +154,54 @@ export default function Header({
           )}
         </div>
 
-        {/* Select dos laboratórios (Visível sempre ou condicionalmente no mobile, aqui mantive visível) */}
-        <div>
-          <Listbox value={labSelecionado} onChange={setLabSelecionado}>
-            <div className="relative w-full">
-              <ListboxButton className="relative w-full cursor-pointer rounded-lg bg-white/20 p-2 md:p-4 text-left text-white font-bold border border-white/20 shadow-md transition-transform duration-300 hover:bg-white/30 outline-none flex items-center justify-between">
-                <span className="block truncate">
-                  {labs.find((lab) => lab.id === labSelecionado)?.name ??
-                    "Selecione um lab"}
-                </span>
-                <span className="pointer-events-none flex items-center pr-2">
-                  <FiChevronsDown
-                    className="h-5 w-5 md:h-6 md:w-6 text-white font-bold"
-                    aria-hidden="true"
-                  />
-                </span>
-              </ListboxButton>
+        {/* Select dos laboratórios */}
+        {isLogged ? (
+          <div>
+            <Listbox value={labSelecionado} onChange={setLabSelecionado}>
+              <div className="relative w-full">
+                <ListboxButton className="relative w-full cursor-pointer rounded-lg bg-white/20 p-2 md:p-4 text-left text-white font-bold border border-white/20 shadow-md transition-transform duration-300 hover:bg-white/30 outline-none flex items-center justify-between">
+                  <span className="block truncate">
+                    {labs.find((lab) => lab.id === labSelecionado)?.name ??
+                      "Selecione um lab"}
+                  </span>
+                  <span className="pointer-events-none flex items-center pr-2">
+                    <FiChevronsDown
+                      className="h-5 w-5 md:h-6 md:w-6 text-white font-bold"
+                      aria-hidden="true"
+                    />
+                  </span>
+                </ListboxButton>
 
-              <ListboxOptions className="text-black absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white text-black z-50 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                {labs.map((lab) => (
-                  <ListboxOption
-                    key={lab.id}
-                    value={lab.id}
-                    className={({ active }) =>
-                      `relative cursor-pointer select-none p-2 m-2 rounded transition-colors outline-none
+                <ListboxOptions className="text-black absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white text-black z-50 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  {labs.map((lab) => (
+                    <ListboxOption
+                      key={lab.id}
+                      value={lab.id}
+                      className={({ active }) =>
+                        `relative cursor-pointer select-none p-2 m-2 rounded transition-colors outline-none
                       ${
                         active
                           ? "bg-teal-300 font-bold text-black"
                           : "bg-white text-black"
                       }`
-                    }
-                  >
-                    {({ selected }) => (
-                      <span
-                        className={`block truncate ${
-                          selected ? "font-medium" : "font-normal"
-                        }`}
-                      >
-                        {lab.name}
-                      </span>
-                    )}
-                  </ListboxOption>
-                ))}
-              </ListboxOptions>
-            </div>
-          </Listbox>
-        </div>
+                      }
+                    >
+                      {({ selected }) => (
+                        <span
+                          className={`block truncate ${
+                            selected ? "font-medium" : "font-normal"
+                          }`}
+                        >
+                          {lab.name}
+                        </span>
+                      )}
+                    </ListboxOption>
+                  ))}
+                </ListboxOptions>
+              </div>
+            </Listbox>
+          </div>
+        ) : null}
 
         {/* Navegação Desktop */}
         <div className="hidden md:flex items-center gap-4 overflow-x-auto pb-2 scrollbar-hide">
@@ -225,7 +243,7 @@ export default function Header({
           />
         </div>
 
-        {/* Menu Mobile (Dropdown) */}
+        {/* Menu Mobile */}
         {isMobileMenuOpen && (
           <div className="md:hidden flex flex-col gap-2 mt-2 bg-white/10 rounded-lg p-4 border border-white/10 backdrop-blur-md animate-fade-in-down">
             <MobileNavLink
@@ -288,7 +306,7 @@ export default function Header({
   );
 }
 
-// Componentes Auxiliares para evitar repetição
+/* ===== Auxiliares ===== */
 
 function NavLink({
   href,
