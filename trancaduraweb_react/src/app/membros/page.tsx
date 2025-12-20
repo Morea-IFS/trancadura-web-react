@@ -92,17 +92,25 @@ export default function Membros() {
               return {
                 ...userRes.data,
                 id: u.userId, // Garante que o ID está presente
-                labs: userRes.data.labs?.filter((lab: any) => lab.id === labSelecionado) || []
+                labs:
+                  userRes.data.labs?.filter(
+                    (lab: any) => lab.id === labSelecionado
+                  ) || [],
               };
             } catch (error) {
-              console.error(`Erro ao buscar detalhes do usuário ${u.userId}:`, error);
+              console.error(
+                `Erro ao buscar detalhes do usuário ${u.userId}:`,
+                error
+              );
               return null;
             }
           })
         );
 
         // Filtra quaisquer usuários nulos e garante que cada um tem um ID
-        setUsers(usersWithDetails.filter((u): u is UserDetails => u !== null && !!u.id));
+        setUsers(
+          usersWithDetails.filter((u): u is UserDetails => u !== null && !!u.id)
+        );
       } catch (err) {
         console.error("Erro ao buscar usuários:", err);
         setUsers([]);
@@ -122,13 +130,16 @@ export default function Membros() {
   // Função para adicionar um novo usuário à lista
   function handleUserAdd(newUser: any) {
     // Verifica se o novo usuário tem um ID e não está já na lista
-    if (newUser.id && !users.some(u => u.id === newUser.id)) {
-      setUsers(prevUsers => [...prevUsers, {
-        ...newUser,
-        // Garante que as propriedades necessárias existam
-        labs: newUser.labs || [],
-        roles: newUser.roles || []
-      }]);
+    if (newUser.id && !users.some((u) => u.id === newUser.id)) {
+      setUsers((prevUsers) => [
+        ...prevUsers,
+        {
+          ...newUser,
+          // Garante que as propriedades necessárias existam
+          labs: newUser.labs || [],
+          roles: newUser.roles || [],
+        },
+      ]);
     }
   }
 
@@ -194,25 +205,24 @@ export default function Membros() {
         </div>
         {/* Busca e Adicionar Membros */}
         <div className="w-full flex flex-col md:flex-row gap-2 bg-white rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.25)] p-4">
-
           {/* Botões de Ação */}
           {podeGerenciar && (
-          <div className="w-full flex flex-col md:flex-row gap-4 mt-4">
-            <button
-              className="w-full md:w-1/2 p-3 bg-gradient-to-r from-green-500 to-lime-300 text-white font-bold rounded-lg shadow-md hover:scale-105 transition"
-              onClick={() => setRegisterModalOpen(true)}
-            >
-              Adicionar Membro
-            </button>
-            {/* Escanear cartão */}
-            <button
-              className="w-full md:w-1/2 p-3 bg-gradient-to-r from-blue-600 to-teal-500 text-white font-bold rounded-lg shadow-md hover:scale-105 transition"
-              onClick={() => setScanCardModalOpen(true)}
-            >
-              Escanear Novo Cartão
-            </button>
-          </div>
-        )}
+            <div className="w-full flex flex-col md:flex-row gap-4 mt-4">
+              <button
+                className="w-full md:w-1/2 p-3 bg-gradient-to-r from-green-500 to-lime-300 text-white font-bold rounded-lg shadow-md hover:scale-105 transition"
+                onClick={() => setRegisterModalOpen(true)}
+              >
+                Adicionar Membro
+              </button>
+              {/* Escanear cartão */}
+              <button
+                className="w-full md:w-1/2 p-3 bg-gradient-to-r from-blue-600 to-teal-500 text-white font-bold rounded-lg shadow-md hover:scale-105 transition"
+                onClick={() => setScanCardModalOpen(true)}
+              >
+                Escanear Novo Cartão
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Lista de Membros */}
@@ -233,7 +243,9 @@ export default function Membros() {
           </div>
           {/* Lista de Membros */}
           {users.length > 0 ? (
-            <div className="space-y-4"> {/* Container para a lista */}
+            <div className="space-y-4">
+              {" "}
+              {/* Container para a lista */}
               {users.map((user) => (
                 <MemberCard
                   key={`user-${user.id}-${labSelecionado}`} // Key única composta
@@ -277,25 +289,30 @@ export default function Membros() {
         </div>
       )}
 
-      {/* 4. Adicione o novo Modal para Escanear Cartão */}
+      {/* Modal para Escanear Cartão */}
       {scanCardModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-md relative">
-            <button
-              className="cursor-pointer absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-4xl"
-              onClick={() => setScanCardModalOpen(false)}
-              aria-label="Fechar"
-            >
-              ×
-            </button>
-            <h2 className="text-2xl font-bold mb-6 text-center">
-              Escanear Novo Cartão
-            </h2>
-            <p className="text-center text-gray-600 mb-4">
-              Selecione o leitor e clique no botão para iniciar. O novo cartão
-              ficará disponível para ser vinculado a um usuário.
-            </p>
-            <ScanCardButton userId={currentUserId} />
+          <div className="bg-white rounded-lg shadow-lg p-8 w-80 sm:w-full max-w-md relative">
+            <div className="overflow-y-auto max-h-[90vh] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <button
+                className="cursor-pointer absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-4xl"
+                onClick={() => setScanCardModalOpen(false)}
+                aria-label="Fechar"
+              >
+                ×
+              </button>
+
+              <h2 className="text-2xl font-bold mb-6 text-center">
+                Escanear Novo Cartão
+              </h2>
+
+              <p className="text-center text-gray-600 mb-6 text-sm">
+                Selecione o leitor e clique no botão para iniciar. O novo cartão
+                ficará disponível para ser vinculado a um usuário.
+              </p>
+
+              <ScanCardButton userId={currentUserId} />
+            </div>
           </div>
         </div>
       )}
