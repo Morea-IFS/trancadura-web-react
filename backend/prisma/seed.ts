@@ -4,10 +4,17 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  const password = 'admin123';
+  console.log('🚀 Iniciando seed padrão do sistema...');
+
+  /* ============================
+     🔐 Usuário padrão de suporte
+  ============================ */
+  const password = 'suporte123';
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Criação das roles
+  /* ============================
+     👤 Roles do sistema
+  ============================ */
   const superUserRole = await prisma.role.upsert({
     where: { name: 'superuser' },
     update: {},
@@ -20,37 +27,73 @@ async function main() {
     create: { name: 'staff' },
   });
 
-  // Criação do usuário admin
-  const superUser = await prisma.user.upsert({
-    where: { email: 'admin@example.com' },
+  /* ============================
+     🧑 Usuário "suporte"
+  ============================ */
+  const suporteUser = await prisma.user.upsert({
+    where: { email: 'suporte@morea.system' },
     update: {},
     create: {
-      username: 'admin',
-      email: 'admin@example.com',
+      username: 'suporte',
+      email: 'suporte@morea.system',
       password: hashedPassword,
+      isActive: true,
     },
   });
 
-  // Relacionar usuário à role superuser (só se ainda não estiver relacionado)
-  const existingUserRole = await prisma.userRole.findUnique({
+  /* ============================
+     🏢 Laboratório "Suporte"
+  ============================ */
+  const suporteLab = await prisma.lab.upsert({
+    where: { name: 'Suporte' },
+    update: {},
+    create: {
+      name: 'Suporte',
+    },
+  });
+
+  /* ============================
+     🔗 Vínculo User ↔ Lab (staff)
+  ============================ */
+  await prisma.userLab.upsert({
+    where: {
+      userId_labId: {
+        userId: suporteUser.id,
+        labId: suporteLab.id,
+      },
+    },
+    update: {
+      isStaff: true,
+    },
+    create: {
+      userId: suporteUser.id,
+      labId: suporteLab.id,
+      isStaff: true,
+    },
+  });
+
+  /* ============================
+     🛡️ Role superuser → suporte
+  ============================ */
+  await prisma.userRole.upsert({
     where: {
       userId_roleId: {
-        userId: superUser.id,
+        userId: suporteUser.id,
         roleId: superUserRole.id,
       },
     },
+    update: {},
+    create: {
+      userId: suporteUser.id,
+      roleId: superUserRole.id,
+    },
   });
 
-  if (!existingUserRole) {
-    await prisma.userRole.create({
-      data: {
-        userId: superUser.id,
-        roleId: superUserRole.id,
-      },
-    });
-  }
-
-  console.log('✅ Seed finalizado: SuperUser criado com sucesso.');
+  console.log('✅ Seed finalizado com sucesso!');
+  console.log('👤 Usuário: suporte');
+  console.log('🔐 Senha: suporte123');
+  console.log('🏢 Laboratório padrão: Suporte');
+  console.log('🛡️ Permissão: superuser + staff no lab Suporte');
 }
 
 main()
