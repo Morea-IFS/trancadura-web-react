@@ -58,6 +58,7 @@ export class DevicesService {
   
         return {
           id: device.uuid,
+          numericId: device.id,
           api_token: newApiToken,
         };
       }
@@ -74,6 +75,7 @@ export class DevicesService {
   
       return {
         id: newUuid,
+        numericId: created.id,
         api_token: newApiToken,
       };
     }
