@@ -235,23 +235,26 @@ export default function DispLabsPage() {
 
       {/* MODAL DE LAB */}
       {isModalOpen && canManage && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md relative">
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-3xl"
-            >
-              ×
-            </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-xl p-8 w-80 sm:w-full max-w-md relative">
+            <div className="overflow-y-auto max-h-[90vh] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-4xl"
+                aria-label="Fechar"
+              >
+                ×
+              </button>
 
-            <h2 className="text-2xl font-bold text-center mb-6">
-              Adicionar Novo Laboratório
-            </h2>
+              <h2 className="text-2xl font-bold text-center mb-6">
+                Adicionar Novo Laboratório
+              </h2>
 
-            <CreateLabForm
-              onClose={() => setIsModalOpen(false)}
-              onSave={handleSaveNewLab}
-            />
+              <CreateLabForm
+                onClose={() => setIsModalOpen(false)}
+                onSave={handleSaveNewLab}
+              />
+            </div>
           </div>
         </div>
       )}

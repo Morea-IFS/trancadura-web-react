@@ -9,9 +9,9 @@ export default function LoginPage() {
           <IoLockClosedOutline className="w-12 h-12 sm:w-16 sm:h-16 text-background" />
         </div>
         <div className="w-full text-center mb-6">
-          <h2 className="text-xl sm:text-2xl font-bold">MOREA - Trancadura</h2>
+          <h2 className="text-xl sm:text-2xl font-bold">Sistema MOREA</h2>
           <p className="text-md sm:text-lg text-gray-600">
-            Faça login para acessar o sistema de controle
+            Faça login para acessar os sistemas de controle
           </p>
         </div>
         <LoginForm />

@@ -1,4 +1,3 @@
-// src/components/DeviceCard.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -28,18 +27,22 @@ interface Lab {
 interface DeviceCardProps {
   device: Device;
   allLabs: Lab[];
-  onUpdate: () => void; // Callback para recarregar a lista na página principal
+  onUpdate: () => void;
 }
 
-export default function DeviceCard({ device, allLabs, onUpdate }: DeviceCardProps) {
+export default function DeviceCard({
+  device,
+  allLabs,
+  onUpdate,
+}: DeviceCardProps) {
   const [selectedLabId, setSelectedLabId] = useState<number | null>(
-    device.lab?.id || null
+    device.lab?.id ?? null
   );
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
 
   useEffect(() => {
-    setSelectedLabId(device.lab?.id || null);
+    setSelectedLabId(device.lab?.id ?? null);
   }, [device]);
 
   const handleSave = async () => {
@@ -49,20 +52,16 @@ export default function DeviceCard({ device, allLabs, onUpdate }: DeviceCardProp
     const initiallyLinkedLabId = device.lab?.id;
 
     try {
-      // Caso 1: O usuário selecionou "Nenhum" para um dispositivo que estava vinculado
       if (initiallyLinkedLabId && selectedLabId === null) {
-        // Desvincula o dispositivo do seu laboratório antigo
         await api.patch(`/labs/${initiallyLinkedLabId}`, { deviceId: null });
-      } 
-      // Caso 2: O usuário selecionou um novo laboratório
-      else if (selectedLabId && selectedLabId !== initiallyLinkedLabId) {
-        // Vincula o dispositivo ao novo laboratório
-        // (Sua API já deve desvincular automaticamente do antigo se houver uma constraint unique)
-        await api.patch(`/labs/${selectedLabId}`, { deviceId: device.id });
+      } else if (selectedLabId && selectedLabId !== initiallyLinkedLabId) {
+        await api.patch(`/labs/${selectedLabId}`, {
+          deviceId: device.id,
+        });
       }
 
       setStatus("success");
-      onUpdate(); // Chama a função para recarregar os dados na página pai
+      onUpdate();
     } catch (err) {
       console.error("Erro ao salvar:", err);
       setStatus("error");
@@ -71,52 +70,83 @@ export default function DeviceCard({ device, allLabs, onUpdate }: DeviceCardProp
       setTimeout(() => setStatus("idle"), 3000);
     }
   };
-  
-  // A lógica para encontrar o nome do lab agora usa a prop `device`
-  const selectedLabName = device.lab?.name || "Nenhum";
+
+  const selectedLabName =
+    allLabs.find((lab) => lab.id === selectedLabId)?.name || "Nenhum";
 
   return (
-    <div className="w-full flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-white rounded-lg shadow-md border border-black/5">
+    <div className="w-full flex flex-col gap-4 p-4 bg-white rounded-lg shadow-md border border-gray-100">
+      {/* Info do dispositivo */}
       <div className="flex flex-col gap-1">
-        <h2 className="text-sm font-bold md:text-lg">{device.location || `Dispositivo #${device.id}`}</h2>
-        <p className="text-xs md:text-sm text-gray-600">MAC: {device.macAddress}</p>
-        <p className="text-xs md:text-sm text-gray-600">IP: {device.ipAddress || "Não registrado"}</p>
+        <h2 className="text-sm md:text-lg font-bold">
+          {device.location || `Dispositivo #${device.id}`}
+        </h2>
+        <p className="text-xs text-gray-600">MAC: {device.macAddress}</p>
+        <p className="text-xs text-gray-600">
+          IP: {device.ipAddress || "Não registrado"}
+        </p>
       </div>
-      
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-        <Listbox value={selectedLabId} onChange={setSelectedLabId}>
-          <div className="relative w-full sm:w-48">
-            <ListboxButton className="relative w-full cursor-pointer rounded-lg bg-gray-50 p-3 text-left text-gray-800 font-semibold border border-gray-200 shadow-sm">
-              <span className="truncate flex items-center gap-2">
-                <LuHotel /> {allLabs.find(lab => lab.id === selectedLabId)?.name || "Nenhum"}
-              </span>
-              <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                <FiChevronsDown className="h-4 w-4 text-gray-600" />
-              </span>
-            </ListboxButton>
-            <ListboxOptions className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white text-black p-2 text-sm shadow-lg ring-1 ring-black/5 z-10">
-              <ListboxOption value={null} className="cursor-pointer select-none p-2 rounded hover:bg-gray-100">
-                Nenhum
-              </ListboxOption>
-              {allLabs.map((lab) => (
-                <ListboxOption key={lab.id} value={lab.id} className="cursor-pointer select-none p-2 rounded hover:bg-gray-100">
-                  {lab.name}
-                </ListboxOption>
-              ))}
-            </ListboxOptions>
+
+      {/* Ações */}
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
+        {/* Select Lab */}
+        <div className="flex-1">
+          <div className="flex items-center gap-1 mb-1">
+            <LuHotel className="w-4 h-4 text-blue-400" />
+            <label className="text-sm font-medium">Laboratório</label>
           </div>
-        </Listbox>
-        
-        <button 
-          onClick={handleSave} 
-          disabled={loading || selectedLabId === device.lab?.id} // Desabilita se não houver mudança
-          className="p-3 bg-blue-600 text-white font-bold rounded-lg shadow-md hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+
+          <Listbox value={selectedLabId} onChange={setSelectedLabId}>
+            <div className="relative">
+              <ListboxButton className="relative w-full cursor-pointer rounded-md bg-white p-2 text-left text-gray-800 text-sm border border-gray-300 shadow-sm flex justify-between items-center h-[38px]">
+                <span className="block truncate">{selectedLabName}</span>
+                <FiChevronsDown className="h-4 w-4 text-gray-600" />
+              </ListboxButton>
+
+              <ListboxOptions className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white p-1 text-sm shadow-lg ring-1 ring-black/5">
+                <ListboxOption
+                  value={null}
+                  className="cursor-pointer p-2 hover:bg-gray-100 text-gray-500 italic"
+                >
+                  Nenhum
+                </ListboxOption>
+
+                {allLabs.map((lab) => (
+                  <ListboxOption
+                    key={lab.id}
+                    value={lab.id}
+                    className={({ selected }) =>
+                      `cursor-pointer p-2 rounded ${
+                        selected ? "bg-teal-200 font-bold" : "hover:bg-gray-100"
+                      }`
+                    }
+                  >
+                    {lab.name}
+                  </ListboxOption>
+                ))}
+              </ListboxOptions>
+            </div>
+          </Listbox>
+        </div>
+
+        {/* Botão Salvar */}
+        <button
+          onClick={handleSave}
+          disabled={loading || selectedLabId === device.lab?.id}
+          className="px-4 h-[38px] bg-blue-600 text-white text-sm font-bold rounded-md shadow-md hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? "Salvando..." : "Salvar"}
         </button>
 
-        {status === 'success' && <p className="text-xs text-green-600">Salvo!</p>}
-        {status === 'error' && <p className="text-xs text-red-600">Erro!</p>}
+        {/* Status */}
+        <div className="min-w-[60px] flex items-center">
+          {status === "success" && (
+            <span className="text-xs text-green-600 font-semibold">Salvo!</span>
+          )}
+          {status === "error" && (
+            <span className="text-xs text-red-600 font-semibold">Erro!</span>
+          )}
+        </div>
       </div>
     </div>
   );

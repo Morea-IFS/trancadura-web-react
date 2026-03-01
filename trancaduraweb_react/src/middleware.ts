@@ -2,18 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
-
-  const publicRoutes = ["/", "/login"]; // rotas abertas
   const currentPath = request.nextUrl.pathname;
 
+  const publicRoutes = ["/", "/login"];
   const isPublic = publicRoutes.includes(currentPath);
 
-  // Se tentar acessar rota protegida sem token → login
+  // 🔐 Rota protegida sem token
   if (!token && !isPublic) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Se tentar acessar login já estando logado → home
+  // 🔁 Usuário logado tentando acessar login
   if (token && currentPath === "/login") {
     return NextResponse.redirect(new URL("/", request.url));
   }
@@ -22,5 +21,8 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    // 🔓 Ignora assets estáticos e imagens
+    "/((?!_next/static|_next/image|favicon.ico|images|assets).*)",
+  ],
 };
