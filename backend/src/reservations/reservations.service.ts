@@ -1,9 +1,9 @@
-import { Injectable, ConflictException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException, Logger, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { GoogleCalendarService } from './google-calendar.service';
+import { JwtService } from '@nestjs/jwt';
 
-// Carrega a biblioteca pdf-extraction
 const pdf = require('pdf-extraction');
 
 @Injectable()
@@ -32,7 +32,8 @@ export class ReservationsService {
 
   constructor(
     private prisma: PrismaService,
-    private googleService: GoogleCalendarService
+    private googleService: GoogleCalendarService,
+    private jwtService: JwtService
   ) {}
 
   async create(dto: CreateReservationDto) {
@@ -94,40 +95,30 @@ export class ReservationsService {
   }
 
   async syncGoogleCalendar() {
-    // 1. Busca os dados brutos do Google
     const rawEvents = await this.googleService.getEventsFromCalendar();
     
     const validatedClasses = [] as any[];
     const userCache = new Map();
     const labCache = new Map();
 
-    // 2. Valida cada evento com o banco de dados (Igual fizemos no PDF)
     for (const event of rawEvents) {
-        // Tenta limpar o nome do Lab vindo do Google (ex: "Laboratório 02" -> "02")
         const labName = event.lab; 
         const professorName = event.professor;
 
-        // --- LÓGICA DE BUSCA USER/LAB (Reaproveitada) ---
-        
-        // Busca Lab
         let dbLab: any = null;
         if (labCache.has(labName)) {
             dbLab = labCache.get(labName);
         } else {
-            // Tenta achar pelo nome ou parte dele
             dbLab = await this.prisma.lab.findFirst({
                 where: { name: { contains: labName } } 
             });
             labCache.set(labName, dbLab);
         }
 
-        // Busca Usuário
         let dbUser: any = null;
         if (userCache.has(professorName)) {
             dbUser = userCache.get(professorName);
         } else {
-             // Busca professor pelo primeiro nome que estiver na descrição
-             // Ex: Descrição "Prof. Telmo" -> busca "Telmo"
             const searchName = professorName.replace('Prof.', '').trim().split(' ')[0];
             
             dbUser = await this.prisma.user.findFirst({
@@ -136,7 +127,6 @@ export class ReservationsService {
             userCache.set(professorName, dbUser);
         }
 
-        // Define Status
         let status = 'PENDENTE';
         let statusMessage = '';
 
@@ -175,7 +165,7 @@ export class ReservationsService {
         const created = await this.create(res);
         results.push({ status: 'SUCCESS', reservation: res, data: created });
         successCount++;
-      } catch (error) {
+      } catch (error: any) {
         this.logger.warn(`Falha ao criar reserva em lote: ${error.message}`);
         results.push({ 
           status: 'ERROR', 
@@ -203,21 +193,17 @@ export class ReservationsService {
       const data = await pdf(file.buffer);
       let text = data.text;
 
-      // Limpeza do texto
       text = text.replace(/LAB\s*\.?\s*\n\s*(INFORMÁTICA|REDES|ROBÓTICA|DADOS)/gi, 'LAB. $1');
       text = text.replace(/(LAB\.[^\n]+)\n\s*(\d{2,}-?COINF[-\w]*)/gi, '$1 $2');
       text = text.replace(/^\s*-\s*$/gm, '');
 
-      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      const lines = text.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
       let createdCount = 0;
-
-      // Variável de estado para rastrear em qual "Dia da Semana" estamos no PDF
       let currentDay = ''; 
 
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
 
-        // Tenta detectar o dia da semana no texto
         if (/^(SEG|TER|QUA|QUI|SEX|SAB|DOM)/i.test(line)) {
             const match = line.match(/^(SEG|TER|QUA|QUI|SEX|SAB|DOM)/i);
             if (match) currentDay = match[0].toUpperCase();
@@ -225,10 +211,9 @@ export class ReservationsService {
 
         if (line.toUpperCase().includes('LAB.') || line.toUpperCase().includes('SALA ')) {
           const labName = line;
-          
-          // Tenta achar horário
           const nextLine = lines[i + 1];
           let slotInfo = null as { start: string, end: string } | null;
+          
           if (nextLine && /^(\d{1,2}(,\d)?)$/.test(nextLine)) {
              slotInfo = this.TIME_SLOTS_FULL[nextLine];
           }
@@ -236,24 +221,19 @@ export class ReservationsService {
           const professorName = lines[i - 1] || 'Desconhecido';
           let subject = lines[i - 2] || 'Desconhecido';
           const preSubject = lines[i - 3];
+          
           if (preSubject && !preSubject.includes('LAB') && !/^\d+$/.test(preSubject) && preSubject.length > 2) {
              subject = `${preSubject} ${subject}`;
           }
 
-          // Se temos dia, hora, lab e prof, podemos criar o evento!
           if (currentDay && slotInfo && labName.length > 4) {
-             
-             // 1. Calcular a data da primeira aula
              const firstClassDate = this.calculateFirstClassDate(semesterStart, currentDay);
              const startDateTime = `${firstClassDate}T${slotInfo.start}:00`;
              const endDateTime = `${firstClassDate}T${slotInfo.end}:00`;
 
-             // 2. Formatar regra de repetição (RRULE) para o Google
-             // Formato: YYYYMMDDThhmmssZ
              const untilDate = semesterEnd.replace(/-/g, '') + 'T235959Z';
              const rrule = [`RRULE:FREQ=WEEKLY;UNTIL=${untilDate}`];
 
-             // 3. Chamar serviço do Google
              const success = await this.googleService.createEvent({
                  summary: subject,
                  description: professorName,
@@ -282,9 +262,8 @@ export class ReservationsService {
 
   private calculateFirstClassDate(semesterStartISO: string, dayName: string): string {
       const start = new Date(semesterStartISO);
-      const targetDay = this.DAY_MAP[dayName.substring(0, 3)]; // SEG -> 1
-      
-      const currentDay = start.getUTCDay(); // 0-6
+      const targetDay = this.DAY_MAP[dayName.substring(0, 3)]; 
+      const currentDay = start.getUTCDay(); 
       
       let daysToAdd = targetDay - currentDay;
       if (daysToAdd < 0) {
@@ -293,5 +272,53 @@ export class ReservationsService {
       
       start.setDate(start.getDate() + daysToAdd);
       return start.toISOString().split('T')[0];
+  }
+
+  async generateAccessKey(reservationId: number) {
+    const reservation = await this.prisma.reservation.findUnique({
+      where: { id: reservationId },
+      include: { user: true, lab: true }
+    });
+
+    if (!reservation) {
+      throw new BadRequestException('Reserva não encontrada.');
+    }
+
+    const startTimeUnix = Math.floor(reservation.startTime.getTime() / 1000);
+    const endTimeUnix = Math.floor(reservation.endTime.getTime() / 1000);
+
+    const payload = {
+      sub: reservation.userId,
+      lab: reservation.labId,
+      resId: reservation.id,
+      nbf: startTimeUnix,
+      exp: endTimeUnix
+    };
+
+    const token = this.jwtService.sign(payload);
+
+    return {
+      access_token: token,
+      valid_from: reservation.startTime,
+      valid_until: reservation.endTime
+    };
+  }
+
+  async validateAccessKey(token: string) {
+    try {
+      const decoded = this.jwtService.verify(token);
+
+      return {
+        access: true,
+        message: 'ACESSO LIBERADO',
+        details: decoded
+      };
+    } catch (error: any) {
+      let reason = 'Token inválido ou corrompido';
+      if (error.name === 'TokenExpiredError') reason = 'O horário da aula já acabou.';
+      if (error.name === 'NotBeforeError') reason = 'A aula ainda não começou.';
+
+      throw new UnauthorizedException(`ACESSO NEGADO: ${reason}`);
+    }
   }
 }
