@@ -13,6 +13,7 @@
     "axios": "^1.10.0",
     "cookie-parser": "^1.4.7",
     "dayjs": "^1.11.13",
+    "framer-motion": "^12.34.3",
     "highcharts": "^12.4.0",
     "highcharts-react-official": "^3.2.3",
     "next": "^15.5.9",

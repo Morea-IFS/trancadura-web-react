@@ -1,24 +1,34 @@
 "use client";
 
-import { useState } from "react";
 import Header from "@/components/Header";
 import Image from "next/image";
 import Link from "next/link";
-import { TypeAnimation } from "react-type-animation"; // Importação Adicionada
+import { TypeAnimation } from "react-type-animation";
+import { motion } from "framer-motion";
 import {
   MdOutlineSensorDoor,
-  MdWaterDrop,
-  MdElectricBolt,
   MdSecurity,
-  MdOutlineSavings,
+  MdWifiTethering,
+  MdAdminPanelSettings,
+  MdHistory,
   MdCode,
 } from "react-icons/md";
-import { FaArrowRight, FaReact, FaNodeJs, FaMicrochip } from "react-icons/fa";
-import { SiNestjs, SiTypescript } from "react-icons/si";
+import { FaArrowRight, FaKey } from "react-icons/fa";
+
+const fadeIn = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.2 }
+  }
+};
 
 export default function Home() {
-  const [labSelecionado, setLabSelecionado] = useState<number | null>(null);
-
   const handleScroll = (
     e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
     id: string
@@ -31,356 +41,271 @@ export default function Home() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen font-sans overflow-x-hidden">
-      {/* Estilo Global para a Animação de Flutuação */}
+    <div className="bg-gray-50 min-h-screen font-sans overflow-x-hidden selection:bg-blue-500 selection:text-white">
       <style jsx global>{`
         @keyframes float {
-          0%,
-          100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-30px);
-          }
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-15px); }
         }
         .animate-float {
-          animation: float 4s ease-in-out infinite;
+          animation: float 5s ease-in-out infinite;
         }
-        .animate-float-delay {
-          animation: float 4s ease-in-out infinite;
-          animation-delay: 2s;
+        .animate-pulse-slow {
+          animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
       `}</style>
 
-      <Header
-        labSelecionado={labSelecionado}
-        setLabSelecionado={setLabSelecionado}
-      />
+      {/* Header */}
+      <Header />
 
-      {/* Hero Section */}
-      <section className="relative min-h-[600px] md:h-[700px] flex items-center justify-center bg-gray-900 text-white pb-20 pt-10 md:pt-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 z-0 animate-gradient-xy"></div>
-        <div className="absolute inset-0 opacity-10 z-0"></div>
-        <div className="absolute inset-0 bg-black/50 z-10" />
+      <section className="relative min-h-[100svh] flex items-center justify-center bg-gray-950 text-white pt-20 pb-20 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-blue-950 to-gray-900 z-0"></div>
+        <div className="absolute inset-0 bg-[url('/assets/grid-pattern.png')] opacity-[0.03] z-0"></div>
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-blue-600/20 blur-[120px] rounded-full z-0 animate-pulse-slow"></div>
 
         <div className="relative z-20 text-center px-6 max-w-5xl mx-auto flex flex-col items-center">
-          <div className="inline-block px-3 py-1 mb-6 rounded-full bg-blue-500/20 border border-blue-400/30 backdrop-blur-md text-blue-300 text-xs md:text-sm font-semibold tracking-wider uppercase">
-            Inovação em IoT no IFS Campus Lagarto
-          </div>
+          <motion.div 
+            initial="hidden" 
+            animate="visible" 
+            variants={fadeIn}
+            className="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full bg-blue-500/10 border border-blue-400/20 backdrop-blur-md text-blue-300 text-xs md:text-sm font-semibold tracking-widest uppercase"
+          >
+            <MdSecurity className="w-4 h-4" />
+            Projeto Morea • IFS Campus Lagarto
+          </motion.div>
 
-          <h1 className="text-4xl md:text-7xl font-bold mb-4 tracking-tight leading-tight">
-            O Futuro do Campus <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-teal-300 to-blue-500 block mt-2">
-              Inteligente & Sustentável
+          <motion.h1 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.8 }}
+            className="text-5xl md:text-8xl font-extrabold mb-6 tracking-tighter leading-[1.1]"
+          >
+            O Fim das <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
+              Chaves Físicas.
             </span>
-          </h1>
+          </motion.h1>
 
-          {/* Type Animation Aqui */}
-          <div className="h-16 mb-6 flex items-center justify-center">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="h-16 md:h-20 mb-6 flex items-center justify-center"
+          >
             <TypeAnimation
               sequence={[
-                "Controle de Acesso Modular",
-                2000,
-                "Monitoramento de Energia e Água",
-                2000,
-                "Segurança com Tecnologia Aberta",
-                2000,
-                "Gestão Inteligente de Recursos",
-                2000,
+                "Acesso Modular via Cartão RFID", 2500,
+                "Auditoria e Logs em Tempo Real", 2500,
+                "Bloqueio Remoto de Laboratórios", 2500,
+                "Gestão Web Centralizada", 2500,
               ]}
               wrapper="span"
               speed={50}
-              style={{
-                fontSize: "1.5rem",
-                display: "inline-block",
-                fontWeight: "bold",
-                color: "#60A5FA",
-              }} // cor blue-400
+              className="text-xl md:text-3xl font-medium text-blue-200"
               repeat={Infinity}
             />
-          </div>
+          </motion.div>
 
-          <p className="text-base md:text-xl text-gray-300 mb-10 max-w-2xl leading-relaxed mx-auto">
-            O projeto <strong>MOREA</strong> une segurança física e eficiência
-            energética através de soluções modulares de baixo custo e código
-            aberto.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 w-full justify-center px-4">
-            <a
-              href="#solutions"
-              onClick={(e) => handleScroll(e, "solutions")}
-              className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-teal-500 rounded-full font-bold text-lg hover:scale-105 transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-3 cursor-pointer text-center"
-            >
-              Acessar Sistemas
-              <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
-            </a>
-            <a
-              href="#about"
-              onClick={(e) => handleScroll(e, "about")}
-              className="w-full sm:w-auto px-8 py-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full font-bold text-lg hover:bg-white/10 transition-all flex items-center justify-center cursor-pointer text-center"
-            >
-              Conhecer o Projeto
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* Seção de Soluções */}
-      <section
-        id="solutions"
-        className="py-16 md:py-20 px-4 md:px-8 max-w-7xl mx-auto -mt-16 md:-mt-24 relative z-30"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-          {/* Card Trancadura - Animação Normal */}
-          <Link href="/trancadura" className="group h-full block animate-float">
-            <div className="bg-white/95 backdrop-blur-xl p-8 md:p-10 rounded-3xl shadow-xl border border-white/50 hover:border-blue-200 transition duration-500 transform hover:-translate-y-2 h-full flex flex-col relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-
-              <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center mb-6 md:mb-8 shadow-lg">
-                <MdOutlineSensorDoor className="w-7 h-7 md:w-8 md:h-8 text-white" />
-              </div>
-
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 group-hover:text-blue-700 transition">
-                Trancadura 2.0
-              </h2>
-              <p className="text-gray-600 mb-6 md:mb-8 text-base md:text-lg leading-relaxed flex-grow">
-                Sistema de controle de acesso modular. Gerencie laboratórios,
-                permissões via RFID/App e logs de auditoria.
-              </p>
-
-              <div className="flex items-center text-blue-700 font-bold tracking-wide group-hover:gap-4 gap-2 transition-all text-sm md:text-base">
-                ABRIR PAINEL <FaArrowRight />
-              </div>
-            </div>
-          </Link>
-
-          {/* Card Sparc - Animação com Delay (Desencontrada) */}
-          <Link
-            href="/dashboard/metering"
-            className="group h-full block animate-float-delay"
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="text-lg md:text-xl text-gray-400 mb-12 max-w-2xl leading-relaxed mx-auto font-light"
           >
-            <div className="bg-white/95 backdrop-blur-xl p-8 md:p-10 rounded-3xl shadow-xl border border-white/50 hover:border-teal-200 transition duration-500 transform hover:-translate-y-2 h-full flex flex-col relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+            A <strong>Trancadura 2.0</strong> substitui o modelo tradicional de acesso por um ecossistema IoT seguro, rastreável e de baixo custo.
+          </motion.p>
 
-              <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-teal-400 to-green-600 rounded-2xl flex items-center justify-center mb-6 md:mb-8 shadow-lg">
-                <MdElectricBolt className="w-7 h-7 md:w-8 md:h-8 text-white" />
-              </div>
-
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4 group-hover:text-teal-700 transition">
-                Sparc Monitor
-              </h2>
-              <p className="text-gray-600 mb-6 md:mb-8 text-base md:text-lg leading-relaxed flex-grow">
-                Monitoramento inteligente de recursos. Visualize gráficos de
-                consumo de energia e água em tempo real.
-              </p>
-
-              <div className="flex items-center text-teal-700 font-bold tracking-wide group-hover:gap-4 gap-2 transition-all text-sm md:text-base">
-                VER DASHBOARD <FaArrowRight />
-              </div>
-            </div>
-          </Link>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="flex flex-col sm:flex-row gap-5 w-full justify-center px-4"
+          >
+            <Link 
+              href="/dashboard" 
+              className="group relative w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 overflow-hidden shadow-[0_0_40px_rgba(37,99,235,0.4)]"
+            >
+              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
+              <span className="relative z-10 flex items-center gap-2">
+                Acessar Painel <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
+              </span>
+            </Link>
+            <a 
+              href="#features" 
+              onClick={(e) => handleScroll(e, "features")}
+              className="w-full sm:w-auto px-8 py-4 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 text-white rounded-2xl font-bold text-lg transition-all flex items-center justify-center cursor-pointer"
+            >
+              Conhecer Arquitetura
+            </a>
+          </motion.div>
         </div>
       </section>
 
-      {/* Sobre o Projeto */}
-      <section id="about" className="py-16 md:py-24 px-4 md:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12 md:mb-20">
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 md:mb-6">
-              Tecnologia com Propósito
-            </h2>
-            <div className="w-16 md:w-24 h-1.5 bg-gradient-to-r from-blue-600 to-teal-400 mx-auto rounded-full"></div>
-            <p className="mt-6 text-lg md:text-xl text-gray-500 max-w-3xl mx-auto leading-relaxed">
-              Desenvolvido no IFS Campus Lagarto, o Morea busca resolver
-              problemas reais de segurança e desperdício utilizando hardware
-              acessível e software moderno.
+      <section id="features" className="py-24 px-4 md:px-8 max-w-7xl mx-auto">
+        <div className="text-center mb-16 md:mb-24">
+          <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Controle Total em Suas Mãos</h2>
+          <p className="mt-4 text-xl text-gray-500 font-light">Segurança de nível corporativo adaptada para o ambiente acadêmico.</p>
+        </div>
+
+        <motion.div 
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-fr"
+        >
+          <motion.div variants={fadeIn} className="md:col-span-2 bg-gradient-to-br from-gray-900 to-blue-950 p-10 rounded-[2rem] shadow-xl text-white relative overflow-hidden group">
+            <div className="absolute -right-10 -bottom-10 opacity-20 group-hover:opacity-40 transition-opacity duration-500">
+              <MdOutlineSensorDoor className="w-64 h-64" />
+            </div>
+            <div className="w-16 h-16 bg-blue-500/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-8 border border-blue-400/20">
+              <MdWifiTethering className="w-8 h-8 text-blue-400" />
+            </div>
+            <h3 className="text-3xl font-bold mb-4 relative z-10">Módulos Independentes</h3>
+            <p className="text-gray-300 text-lg leading-relaxed relative z-10 max-w-lg">
+              Cada porta funciona como um nó IoT autônomo baseado no ESP32. Eles validam chaves JWT localmente e sincronizam o histórico com o servidor central quando há conexão.
             </p>
+          </motion.div>
+
+          <motion.div variants={fadeIn} className="bg-white p-10 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 hover:-translate-y-2 transition-transform duration-300">
+            <div className="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center mb-6">
+              <MdAdminPanelSettings className="w-7 h-7 text-indigo-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Gestão de Permissões</h3>
+            <p className="text-gray-600 leading-relaxed">
+              Atribua tags RFID para professores ou alunos. Determine quem pode abrir qual laboratório e em quais horários específicos.
+            </p>
+          </motion.div>
+
+          <motion.div variants={fadeIn} className="bg-white p-10 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 hover:-translate-y-2 transition-transform duration-300">
+            <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center mb-6">
+              <MdHistory className="w-7 h-7 text-purple-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Auditoria Completa</h3>
+            <p className="text-gray-600 leading-relaxed">
+              Fim do mistério. O painel web registra exatamente quem destrancou a porta, a que horas e se o acesso foi autorizado ou negado.
+            </p>
+          </motion.div>
+
+          <motion.div variants={fadeIn} className="md:col-span-2 bg-white p-10 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col md:flex-row items-start md:items-center gap-8 hover:-translate-y-2 transition-transform duration-300">
+            <div className="flex-1">
+              <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mb-6">
+                <MdCode className="w-7 h-7 text-emerald-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">Tecnologia Open Source</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Hardware desenhado para o menor custo possível utilizando Leitor RFID MFRC522 e Solenoide 12V. Cases projetadas e impressas em 3D dentro da própria instituição.
+              </p>
+            </div>
+            <div className="flex-1 w-full bg-gray-50 rounded-2xl p-6 border border-gray-200">
+               <ul className="space-y-4">
+                 <li className="flex items-center gap-3 font-semibold text-gray-700"><FaKey className="text-blue-500" /> Leitor RFID 13.56MHz</li>
+                 <li className="flex items-center gap-3 font-semibold text-gray-700"><FaKey className="text-blue-500" /> Microcontrolador NodeMCU</li>
+                 <li className="flex items-center gap-3 font-semibold text-gray-700"><FaKey className="text-blue-500" /> API RESTful (NestJS)</li>
+               </ul>
+            </div>
+          </motion.div>
+
+        </motion.div>
+      </section>
+
+      <section className="py-24 px-4 md:px-8 bg-gray-900 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('/assets/grid-pattern.png')] opacity-5 z-0"></div>
+        
+        <div className="max-w-6xl mx-auto relative z-10">
+          <div className="text-center mb-20">
+            <h2 className="text-3xl md:text-5xl font-bold mb-6">Como Funciona a <span className="text-blue-400">Integração</span></h2>
+            <div className="w-24 h-1.5 bg-gradient-to-r from-blue-500 to-indigo-500 mx-auto rounded-full"></div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10 mb-16 md:mb-24">
-            <FeatureCard
-              icon={<MdOutlineSavings />}
-              title="Baixo Custo"
-              desc="Soluções desenvolvidas com ESP32 e impressão 3D, custando até 50% menos que alternativas comerciais."
-              color="blue"
-            />
-            <FeatureCard
-              icon={<MdSecurity />}
-              title="Segurança Moderna"
-              desc="Comunicação criptografada (HTTPS), autenticação via JWT e atualizações remotas (OTA)."
-              color="indigo"
-            />
-            <FeatureCard
-              icon={<MdCode />}
-              title="Open Source"
-              desc="Código aberto para promover a colaboração acadêmica e a transparência no desenvolvimento."
-              color="teal"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <div className="space-y-6 md:space-y-8 order-2 lg:order-1 col-span-1 lg:col-span-2 text-center mb-8">
-              <h3 className="text-2xl md:text-3xl font-bold text-gray-800">
-                Ecossistema Integrado
-              </h3>
-              <p className="text-gray-600 text-base md:text-lg leading-relaxed max-w-4xl mx-auto">
-                O sistema utiliza uma arquitetura moderna para garantir
-                escalabilidade. No hardware, sensores de vazão e módulos RFID
-                conectam-se ao microcontrolador <strong>ESP32</strong>. No
-                servidor, uma API robusta processa requisições em tempo real,
-                gerenciando permissões de acesso e acumulando dados de
-                telemetria.
-              </p>
-            </div>
-
-            {/* Detalhe SPARC */}
-            <div className="order-1 lg:order-1 relative h-64 md:h-80 rounded-2xl overflow-hidden shadow-2xl group bg-gray-100 border border-gray-200">
-              <Image
-                src="/images/image-1.png"
-                alt="Sensor Sparc"
-                fill
-                unoptimized
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow-sm z-10">
-                <p className="text-teal-800 font-bold text-sm">
-                  Sensor Sparc (Água)
+          <div className="space-y-24">
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
+              className="flex flex-col md:flex-row items-center gap-12"
+            >
+              <div className="flex-1 space-y-6">
+                <div className="text-6xl font-black text-white/10">01</div>
+                <h3 className="text-3xl font-bold">Leitura Física (Hardware)</h3>
+                <p className="text-gray-400 text-lg leading-relaxed">
+                  O usuário aproxima a tag RFID da case fixada ao lado da porta do laboratório. O leitor MFRC522 captura o código único (UID) e repassa para o microcontrolador ESP32.
                 </p>
               </div>
-            </div>
-
-            <div className="order-2 lg:order-2 space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-100 text-teal-800 text-xs font-bold uppercase tracking-wider">
-                <MdElectricBolt /> Eficiência Energética
+              <div className="flex-1 w-full h-72 bg-gray-800 rounded-3xl border border-gray-700 flex items-center justify-center relative shadow-2xl">
+                 <div className="animate-float">
+                   <FaKey className="text-6xl text-blue-400" />
+                 </div>
               </div>
-              <h3 className="text-2xl md:text-3xl font-bold text-gray-900">
-                Sparc: Monitoramento Inteligente
-              </h3>
-              <p className="text-gray-600 text-lg leading-relaxed">
-                O Sparc utiliza sensores não invasivos para medir o consumo de
-                energia elétrica e fluxo de água em tempo real. Os dados são
-                enviados para o servidor a cada 5 minutos, permitindo a detecção
-                precoce de vazamentos e o acompanhamento de metas de economia.
-              </p>
-              <ul className="space-y-2 mt-2 text-gray-500">
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>{" "}
-                  Sensor de Fluxo YF-S201
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-teal-500 rounded-full"></div>{" "}
-                  Medição de Corrente SCT-013
-                </li>
-              </ul>
-            </div>
+            </motion.div>
 
-            {/* Detalhe TRANCADURA */}
-            <div className="order-4 lg:order-3 space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold uppercase tracking-wider">
-                <MdSecurity /> Segurança Física
-              </div>
-              <h3 className="text-2xl md:text-3xl font-bold text-gray-900">
-                Trancadura: Controle de Acesso
-              </h3>
-              <p className="text-gray-600 text-lg leading-relaxed">
-                A Trancadura substitui chaves físicas por cartões RFID e
-                controle via aplicativo. O sistema mantém um log auditável de
-                quem entrou em cada laboratório e quando, além de permitir o
-                bloqueio remoto de portas em caso de emergência.
-              </p>
-              <ul className="space-y-2 mt-2 text-gray-500">
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>{" "}
-                  Leitor RFID MFRC522
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>{" "}
-                  Solenóide 12V com Relé
-                </li>
-              </ul>
-            </div>
-
-            <div className="order-3 lg:order-4 relative h-64 md:h-80 rounded-2xl overflow-hidden shadow-2xl group bg-gray-100 border border-gray-200">
-              <div className="absolute inset-0 flex items-center justify-center group-hover:scale-105 transition duration-700 bg-gradient-to-br from-blue-50 to-blue-100">
-                <MdOutlineSensorDoor className="text-8xl text-blue-300" />
-              </div>
-              <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow-sm">
-                <p className="text-blue-800 font-bold text-sm">
-                  Protótipo Trancadura
+            <motion.div 
+              initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
+              className="flex flex-col md:flex-row-reverse items-center gap-12"
+            >
+              <div className="flex-1 space-y-6">
+                <div className="text-6xl font-black text-white/10">02</div>
+                <h3 className="text-3xl font-bold">Autenticação (Software)</h3>
+                <p className="text-gray-400 text-lg leading-relaxed">
+                  O ESP32 criptografa a requisição e envia para nossa API em NestJS. O sistema verifica no banco de dados se aquela Tag possui autorização vigente para aquela porta específica.
                 </p>
               </div>
-            </div>
+              <div className="flex-1 w-full h-72 bg-gray-800 rounded-3xl border border-gray-700 flex items-center justify-center relative shadow-2xl">
+                 <div className="animate-float" style={{ animationDelay: '1s' }}>
+                   <MdSecurity className="text-7xl text-indigo-400" />
+                 </div>
+              </div>
+            </motion.div>
+
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
+              className="flex flex-col md:flex-row items-center gap-12"
+            >
+              <div className="flex-1 space-y-6">
+                <div className="text-6xl font-black text-white/10">03</div>
+                <h3 className="text-3xl font-bold">Ação e Registro</h3>
+                <p className="text-gray-400 text-lg leading-relaxed">
+                  Se aprovado, a API retorna um token de sucesso. O ESP32 aciona o relé que recolhe o pino da fechadura solenoide, abrindo a porta. Simultaneamente, o Dashboard é atualizado com o novo log de acesso.
+                </p>
+              </div>
+              <div className="flex-1 w-full h-72 bg-gray-800 rounded-3xl border border-gray-700 flex items-center justify-center relative shadow-2xl">
+                 <div className="animate-float" style={{ animationDelay: '2s' }}>
+                   <MdOutlineSensorDoor className="text-7xl text-green-400" />
+                 </div>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Footer com Logos */}
-      <footer className="bg-blue-950 text-gray-300 py-10 border-t border-blue-900">
+      <footer className="bg-white py-12 border-t border-gray-200">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="text-center md:text-left">
-            <h4 className="text-xl font-bold text-white mb-2">Projeto MOREA</h4>
-            <p className="text-sm text-gray-400">
+            <h4 className="text-2xl font-black text-gray-900 tracking-tight">TRANCADURA <span className="text-blue-600">2.0</span></h4>
+            <p className="text-sm text-gray-500 font-medium mt-1">
               Instituto Federal de Sergipe - Campus Lagarto
+            </p>
+            <p className="text-xs text-gray-400 mt-4">
+              © 2026 Projeto MOREA. Todos os direitos reservados.
             </p>
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="relative bg-white rounded-lg p-2 flex items-center justify-center shadow-lg">
-              <Image
-                src="/images/logo-ifs.png"
-                alt="Logo IFS"
-                width={60}
-                height={40}
-                className="object-contain"
-              />
-            </div>
-            <div className="relative bg-white rounded-lg p-2 flex items-center justify-center shadow-lg">
-              <Image
-                src="/images/logo-propex.png"
-                alt="Logo Propex"
-                width={220}
-                height={80}
-                className="object-contain"
-              />
-            </div>
-          </div>
-
-          <div className="text-sm text-gray-500">
-            © 2025 Todos os direitos reservados.
+          <div className="flex items-center gap-8">
+            <Image
+              src="/images/logo-ifs.png"
+              alt="Logo IFS"
+              width={70}
+              height={50}
+              className="object-contain grayscale hover:grayscale-0 transition-all duration-300"
+            />
+            <Image
+              src="/images/logo-propex.png"
+              alt="Logo Propex"
+              width={180}
+              height={60}
+              className="object-contain grayscale hover:grayscale-0 transition-all duration-300"
+            />
           </div>
         </div>
       </footer>
-    </div>
-  );
-}
-
-function FeatureCard({
-  icon,
-  title,
-  desc,
-  color,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  desc: string;
-  color: string;
-}) {
-  const colorClasses: any = {
-    blue: "bg-blue-100 text-blue-600",
-    indigo: "bg-indigo-100 text-indigo-600",
-    teal: "bg-teal-100 text-teal-600",
-  };
-
-  return (
-    <div className="p-6 rounded-2xl bg-gray-50 border border-gray-100 hover:shadow-lg transition duration-300 h-full">
-      <div
-        className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4 ${colorClasses[color]}`}
-      >
-        {icon}
-      </div>
-      <h3 className="text-xl font-bold text-gray-800 mb-3">{title}</h3>
-      <p className="text-gray-600 leading-relaxed text-sm">{desc}</p>
     </div>
   );
 }

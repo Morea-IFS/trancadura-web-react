@@ -12,9 +12,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // 🔁 Usuário logado tentando acessar login
+  // 🔁 Usuário logado tentando acessar login -> Vai direto para a Trancadura
   if (token && currentPath === "/login") {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/trancadura", request.url));
   }
 
   return NextResponse.next();
@@ -23,6 +23,6 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // 🔓 Ignora assets estáticos e imagens
-    "/((?!_next/static|_next/image|favicon.ico|images|assets).*)",
+    "/((?!_next/static|_next/image|api|favicon.ico|images|assets).*)",
   ],
 };
