@@ -12,14 +12,14 @@ import { UsersModule } from '../users/users.module';
   imports: [
     UsersModule,
     PassportModule,
-    ConfigModule, // Adicionar o ConfigModule aos imports
-    JwtModule.registerAsync({ // Usar registerAsync
-      imports: [ConfigModule], // Importar para o contexto do JwtModule
-      inject: [ConfigService], // Injetar o ConfigService
+    ConfigModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'), // Ler o segredo do .env
+        secret: configService.get<string>('JWT_SECRET') || 'chave_secreta_padrao', 
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN'), // Ler o tempo de expiração
+          expiresIn: (configService.get<string>('JWT_EXPIRES_IN') || '1d') as any, 
         },
       }),
     }),

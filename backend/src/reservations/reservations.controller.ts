@@ -60,4 +60,17 @@ export class ReservationsController {
     }
     return this.reservationsService.populateCalendarFromPdf(file, startDate, endDate);
   }
+
+  @Post(':id/token')
+  async generateToken(@Param('id', ParseIntPipe) id: number) {
+    return this.reservationsService.generateAccessKey(id);
+  }
+
+  @Post('validate-access')
+  async validateToken(@Body('token') token: string) {
+    if (!token) {
+      throw new BadRequestException('Token é obrigatório.');
+    }
+    return this.reservationsService.validateAccessKey(token);
+  }
 }
