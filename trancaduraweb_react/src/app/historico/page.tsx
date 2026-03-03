@@ -12,7 +12,6 @@ import {
   ListboxOption,
 } from "@headlessui/react";
 
-// Import dos icones
 import { FaRegClock } from "react-icons/fa6";
 import { SlGraph } from "react-icons/sl";
 import { CiDiscount1 } from "react-icons/ci";
@@ -21,15 +20,15 @@ import { LuTriangleAlert } from "react-icons/lu";
 import { RiFilter2Line } from "react-icons/ri";
 import { FiChevronsDown } from "react-icons/fi";
 
-// Configuração para os filtros / utilizei o dayjs para manipulação de datas
-type Periodo = "dia" | "semana" | "mes" | "ano";
+type Periodo = "tudo" | "dia" | "semana" | "mes" | "ano";
 type StatusFiltro = "autorizado" | "nao-autorizado" | null;
 
 const periodOptions: { value: Periodo; label: string }[] = [
-  { value: "dia", label: "Dia" },
-  { value: "semana", label: "Semana" },
-  { value: "mes", label: "Mês" },
-  { value: "ano", label: "Ano" },
+  { value: "tudo", label: "Todo o Histórico" },
+  { value: "dia", label: "Hoje" },
+  { value: "semana", label: "Últimos 7 dias" },
+  { value: "mes", label: "Últimos 30 dias" },
+  { value: "ano", label: "Este Ano" },
 ];
 
 const statusOptions: { value: Exclude<StatusFiltro, null>; label: string }[] = [
@@ -42,13 +41,10 @@ export default function HistoricoPage() {
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
   const [acessos, setAcessos] = useState<any[]>([]);
   const [labSelecionado, setLabSelecionado] = useState<number | null>(null);
-  const [nomeLabSelecionado, setNomeLabSelecionado] = useState<string | null>(
-    null
-  );
-  const [filtroPeriodo, setFiltroPeriodo] = useState<Periodo>("dia");
+  const [nomeLabSelecionado, setNomeLabSelecionado] = useState<string | null>(null);
+  const [filtroPeriodo, setFiltroPeriodo] = useState<Periodo>("tudo"); // Mudei o default para "tudo"
   const [statusFiltro, setStatusFiltro] = useState<StatusFiltro>(null);
 
-  // Buscar o usuário logado e os acessos
   useEffect(() => {
     setMounted(true);
 
@@ -62,7 +58,6 @@ export default function HistoricoPage() {
       });
   }, []);
 
-  // Buscar os acessos do usuário selecionado
   useEffect(() => {
     if (!labSelecionado) return;
 
@@ -80,32 +75,40 @@ export default function HistoricoPage() {
 
        api.get(`/devices/${deviceId}/all`)
         .then((res) => {
-          console.log(`Acessos encontrados para Device ${deviceId}:`, res.data.length);
           let filtrados = res.data;
 
-          // Filtra por período
-          const agora = dayjs();
+          // ==========================================
+          // FILTRO DE PERÍODO (CORRIGIDO)
+          // ==========================================
+          const hoje = dayjs().startOf('day'); // Zera as horas para 00:00:00
+
           filtrados = filtrados.filter((item: any) => {
             const dataAcesso = dayjs(item.date);
-            if (filtroPeriodo === "dia") return dataAcesso.isSame(agora, "day");
-            if (filtroPeriodo === "semana") return dataAcesso.isSame(agora, "week");
-            if (filtroPeriodo === "mes") return dataAcesso.isSame(agora, "month");
-            if (filtroPeriodo === "ano") return dataAcesso.isSame(agora, "year");
+
+            if (filtroPeriodo === "tudo") return true;
+            if (filtroPeriodo === "dia") return dataAcesso.isAfter(hoje) || dataAcesso.isSame(hoje);
+            if (filtroPeriodo === "semana") return dataAcesso.isAfter(hoje.subtract(7, 'day'));
+            if (filtroPeriodo === "mes") return dataAcesso.isAfter(hoje.subtract(30, 'day'));
+            if (filtroPeriodo === "ano") return dataAcesso.isAfter(hoje.startOf('year'));
+            
             return true;
           });
 
-          // Filtra por status
+          // ==========================================
+          // FILTRO DE STATUS
+          // ==========================================
           if (statusFiltro === "autorizado") {
             filtrados = filtrados.filter((item: any) => item.permission === true);
           } else if (statusFiltro === "nao-autorizado") {
             filtrados = filtrados.filter((item: any) => item.permission === false);
           }
 
+          // Adiciona o nome do lab a cada acesso (para o card exibir)
           filtrados = filtrados.map((item: any) => ({
             ...item,
             nomeLab: lab.name,
           }));
-
+          
           setAcessos(filtrados);
         })
         .catch((err) => {
@@ -114,19 +117,7 @@ export default function HistoricoPage() {
         });
     });
 
-  }, [
-    labSelecionado,
-    filtroPeriodo,
-    statusFiltro,
-  ]);
-
-  // Buscar o nome do laboratório selecionado
-  useEffect(() => {
-    if (!labSelecionado) return;
-    api.get(`/labs/${labSelecionado}`).then((res) => {
-      setNomeLabSelecionado(res.data.name);
-    });
-  }, [labSelecionado]);
+  }, [labSelecionado, filtroPeriodo, statusFiltro]);
 
   if (!mounted) return null;
 
@@ -323,7 +314,7 @@ export default function HistoricoPage() {
           {acessos.length > 0 ? (
             acessos.map((item) => <HistoryCard key={item.id} acesso={item} />)
           ) : (
-            <p className="text-sm mt-4">Nenhum acesso encontrado.</p>
+            <p className="text-sm mt-4 text-gray-500 italic">Nenhum acesso encontrado com os filtros atuais.</p>
           )}
         </div>
       </section>
