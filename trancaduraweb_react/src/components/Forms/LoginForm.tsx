@@ -30,6 +30,9 @@ export default function LoginForm() {
         localStorage.setItem("token", res.data.access_token);
         localStorage.setItem("user", JSON.stringify(res.data.user));
         
+        // Define o cookie 'token' no domínio do frontend para o Middleware do Next.js
+        document.cookie = `token=${res.data.access_token}; path=/; max-age=86400; SameSite=Lax; Secure`;
+        
         // Atualiza o estado global de autenticação (se estiver usando context/redux)
         // router.push para a página inicial
         router.push("/");
