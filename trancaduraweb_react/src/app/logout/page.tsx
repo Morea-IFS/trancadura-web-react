@@ -17,6 +17,9 @@ export default function Logout() {
       } finally {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
+        
+        // Limpa o cookie 'token' do frontend
+        document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure";
 
         router.replace("/");
       }
