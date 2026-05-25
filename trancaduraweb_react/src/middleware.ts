@@ -4,7 +4,7 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
   const currentPath = request.nextUrl.pathname;
 
-  const publicRoutes = ["/", "/login"];
+  const publicRoutes = ["/", "/login", "/recuperar-senha", "/recuperar-senha/verificar", "/recuperar-senha/nova-senha"];
   const isPublic = publicRoutes.includes(currentPath);
 
   // 🔐 Rota protegida sem token
