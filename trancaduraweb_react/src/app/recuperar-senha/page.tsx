@@ -101,6 +101,18 @@ export default function RecuperarSenhaPage() {
               </p>
               <p className="text-xs text-gray-400 mt-2">Verifique também a pasta de spam.</p>
             </div>
+
+            {/* Aviso de spam destacado */}
+            <div className="w-full bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-3">
+              <span className="text-amber-500 text-xl mt-0.5">⚠️</span>
+              <div>
+                <p className="text-sm font-semibold text-amber-800">Não recebeu o email?</p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  Verifique sua <strong>pasta de spam</strong> ou <strong>lixo eletrônico</strong>. 
+                  Emails automáticos podem ser filtrados pelo Gmail.
+                </p>
+              </div>
+            </div>
             <button
               id="go-to-verify-btn"
               onClick={() => router.push("/recuperar-senha/verificar")}
